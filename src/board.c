@@ -413,7 +413,6 @@ void BOARD_ToggleRed(bool on) {
 }
 
 void BOARD_Init(void) {
-
   ST7565_Init();
   // BK1080_Init(0, false);
   BK4819_Init();

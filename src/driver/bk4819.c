@@ -27,86 +27,14 @@ static const uint8_t squelchTypeValues[4] = {0x88, 0xAA, 0xCC, 0xFF};
 static const uint8_t DTMF_COEFFS[] = {111, 107, 103, 98, 80,  71,  58,  44,
                                       65,  55,  37,  23, 228, 203, 181, 159};
 
-/* const uint8_t SQ[2][6][11] = {
-    {
-        {0, 10, 62, 66, 74, 75, 92, 95, 98, 170, 252},
-        {0, 5, 60, 64, 72, 70, 89, 92, 95, 166, 250},
-        {255, 240, 56, 54, 48, 45, 32, 29, 20, 25, 20},
-        {255, 250, 61, 58, 52, 48, 35, 32, 23, 30, 30},
-        {255, 240, 135, 135, 116, 17, 3, 3, 2, 50, 50},
-        {255, 250, 150, 140, 120, 20, 5, 5, 4, 45, 45},
-    },
-    {
-        {0, 50, 78, 88, 94, 110, 114, 117, 119, 200, 252},
-        {0, 40, 76, 86, 92, 106, 110, 113, 115, 195, 250},
-        {255, 65, 49, 44, 42, 40, 33, 30, 22, 23, 22},
-        {255, 70, 59, 54, 46, 45, 37, 34, 25, 27, 25},
-        {255, 90, 135, 135, 116, 10, 8, 7, 6, 32, 32},
-        {255, 100, 150, 140, 120, 15, 12, 11, 10, 30, 30},
-    },
-}; */
-
 const Gain gainTable[32] = {
-    {0x10, 90},  //	0 	  	-57   			0 0 2 0
-    {0x1, 88},   //	1 		-55       		0
-                 // 0	    0	    1
-    {0x9, 87},   //	2  		-54      		0
-                 // 0	    1	    1
-    {0x2, 83},   //	3  		-50       		0
-                 // 0	    0	    2
-    {0xA, 81},   //	4  		-48       		0
-                 // 0	    1	    2
-    {0x12, 79},  //	5  		-46       		0
-                 // 0	    2	    2
-    {0x2A, 77},  //	6  		-44       		0
-                 // 1	    1	    2
-    {0x32, 75},  //	7  		-42       		0
-                 // 1	    2	    2
-    {0x3A, 70},  //	8  		-37       		0
-                 // 1	    3	    2
-    {0x20B, 68}, //   9  		-35       		2
-                 //   0	    1	    3
-    {0x213, 64}, //   10 		-31      		2
-                 //   0	    2	    3
-    {0x21B, 62}, //   11 		-29       		2
-                 //   0	    3	    3
-    {0x214, 59}, //   12 		-26       		2
-                 //   0	    2	    4
-    {0x21C, 56}, //   13 		-23      		2
-                 //   0	    3	    4
-    {0x22D, 52}, //   14 		-19      		2
-                 //   1	    1	    5
-    {0x23C, 50}, //   15 		-17      		2
-                 //   1	    3	    4
-    {0x23D, 48}, //   16 		-15      		2
-                 //   1	    3	    5
-    {0x255, 44}, //   17 		-11      		2
-                 //   2	    2	    5
-    {0x25D, 42}, //   18 		-9      		2
-                 //   2	    3	    5
-    {0x275, 39}, //   19 		-6       		2
-                 //   3	    2	    5
-    {0x295, 33}, //   20 		 0       		2
-                 //   4	    2	    5
-    {0x2B6, 31}, //   21 		+2        		2
-                 //   4	    2	    6
-    {0x354, 28}, //   22 		+5 	   			3
-                 //   2	    2	    4
-    {0x36C, 23}, //   23 		+9       		3
-                 //   3	    1	    4
-    {0x38C, 20}, //   24 		+13        		3
-                 //   4	    1	    4
-    {0x38D, 17}, //   25 		+16        		3
-                 //   4	    1	    5
-    {0x3B5, 13}, //   26 		+20        		3
-                 //   5	    2	    5
-    {0x3B6, 9},  //   27 		+22      		3
-                 //   5	    2	    6
-    {0x3D6, 8},  //   28 		+25       		3
-                 //   6	    2	    6
-    {0x3BF, 3},  //   29 		+28      		3 5 3 7
-    {0x3DF, 2},  //   30 		+31      		3 6 3 7
-    {0x3FF, 0},  //   31 		+33  			3 7 3 7
+    {0x10, 90},  {0x1, 88},   {0x9, 87},   {0x2, 83},   {0xA, 81},
+    {0x12, 79},  {0x2A, 77},  {0x32, 75},  {0x3A, 70},  {0x20B, 68},
+    {0x213, 64}, {0x21B, 62}, {0x214, 59}, {0x21C, 56}, {0x22D, 52},
+    {0x23C, 50}, {0x23D, 48}, {0x255, 44}, {0x25D, 42}, {0x275, 39},
+    {0x295, 33}, {0x2B6, 31}, {0x354, 28}, {0x36C, 23}, {0x38C, 20},
+    {0x38D, 17}, {0x3B5, 13}, {0x3B6, 9},  {0x3D6, 8},  {0x3BF, 3},
+    {0x3DF, 2},  {0x3FF, 0},
 };
 
 inline uint16_t scale_freq(const uint16_t freq) {
@@ -127,13 +55,6 @@ void BK4819_Init(void) {
   BK4819_SetAGC(true, 0);
   BK4819_WriteRegister(BK4819_REG_19, 0x1041);
   BK4819_WriteRegister(BK4819_REG_7D, 0xE94F);
-  // BK4819_WriteRegister(BK4819_REG_48, 0xB3A8); // see radio.c
-  BK4819_WriteRegister(
-      BK4819_REG_48,
-      (11u << 12) |    // ??? 0..15
-          (0u << 10) | // AF Rx Gain-1 (0 = 0dB)
-          (58u << 4) | // AF Rx Gain-2 (-26dB ~ 5.5dB, 0.5dB/step)
-          (8u << 0));  // AF DAC Gain (2dB/step, 15 = max, 0 = min)
 
   for (uint8_t i = 0; i < ARRAY_SIZE(DTMF_COEFFS); ++i) {
     BK4819_WriteRegister(0x09, (i << 12) | DTMF_COEFFS[i]);
@@ -144,6 +65,32 @@ void BK4819_Init(void) {
   gBK4819_GpioOutState = 0x9000;
   BK4819_WriteRegister(BK4819_REG_33, 0x9000);
   BK4819_WriteRegister(BK4819_REG_3F, 0);
+
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);
+  BK4819_SetupPowerAmplifier(0, 0); // 0 is default, but...
+
+  while (BK4819_ReadRegister(BK4819_REG_0C) & 1U) {
+    BK4819_WriteRegister(BK4819_REG_02, 0);
+    SYSTEM_DelayMs(1);
+  }
+  BK4819_WriteRegister(BK4819_REG_3F, 0);
+  BK4819_WriteRegister(BK4819_REG_7D, 0xE94F | 10); // mic
+  // TX
+  // BK4819_WriteRegister(0x44, 38888);  // 300 resp TX
+  BK4819_WriteRegister(0x74, 0xAF1F); // 3k resp TX
+
+  BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_RX_ENABLE, true);
+  BK4819_WriteRegister(
+      BK4819_REG_48,
+      (11u << 12) |   // ??? .. 0 ~ 15, doesn't seem to make any difference
+          (0 << 10) | // AF Rx Gain-1 00:0dB 01:-6dB 10:-12dB 11:-18dB
+          (58 << 4) | // AF Rx Gain-2 AF RX Gain2 (-26 dB ~ 5.5 dB): 0x00: Mute
+          (8 << 0));  // AF DAC Gain (after Gain-1 and Gain-2) 1111 - max
+
+  BK4819_DisableDTMF();
+
+  BK4819_WriteRegister(0x40, (BK4819_ReadRegister(0x40) & ~(0x7FF)) |
+                                 (gSettings.deviation * 10) | (1 << 12));
 }
 
 void BK4819_WriteU8(uint8_t Data) {
@@ -230,9 +177,7 @@ void BK4819_WriteRegister(BK4819_REGISTER_t Register, uint16_t Data) {
   SYSTICK_Delay250ns(1);
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCN);
   BK4819_WriteU8(Register);
-  // SYSTICK_DelayUs(1);
   BK4819_WriteU16(Data);
-  // SYSTICK_DelayUs(1);
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCN);
   SYSTICK_Delay250ns(1);
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCL);
@@ -940,8 +885,8 @@ void BK4819_PlayRogerTiny(void) {
 }
 
 void BK4819_PlayRogerStalk1(void) {
-  BK4819_PlaySequence(
-      (uint16_t[]){1975, 80, 0, 10, 2100, 100, 0, 10, 3140, 80, 0, 10, 2800, 100, 0, 10, 0, 0});
+  BK4819_PlaySequence((uint16_t[]){1975, 80, 0, 10, 2100, 100, 0, 10, 3140, 80,
+                                   0, 10, 2800, 100, 0, 10, 0, 0});
 }
 
 void BK4819_PlaySequence(const uint16_t *M) {

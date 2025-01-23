@@ -38,7 +38,6 @@ Settings gSettings = (Settings){
     .vox = 0,
     .backlight = 3,
     .txTime = 0,
-    .micGain = 15,
     .currentScanlist = SCANLIST_ALL,
     .roger = 0,
     .scanmode = 0,

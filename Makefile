@@ -41,6 +41,7 @@ CFLAGS = -Os -Wall -Wno-error -mcpu=cortex-m0 -fno-builtin -fshort-enums -fno-de
 CFLAGS += -DPRINTF_INCLUDE_CONFIG_H
 CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
 CFLAGS += -DTIME_STAMP=\"$(TS)\"
+CFLAGS += -DCMSIS_device_header=\"ARMCM0.h\"
 
 
 CCFLAGS += -Wall -Werror -mcpu=cortex-m0 -fno-builtin -fshort-enums -fno-delete-null-pointer-checks -MMD -g

@@ -47,18 +47,15 @@
 /* Section where include file can be added */
 /* USER CODE END Includes */
 
-
-#define configENABLE_MPU 1
 #define configUSE_PREEMPTION 1
 #define configSUPPORT_STATIC_ALLOCATION 1
 #define configSUPPORT_DYNAMIC_ALLOCATION 0
 #define configUSE_IDLE_HOOK 0
 #define configUSE_TICK_HOOK 0
 #define configCPU_CLOCK_HZ (48000000U)
-#define configTICK_RATE_HZ ((TickType_t)1000U)
+#define configTICK_RATE_HZ ((TickType_t)10000U)
 #define configMAX_PRIORITIES (5)
 #define configMINIMAL_STACK_SIZE ((uint16_t)84)
-#define configSYSTEM_CALL_STACK_SIZE 128
 // #define configTOTAL_HEAP_SIZE                    ((size_t)3072)
 #define configMAX_TASK_NAME_LEN (6)
 #define configUSE_TRACE_FACILITY 0
