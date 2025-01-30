@@ -170,8 +170,8 @@ uint16_t BK4819_ReadRegister(BK4819_REGISTER_t Register) {
 }
 
 void BK4819_WriteRegister(BK4819_REGISTER_t Register, uint16_t Data) {
-  if (BK4819_ReadRegister(Register) == Data)
-    return;
+  /* if (BK4819_ReadRegister(Register) == Data)
+    return; */
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCN);
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCL);
   SYSTICK_Delay250ns(1);

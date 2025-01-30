@@ -24,6 +24,7 @@ typedef struct {
   uint32_t f;
   uint32_t lastTimeOpen;
   uint16_t duration;
+  uint16_t timeUs;
   uint16_t rssi;
   uint8_t noise;
   uint8_t glitch;

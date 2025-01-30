@@ -63,7 +63,7 @@ void UI_RSSIBar(uint8_t y) {
 
 void drawTicks(uint8_t y, uint32_t fs, uint32_t fe, uint32_t div, uint8_t h) {
   for (uint32_t f = fs - (fs % div) + div; f < fe; f += div) {
-    uint8_t x = ConvertDomain(f, fs, fe, 0, LCD_WIDTH - 1);
+    uint8_t x = ConvertDomainF(f, fs, fe, 0, LCD_WIDTH - 1);
     DrawVLine(x, y, h, C_FILL);
   }
 }

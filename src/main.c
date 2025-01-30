@@ -1,14 +1,16 @@
 #include "board.h"
+#include "config/FreeRTOSConfig.h"
 #include "driver/crc.h"
 #include "driver/system.h"
 #include "driver/systick.h"
 #include "driver/uart.h"
-#include "FreeRTOS.h"
+#include "external/FreeRTOS/include/FreeRTOS.h"
+#include "external/FreeRTOS/portable/GCC/ARM_CM0/portmacro.h"
 #include "misc.h"
 #include "system.h"
 
 StaticTask_t systemTaskBuffer;
-StackType_t systemTaskStack[configMINIMAL_STACK_SIZE + 200];
+StackType_t systemTaskStack[configMINIMAL_STACK_SIZE + 300];
 
 void Main(void) {
   SYSTICK_Init();

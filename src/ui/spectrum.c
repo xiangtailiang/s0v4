@@ -4,6 +4,7 @@
 #include "components.h"
 #include "graphics.h"
 #include <stdint.h>
+#include <stdlib.h>
 
 #define MAX_POINTS 128
 
@@ -81,7 +82,7 @@ void SP_Init(Band *b) {
 }
 
 uint8_t SP_F2X(uint32_t f) {
-  return ConvertDomain(f, range->rxF, range->txF, 0, MAX_POINTS);
+  return ConvertDomainF(f, range->rxF, range->txF, 0, MAX_POINTS);
 }
 
 void SP_AddPoint(const Measurement *msm) {
@@ -124,6 +125,8 @@ static VMinMax getV() {
   return (VMinMax){vMin, vMax};
 }
 
+uint16_t peaks[MAX_POINTS];
+
 void SP_Render(const Band *p) {
   const VMinMax v = getV();
 
@@ -137,6 +140,12 @@ void SP_Render(const Band *p) {
   for (uint8_t i = 0; i < filledPoints; ++i) {
     uint8_t yVal = ConvertDomain(rssiHistory[i], v.vMin, v.vMax, 0, SPECTRUM_H);
     DrawVLine(i, S_BOTTOM - yVal, yVal, C_FILL);
+  }
+
+  for (uint8_t x = 0; x < MAX_POINTS; ++x) {
+    if (peaks[x]) {
+      DrawVLine(x, SPECTRUM_Y + 1, 4, C_FILL);
+    }
   }
 }
 
