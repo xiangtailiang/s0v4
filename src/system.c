@@ -50,6 +50,7 @@ static uint8_t systemQueueStorageArea[queueLen * itemSize];
 
 StaticTask_t appUpdateTaskBuffer;
 StackType_t appUpdateTaskStack[configMINIMAL_STACK_SIZE + 100];
+
 StaticTask_t appRenderTaskBuffer;
 StackType_t appRenderTaskStack[configMINIMAL_STACK_SIZE + 100];
 
@@ -116,27 +117,26 @@ void SYSTEM_Main(void *params) {
   xTaskCreateStatic(appRender, "appR", ARRAY_SIZE(appRenderTaskStack), NULL, 4,
                     appRenderTaskStack, &appRenderTaskBuffer);
 
-  SystemMessages notification;
+  SystemMessages n;
 
   for (;;) {
-    if (xQueueReceive(systemMessageQueue, &notification, pdMS_TO_TICKS(5))) {
+    if (xQueueReceive(systemMessageQueue, &n, pdMS_TO_TICKS(5))) {
       // Process system notifications
-      Log("MSG: m:%u, k:%u, st:%u", notification.message, notification.key,
-          notification.state);
-      if (notification.message == MSG_KEYPRESSED) {
-        if (APPS_key(notification.key, notification.state)) {
+      Log("MSG: m:%u, k:%u, st:%u", n.message, n.key, n.state);
+      if (n.message == MSG_KEYPRESSED) {
+        if (APPS_key(n.key, n.state)) {
           gRedrawScreen = true;
         } else {
           Log("Process keys external");
-          if (notification.key == KEY_MENU) {
-            if (notification.state == KEY_LONG_PRESSED) {
+          if (n.key == KEY_MENU) {
+            if (n.state == KEY_LONG_PRESSED) {
               APPS_run(APP_SETTINGS);
-            } else if (notification.state == KEY_RELEASED) {
+            } else if (n.state == KEY_RELEASED) {
               APPS_run(APP_APPS_LIST);
             }
           }
-          if (notification.key == KEY_EXIT) {
-            if (notification.state == KEY_PRESSED) {
+          if (n.key == KEY_EXIT) {
+            if (n.state == KEY_PRESSED) {
               APPS_exit();
             }
           }

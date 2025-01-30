@@ -136,59 +136,64 @@ void ANALYZER_deinit(void) {}
 bool ANALYZER_key(KEY_Code_t key, Key_State_t state) {
   uint8_t stp;
   uint8_t bw;
-
-  switch (key) {
-  case KEY_1:
-    IncDec32(&delay, 200, 10000, 100);
-    return true;
-  case KEY_7:
-    IncDec32(&delay, 200, 10000, -100);
-    return true;
-  case KEY_3:
-    stp = b.step;
-    IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, 1);
-    b.step = stp;
-    SP_Init(&b);
-    return true;
-  case KEY_9:
-    stp = b.step;
-    IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, -1);
-    b.step = stp;
-    SP_Init(&b);
-    return true;
-  case KEY_2:
-    bw = b.bw;
-    IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, 1);
-    b.bw = bw;
-    BK4819_SetFilterBandwidth(b.bw);
-    return true;
-  case KEY_8:
-    bw = b.bw;
-    IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, -1);
-    b.bw = bw;
-    BK4819_SetFilterBandwidth(b.bw);
-    return true;
-  case KEY_6:
-    IncDec8(&filter, 0, 3, 1);
-    selectFilter(filter);
-    return true;
-  case KEY_STAR:
-    IncDec8(&msmBy, MSM_RSSI, MSM_EXTRA + 1, 1);
-    SP_Init(&b);
-    m.f = b.rxF;
-    return true;
-  case KEY_SIDE1:
-    IncDec8(&gain, 0, ARRAY_SIZE(gainTable), 1);
-    BK4819_SetAGC(true, gain);
-    return true;
-  case KEY_SIDE2:
-    IncDec8(&gain, 0, ARRAY_SIZE(gainTable), -1);
-    BK4819_SetAGC(true, gain);
-    return true;
-
-  default:
-    return false;
+  if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
+    switch (key) {
+    case KEY_1:
+      IncDec32(&delay, 200, 10000, 100);
+      return true;
+    case KEY_7:
+      IncDec32(&delay, 200, 10000, -100);
+      return true;
+    case KEY_3:
+      stp = b.step;
+      IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, 1);
+      b.step = stp;
+      SP_Init(&b);
+      return true;
+    case KEY_9:
+      stp = b.step;
+      IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, -1);
+      b.step = stp;
+      SP_Init(&b);
+      return true;
+    case KEY_2:
+      bw = b.bw;
+      IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, 1);
+      b.bw = bw;
+      BK4819_SetFilterBandwidth(b.bw);
+      return true;
+    case KEY_8:
+      bw = b.bw;
+      IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, -1);
+      b.bw = bw;
+      BK4819_SetFilterBandwidth(b.bw);
+      return true;
+    case KEY_STAR:
+      IncDec8(&msmBy, MSM_RSSI, MSM_EXTRA + 1, 1);
+      SP_Init(&b);
+      m.f = b.rxF;
+      return true;
+    default:
+      break;
+    }
   }
+
+  if (state == KEY_RELEASED) {
+    switch (key) {
+    case KEY_6:
+      IncDec8(&filter, 0, 3, 1);
+      selectFilter(filter);
+      return true;
+    case KEY_STAR:
+      IncDec8(&msmBy, MSM_RSSI, MSM_EXTRA + 1, 1);
+      SP_Init(&b);
+      m.f = b.rxF;
+      return true;
+    default:
+      break;
+    }
+  }
+  return false;
 }
 
 void ANALYZER_render(void) {
