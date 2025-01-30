@@ -14,6 +14,7 @@
 #include "external/FreeRTOS/portable/GCC/ARM_CM0/portmacro.h"
 #include "helper/battery.h"
 #include "misc.h"
+#include "settings.h"
 #include "ui/graphics.h"
 #include "ui/statusline.h"
 #include <iso646.h>
@@ -78,22 +79,22 @@ void SYSTEM_Main(void *params) {
   uint8_t deadBuf[] = {0xDE, 0xAD};
   EEPROM_ReadBuffer(0, buf, 2);
 
-  if (false && memcmp(buf, deadBuf, 2) == 0) {
+  if (memcmp(buf, deadBuf, 2) == 0) {
     gSettings.batteryCalibration = 2000;
     gSettings.backlight = 5;
     APPS_run(APP_RESET);
   } else {
     SETTINGS_Load();
-    /* if (gSettings.batteryCalibration > 2154 ||
+    if (gSettings.batteryCalibration > 2154 ||
         gSettings.batteryCalibration < 1900) {
       gSettings.batteryCalibration = 0;
       EEPROM_WriteBuffer(0, deadBuf, 2);
       NVIC_SystemReset();
-    } */
+    }
 
     ST7565_Init();
     // BACKLIGHT_Init();
-    APPS_run(APP_VFO2);
+    APPS_run(gSettings.mainApp);
   }
 
   BATTERY_UpdateBatteryInfo();

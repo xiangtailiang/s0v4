@@ -105,7 +105,10 @@ void VFO1_init(void) {
   RADIO_LoadCurrentVFO();
 }
 
-void VFO1_update(void) {}
+void VFO1_update(void) {
+  // TODO: scan
+  vTaskDelay(pdMS_TO_TICKS(500));
+}
 
 bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
   if (key == KEY_PTT) {
