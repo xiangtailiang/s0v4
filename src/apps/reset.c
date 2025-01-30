@@ -225,8 +225,8 @@ void RESET_Render(void) {
   PrintMediumEx(LCD_XCENTER, TOP + 7, POS_C, C_INVERT, "%u%", progress);
 }
 
-bool RESET_key(KEY_Code_t k, bool bKeyPressed, bool bKeyHeld) {
-  if (!bKeyPressed && !bKeyHeld) {
+bool RESET_key(KEY_Code_t k, Key_State_t state) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     if (gSettings.eepromType == EEPROM_UNKNOWN) {
       if (k > KEY_0) {
         uint8_t t = k - 1;

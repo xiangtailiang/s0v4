@@ -537,8 +537,8 @@ static void upDown(uint8_t inc) {
   }
 }
 
-bool CHCFG_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
-  if (!bKeyPressed && !bKeyHeld) {
+bool CHCFG_key(KEY_Code_t key, Key_State_t state) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(menuIndex + 1, 1, menuSize);
       gNumNavCallback = setMenuIndexAndRun;

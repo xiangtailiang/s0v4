@@ -8,7 +8,6 @@
 #include "../helper/measurements.h"
 #include "../radio.h"
 #include "../scheduler.h"
-#include "../svc_render.h"
 #include "../ui/graphics.h"
 #include "../ui/spectrum.h"
 #include "../ui/statusline.h"
@@ -16,326 +15,233 @@
 #include "vfo1.h"
 #include <stdint.h>
 
-static const uint8_t spectrumWidth = LCD_WIDTH;
+static Band b = {
+    .rxF = 17200000,
+    .txF = 17200000 + 2500 * 128,
+    .step = STEP_25_0kHz,
+    .bw = BK4819_FILTER_BW_12k,
+};
 
-static Measurement msm;
-static uint32_t centerF = 0;
-static uint8_t scanInterval = 2;
-static uint8_t stepsCount = 128;
+static Measurement m;
+static uint32_t delay = 1200;
+static uint8_t filter = FILTER_VHF;
 
 static uint32_t peakF = 0;
-static uint32_t _peakF = 0;
-static uint16_t peakRssi = 0;
+static uint8_t peakSnr = 0;
+static uint8_t lowSnr = 255;
+static const char *bwNames[10] = {
+    "U6K",  //
+    "U7K",  //
+    "N9k",  //
+    "N10k", //
+    "W12k", //
+    "W14k", //
+    "W17k", //
+    "W20k", //
+    "W23k", //
+    "W26k", //
+};
 
-static uint16_t squelchRssi = UINT16_MAX;
-static bool useSquelch = false;
-static uint16_t step;
-
-static bool isStillMode = false;
-
-static void startNewScan(bool reset) {
-  _peakF = 0;
-  peakRssi = 0;
-  if (reset) {
-    LOOT_Standby();
-    msm.f = gCurrentBand.rxF;
-    BK4819_TuneTo(msm.f, true);
-    BK4819_SetRegValue(afcDisableRegSpec, true);
-    BK4819_SetModulation(gCurrentBand.modulation);
-    if (step > 5000) {
-      BK4819_SetModulation(MOD_WFM);
-    } else if (step >= 1300) {
-      BK4819_SetFilterBandwidth(BK4819_FILTER_BW_26k);
-    } else if (step >= 1200) {
-      BK4819_SetFilterBandwidth(BK4819_FILTER_BW_20k);
-    } else if (step >= 625) {
-      BK4819_SetFilterBandwidth(BK4819_FILTER_BW_12k);
-    } else {
-      BK4819_SetFilterBandwidth(BK4819_FILTER_BW_6k);
-    }
-    SP_Init(&gCurrentBand);
-  } else {
-    SP_Begin();
-  }
+static void selectFilter(Filter filter) {
+  BK4819_ToggleGpioOut(BK4819_GPIO4_PIN32_VHF_LNA, filter == FILTER_VHF);
+  BK4819_ToggleGpioOut(BK4819_GPIO3_PIN31_UHF_LNA, filter == FILTER_UHF);
 }
 
-static void setCenterF(uint32_t f) {
-  step = StepFrequencyTable[gCurrentBand.step];
-  const uint32_t halfBW = step * (stepsCount / 2);
-  centerF = f;
-  gCurrentBand.rxF = centerF - halfBW;
-  gCurrentBand.txF = centerF + halfBW;
-  gCurrentBand.modulation = RADIO_GetModulation();
-  startNewScan(true);
+static void updateSecondF(uint32_t f) {
+  b.txF = f;
+  SP_Init(&b);
 }
 
-static void shift(int8_t n) {
-  _peakF = 0;
-  peakRssi = 0;
-  SP_Shift(-n);
-  step = StepFrequencyTable[gCurrentBand.step];
-  const uint32_t halfBW = step * (stepsCount / 2);
-  centerF += step * n;
-  gCurrentBand.rxF = centerF - halfBW;
-  gCurrentBand.txF = centerF + halfBW;
+static void updateFirstF(uint32_t f) { b.rxF = f; }
 
-  if (n < 2) {
-    msm.f = gCurrentBand.rxF;
-  } else {
-    msm.f = gCurrentBand.rxF + step * n;
-  }
-}
+static const char *fltNames[3] = {"VHF", "UHF", "OFF"};
 
-void toggleStillMode() {
-  isStillMode = !isStillMode;
-  gMonitorMode = isStillMode;
-  RADIO_ToggleRX(true);
-  BK4819_TuneTo(peakF, true);
-}
+typedef enum {
+  MSM_RSSI,
+  MSM_SNR,
+  MSM_NOISE,
+  MSM_GLITCH,
+  MSM_EXTRA,
+} MsmBy;
+
+static const char *msmByNames[5] = {
+    "RSSI", "SNR", "NOISE", "GLITCH", "EXTRA",
+};
+
+static uint8_t msmBy = MSM_RSSI;
+static uint8_t gain = 21;
 
 void ANALYZER_init(void) {
   SPECTRUM_Y = 6;
   SPECTRUM_H = 48;
 
-  isStillMode = false;
-  gMonitorMode = false;
-  squelchRssi = UINT16_MAX;
-
-  RADIO_ToggleRX(false);
-  RADIO_LoadCurrentVFO();
-  radio->radio = RADIO_BK4819;
-  RADIO_SwitchRadioPure();
-
-  gCurrentBand.meta.type = TYPE_BAND_DETACHED;
-  gCurrentBand.squelch.value = 0;
-
-  setCenterF(radio->rxF);
-  startNewScan(true);
+  BK4819_SetAGC(true, gain);
+  BK4819_SetAFC(0);
+  BK4819_SetFilterBandwidth(b.bw);
+  selectFilter(filter);
+  BK4819_SetModulation(MOD_FM);
+  BK4819_RX_TurnOn();
+  m.f = b.rxF;
+  SP_Init(&b);
 }
 
 void ANALYZER_update(void) {
-  if (Now() - gLastRender >= 500) {
-    gRedrawScreen = true;
+  m.snr = 0;
+  m.rssi = 0;
+
+  BK4819_SetFrequency(m.f);
+  BK4819_WriteRegister(BK4819_REG_30, 0x0000);
+  BK4819_WriteRegister(BK4819_REG_30, 0xBFF1);
+  vTaskDelay(delay / 100);
+  switch (msmBy) {
+  case MSM_RSSI:
+    m.rssi = BK4819_GetRSSI();
+    break;
+  case MSM_NOISE:
+    m.rssi = BK4819_GetNoise();
+    break;
+  case MSM_GLITCH:
+    m.rssi = BK4819_GetGlitch();
+    break;
+  case MSM_SNR:
+    m.rssi = BK4819_GetSNR();
+    break;
+  case MSM_EXTRA:
+    m.rssi = (BK4819_ReadRegister(0x62) >> 8) &
+             0xff; // another snr ? размазывает сигнал на спектре, возможно
+                   // уровень сигнала до фильтра, показывает и при 200мкс TEST
+    break;
   }
-  if (!gIsListening) {
-    BK4819_SetFrequency(msm.f);
-    BK4819_WriteRegister(BK4819_REG_30, 0x0200);
-    BK4819_WriteRegister(BK4819_REG_30, 0xBFF1);
-    SYSTEM_DelayMs(scanInterval); // (X_X)
+  // m.rssi = BK4819_GetRSSI();
+  /* m.noise = BK4819_GetNoise();
+  m.glitch = BK4819_GetGlitch(); */
+
+  // m.snr = BK4819_ReadRegister(0x66) & 0xff; // t>=4ms, interesting выше
+  // m.snr = (BK4819_ReadRegister(0x66) >> 8) & 0xff; // noise? запаздывает на
+  // шаг, показывает только правый канал TEST
+  m.timeUs = delay;
+  if (m.rssi > peakSnr) {
+    peakSnr = m.rssi;
+    peakF = m.f;
   }
-  msm.rssi = BK4819_GetRSSI();
-  if (gMonitorMode) {
-    msm.open = true;
-  } else {
-    msm.open = msm.rssi > squelchRssi;
-    LOOT_Update(&msm);
-  }
-  SP_AddPoint(&msm);
-  if (msm.rssi > peakRssi) {
-    peakRssi = msm.rssi;
-    _peakF = msm.f;
+  if (m.rssi < lowSnr) {
+    lowSnr = m.rssi;
   }
 
-  RADIO_ToggleRX(msm.open);
-  if (gIsListening) {
-    return;
-  }
+  SP_AddPoint(&m);
+  // Log("%u,%u,%u,%u,%u,%u", m.timeUs, m.f, m.rssi, m.noise, m.glitch,
+  // m.snr);
 
-  if (msm.f + step > gCurrentBand.txF) {
-    msm.f = gCurrentBand.rxF;
-    peakF = _peakF;
-    gRedrawScreen = true;
-    if (useSquelch && squelchRssi == UINT16_MAX) {
-      squelchRssi = SP_GetRssiMax() + 2;
-    }
-  } else {
-    msm.f += step;
-  }
-
-  if (msm.f == gCurrentBand.rxF) {
-    startNewScan(false);
-    return;
+  m.f += StepFrequencyTable[b.step];
+  if (m.f > b.txF) {
+    m.f = b.rxF;
+    appRender(NULL);
+    peakF = 0;
+    peakSnr = 0;
   }
 }
 
-void ANALYZER_deinit(void) {  }
+void ANALYZER_deinit(void) {}
 
-bool ANALYZER_key(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
-  // repeat or keyup
-  if (bKeyPressed || !bKeyHeld) {
-    switch (Key) {
-    case KEY_1:
-      IncDec8(&scanInterval, 1, 10, 1);
-      return true;
-    case KEY_7:
-      IncDec8(&scanInterval, 1, 10, -1);
-      return true;
-    case KEY_3:
-      if (squelchRssi < 512) {
-        squelchRssi += 2;
-      }
-      return true;
-    case KEY_9:
-      if (squelchRssi > 1) {
-        squelchRssi -= 2;
-      }
-      return true;
-    default:
-      break;
-    }
+bool ANALYZER_key(KEY_Code_t key, Key_State_t state) {
+  uint8_t stp;
+  uint8_t bw;
 
-    if (isStillMode) {
-      if (Key == KEY_UP || Key == KEY_DOWN) {
-        uint8_t mul = bKeyHeld ? 5 : 1;
-        IncDec32(&peakF, gCurrentBand.rxF, gCurrentBand.txF,
-                 step * (Key == KEY_UP ? mul : -mul));
-        BK4819_TuneTo(peakF, false);
-        return true;
-      }
-    }
+  switch (key) {
+  case KEY_1:
+    IncDec32(&delay, 200, 10000, 100);
+    appRender(NULL);
+    break;
+  case KEY_7:
+    IncDec32(&delay, 200, 10000, -100);
+    appRender(NULL);
+    break;
+  case KEY_3:
+    stp = b.step;
+    IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, 1);
+    b.step = stp;
+    SP_Init(&b);
+    appRender(NULL);
+    break;
+  case KEY_9:
+    stp = b.step;
+    IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, -1);
+    b.step = stp;
+    SP_Init(&b);
+    break;
+  case KEY_2:
+    bw = b.bw;
+    IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, 1);
+    b.bw = bw;
+    BK4819_SetFilterBandwidth(b.bw);
+    appRender(NULL);
+    break;
+  case KEY_8:
+    bw = b.bw;
+    IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, -1);
+    b.bw = bw;
+    BK4819_SetFilterBandwidth(b.bw);
+    appRender(NULL);
+    break;
+  case KEY_6:
+    IncDec8(&filter, 0, 3, 1);
+    selectFilter(filter);
+    appRender(NULL);
+    break;
+  case KEY_STAR:
+    IncDec8(&msmBy, MSM_RSSI, MSM_EXTRA + 1, 1);
+    SP_Init(&b);
+    m.f = b.rxF;
+    appRender(NULL);
+    break;
+  case KEY_SIDE1:
+    IncDec8(&gain, 0, ARRAY_SIZE(gainTable), 1);
+    BK4819_SetAGC(true, gain);
+    appRender(NULL);
+    break;
+  case KEY_SIDE2:
+    IncDec8(&gain, 0, ARRAY_SIZE(gainTable), -1);
+    BK4819_SetAGC(true, gain);
+    appRender(NULL);
+    break;
+
+  default:
+    break;
   }
 
-  // long press
-  if (bKeyHeld && bKeyPressed && !gRepeatHeld) {
-    switch (Key) {
-    case KEY_UP:
-      shift(64);
-      return true;
-    case KEY_DOWN:
-      shift(-64);
-      return true;
-    case KEY_SIDE1:
-      gMonitorMode ^= 1;
-      if (gMonitorMode) {
-        RADIO_TuneToPure(centerF, true);
-      }
-      RADIO_ToggleRX(gMonitorMode);
-      return true;
-    case KEY_SIDE2:
-      if (useSquelch) {
-        useSquelch = false;
-        squelchRssi = UINT16_MAX;
-      } else {
-        useSquelch = true;
-      }
-      return true;
-    default:
-      break;
+  /* if (notification.key == KEY_5) {
+    for (uint8_t r = 0; r < 255; ++r) {
+      uint16_t reg = BK4819_ReadRegister(r);
+      Log("0x%x, %u, %u", r, (reg >> 8) & 0xFF, reg & 0xFF);
     }
-  }
-
-  // just pressed
-  if (!bKeyPressed && !bKeyHeld) {
-    switch (Key) {
-    case KEY_4:
-      toggleStillMode();
-      return true;
-    case KEY_EXIT:
-      APPS_exit();
-      return true;
-    case KEY_UP:
-      shift(1);
-      return true;
-    case KEY_DOWN:
-      shift(-1);
-      return true;
-    case KEY_SIDE1:
-      LOOT_BlacklistLast();
-      return true;
-    case KEY_SIDE2:
-      LOOT_WhitelistLast();
-      return true;
-    case KEY_2:
-      if (gCurrentBand.step < STEP_500_0kHz) {
-        gCurrentBand.step++;
-      }
-      setCenterF(centerF);
-      return true;
-    case KEY_8:
-      if (gCurrentBand.step > 0) {
-        gCurrentBand.step--;
-      }
-      setCenterF(centerF);
-      return true;
-    case KEY_F:
-      APPS_run(APP_CH_CFG);
-      return true;
-    case KEY_0:
-      if (stepsCount > 32) {
-        stepsCount >>= 1;
-      } else {
-        stepsCount = 128;
-      }
-      setCenterF(centerF);
-      return true;
-    case KEY_STAR:
-      APPS_run(APP_LOOT_LIST);
-      return true;
-    case KEY_5:
-      gFInputCallback = setCenterF;
-      APPS_run(APP_FINPUT);
-      return true;
-    case KEY_PTT:
-      if (centerF == peakF) {
-        RADIO_TuneToSave(centerF);
-        gVfo1ProMode = true;
-        APPS_run(APP_VFO1);
-      } else if (peakF) {
-        setCenterF(peakF);
-      }
-      return true;
-    default:
-      break;
-    }
-  }
-  return false;
+  } */
 }
 
 void ANALYZER_render(void) {
-  char sql[4] = "";
-  const int16_t sq = Rssi2DBm(squelchRssi);
-  const uint32_t fs = gCurrentBand.rxF;
-  const uint32_t fe = gCurrentBand.txF;
-  const uint32_t step = StepFrequencyTable[gCurrentBand.step];
-  const uint8_t bl = 12;
+  SP_Render(&b);
+  PrintSmallEx(0, 12 + 6 * 0, POS_L, C_FILL, "%uus", delay);
+  PrintSmallEx(0, 12 + 6 * 1, POS_L, C_FILL, "%u", peakSnr);
+  PrintSmallEx(0, 12 + 6 * 2, POS_L, C_FILL, "%u", lowSnr);
 
-  if (sq >= 255) {
-    sprintf(sql, "off");
-  } else {
-    sprintf(sql, "%d", sq);
-    SP_RenderLine(squelchRssi);
-  }
+  PrintSmallEx(LCD_XCENTER, 16 + 6 * 1, POS_C, C_FILL, "%+d",
+               -gainTable[gain].gainDb + 33);
 
-  STATUSLINE_SetText("%ums %u.%02uk %s SQ %s", scanInterval, step / 100,
-                     step % 100, modulationTypeOptions[radio->modulation], sql);
+  PrintSmallEx(LCD_WIDTH, 12 + 6 * 0, POS_R, C_FILL, "STP %u.%02uk",
+               StepFrequencyTable[b.step] / 100,
+               StepFrequencyTable[b.step] % 100);
+  PrintSmallEx(LCD_WIDTH, 12 + 6 * 1, POS_R, C_FILL, "BW %s", bwNames[b.bw]);
+  PrintSmallEx(LCD_WIDTH, 12 + 6 * 2, POS_R, C_FILL, "FLT %s",
+               fltNames[filter]);
+  PrintSmallEx(LCD_WIDTH, 12 + 6 * 3, POS_R, C_FILL, "%s", msmByNames[msmBy]);
 
-  for (uint8_t i = SPECTRUM_Y; i < SPECTRUM_Y + SPECTRUM_H; i += 4) {
-    PutPixel(spectrumWidth / 2, i, C_FILL);
-  }
+  SP_RenderArrow(&b, peakF);
+  PrintMediumEx(LCD_XCENTER, 16, POS_C, C_FILL, "%u.%05u", peakF / MHZ,
+                peakF % MHZ);
+  PrintSmallEx(0, LCD_HEIGHT - 1, POS_L, C_FILL, "%u.%05u", b.rxF / MHZ,
+               b.rxF % MHZ);
+  PrintSmallEx(LCD_WIDTH, LCD_HEIGHT - 1, POS_R, C_FILL, "%u.%05u", b.txF / MHZ,
+               b.txF % MHZ);
 
-  SP_Render(&gCurrentBand);
-  SP_RenderArrow(&gCurrentBand, peakF);
-
-  if (peakF) {
-    PrintMediumBoldEx(LCD_XCENTER, 14, POS_C, C_FILL, "%u.%05u", peakF / MHZ,
-                      peakF % MHZ);
-  }
-
-  PrintSmallEx(0, LCD_HEIGHT - 1, POS_L, C_FILL, "%u.%05u", fs / MHZ, fs % MHZ);
-  PrintSmallEx(LCD_WIDTH, LCD_HEIGHT - 1, POS_R, C_FILL, "%u.%05u", fe / MHZ,
-               fe % MHZ);
-
-  PrintSmallEx(LCD_WIDTH, bl, POS_R, C_FILL, "%+3d", Rssi2DBm(SP_GetRssiMax()));
-  PrintSmallEx(LCD_WIDTH, bl + 6, POS_R, C_FILL, "%+3d",
-               Rssi2DBm(SP_GetNoiseFloor()));
-
-  if (isStillMode) {
-    PrintSmallEx(0, bl + 6 * 0, POS_L, C_FILL, "r %03d", BK4819_GetRSSI());
-    PrintSmallEx(0, bl + 6 * 1, POS_L, C_FILL, "n %03d", BK4819_GetNoise());
-    PrintSmallEx(0, bl + 6 * 2, POS_L, C_FILL, "g %03d", BK4819_GetGlitch());
-    PrintSmallEx(0, bl + 6 * 3, POS_L, C_FILL, "s %03d", BK4819_GetSNR());
-  }
-
-  PrintSmallEx(spectrumWidth / 2, LCD_HEIGHT - 1, POS_C, C_FILL, "%u.%05u",
-               centerF / MHZ, centerF % MHZ);
+  peakSnr = 0;
+  lowSnr = 255;
 }

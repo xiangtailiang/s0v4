@@ -8,7 +8,7 @@
 
 void CHLIST_init();
 void CHLIST_deinit();
-bool CHLIST_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld);
+bool CHLIST_key(KEY_Code_t key, Key_State_t state);
 void CHLIST_render();
 
 extern bool gChSaveMode;

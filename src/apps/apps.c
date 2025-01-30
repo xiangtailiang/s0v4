@@ -83,9 +83,9 @@ const App apps[APPS_COUNT] = {
     {"ABOUT", NULL, NULL, ABOUT_Render, ABOUT_key, NULL},
 };
 
-bool APPS_key(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
+bool APPS_key(KEY_Code_t Key, Key_State_t state) {
   if (apps[gCurrentApp].key) {
-    return apps[gCurrentApp].key(Key, bKeyPressed, bKeyHeld);
+    return apps[gCurrentApp].key(Key, state);
   }
   return false;
 }

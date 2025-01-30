@@ -35,8 +35,8 @@ static void setMenuIndexAndRun(uint16_t v) {
 
 void APPSLIST_init(void) {}
 
-bool APPSLIST_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
-  if (!bKeyPressed && !bKeyHeld) {
+bool APPSLIST_key(KEY_Code_t key, Key_State_t state) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(menuIndex + 1, 1, MENU_SIZE);
       gNumNavCallback = setMenuIndexAndRun;

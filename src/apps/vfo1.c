@@ -117,12 +117,12 @@ void VFO1_update(void) {
   }
 }
 
-bool VFOPRO_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
+bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
   if (key == KEY_PTT) {
-    RADIO_ToggleTX(bKeyHeld);
+    RADIO_ToggleTX(state == KEY_LONG_PRESSED);
     return true;
   }
-  if (bKeyHeld && bKeyPressed && !gRepeatHeld) {
+  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_4: // freq catch
       if (RADIO_GetRadio() != RADIO_BK4819) {
@@ -139,7 +139,7 @@ bool VFOPRO_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
 
   bool isSsb = RADIO_IsSSB();
 
-  if (!bKeyHeld || bKeyPressed) {
+  if (state != KEY_LONG_PRESSED || state == KEY_PRESSED) {
     switch (key) {
     case KEY_1:
       RADIO_UpdateStep(true);
@@ -182,7 +182,7 @@ bool VFOPRO_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
     }
   }
 
-  if (!bKeyPressed && !bKeyHeld) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_0:
       RADIO_ToggleModulation();
@@ -216,10 +216,10 @@ bool VFOPRO_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
   return false;
 }
 
-bool VFO1_keyEx(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld,
+bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
                 bool isProMode) {
   if (!SVC_Running(SVC_SCAN) && (!gVfo1ProMode || gCurrentApp == APP_VFO2) &&
-      !bKeyPressed && !bKeyHeld && RADIO_IsChMode()) {
+      state != KEY_PRESSED && state != KEY_LONG_PRESSED && RADIO_IsChMode()) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(radio->channel, 0, CHANNELS_GetCountMax() - 1);
       gNumNavCallback = setChannel;
@@ -230,17 +230,17 @@ bool VFO1_keyEx(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld,
     }
   }
 
-  if (isProMode && VFOPRO_key(key, bKeyPressed, bKeyHeld)) {
+  if (isProMode && VFOPRO_key(key, state == KEY_PRESSED, state == KEY_LONG_PRESSED)) {
     return true;
   }
 
   if (key == KEY_PTT && !gIsNumNavInput) {
-    RADIO_ToggleTX(bKeyHeld);
+    RADIO_ToggleTX(state == KEY_LONG_PRESSED);
     return true;
   }
 
   // pressed or hold continue
-  if (bKeyPressed || (!bKeyPressed && !bKeyHeld)) {
+  if (state == KEY_PRESSED || (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
     bool isSsb = RADIO_IsSSB();
     switch (key) {
     case KEY_UP:
@@ -266,8 +266,8 @@ bool VFO1_keyEx(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld,
     }
   }
 
-  bool longHeld = bKeyHeld && bKeyPressed && !gRepeatHeld;
-  bool simpleKeypress = !bKeyPressed && !bKeyHeld;
+  bool longHeld = state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT;
+  bool simpleKeypress = state != KEY_PRESSED && state != KEY_LONG_PRESSED;
 
   if (SVC_Running(SVC_SCAN) && (longHeld || simpleKeypress) &&
       (key > KEY_0 && key < KEY_9)) {
@@ -364,7 +364,7 @@ bool VFO1_keyEx(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld,
     case KEY_9:
       gFInputCallback = tuneTo;
       APPS_run(APP_FINPUT);
-      APPS_key(key, bKeyPressed, bKeyHeld);
+      APPS_key(key, state == KEY_PRESSED, state == KEY_LONG_PRESSED);
       return true;
     case KEY_F:
       gChEd = *radio;
@@ -408,8 +408,8 @@ bool VFO1_keyEx(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld,
   return false;
 }
 
-bool VFO1_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
-  return VFO1_keyEx(key, bKeyPressed, bKeyHeld, gVfo1ProMode);
+bool VFO1_key(KEY_Code_t key, Key_State_t state) {
+  return VFO1_keyEx(key, state == KEY_PRESSED, state == KEY_LONG_PRESSED, gVfo1ProMode);
 }
 
 static void DrawRegs(void) {

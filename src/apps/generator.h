@@ -8,7 +8,7 @@
 
 void GENERATOR_init();
 void GENERATOR_update();
-bool GENERATOR_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld);
+bool GENERATOR_key(KEY_Code_t key, Key_State_t state);
 void GENERATOR_render();
 
 #endif /* end of include guard: GENERATOR_H */

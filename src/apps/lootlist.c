@@ -183,7 +183,7 @@ static void saveToFreeChannels(bool saveWhitelist, uint16_t scanlist) {
   }
 }
 
-bool LOOTLIST_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
+bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {
   Loot *loot;
   if (SVC_Running(SVC_FC)) {
     loot = gLastActiveLoot;
@@ -192,7 +192,7 @@ bool LOOTLIST_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
   }
   const uint8_t MENU_SIZE = LOOT_Size();
 
-  if (bKeyHeld && bKeyPressed && !gRepeatHeld) {
+  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_0:
       LOOT_Clear();
@@ -234,7 +234,7 @@ bool LOOTLIST_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
     break;
   }
 
-  if (!bKeyPressed && !bKeyHeld) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_EXIT:
       APPS_exit();

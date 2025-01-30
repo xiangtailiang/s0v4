@@ -97,15 +97,15 @@ void FINPUT_init(void) {
 
 void FINPUT_deinit(void) { TaskRemove(dotBlinkFn); }
 
-bool FINPUT_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
-  if (bKeyHeld && bKeyPressed && !gRepeatHeld && key == KEY_EXIT) {
+bool FINPUT_key(KEY_Code_t key, Key_State_t state) {
+  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT && key == KEY_EXIT) {
     freqInputIndex = 0;
     freqInputDotIndex = 0;
     gFInputTempFreq = 0;
     memset(freqInputArr, 0, FREQ_INPUT_LENGTH);
     return true;
   }
-  if (!bKeyPressed && !bKeyHeld) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_0:
     case KEY_1:

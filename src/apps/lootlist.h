@@ -7,7 +7,7 @@
 
 void LOOTLIST_init();
 void LOOTLIST_update();
-bool LOOTLIST_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld);
+bool LOOTLIST_key(KEY_Code_t key, Key_State_t state);
 void LOOTLIST_render();
 
 #endif /* end of include guard: LOOTLIST_APP_H */

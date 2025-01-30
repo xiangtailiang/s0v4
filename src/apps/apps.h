@@ -29,7 +29,7 @@ typedef struct App {
   void (*init)(void);
   void (*update)(void);
   void (*render)(void);
-  bool (*key)(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
+  bool (*key)(KEY_Code_t Key, Key_State_t state);
   void (*deinit)(void);
 } App;
 
@@ -39,7 +39,7 @@ extern AppType_t gCurrentApp;
 extern const AppType_t appsAvailableToRun[RUN_APPS_COUNT];
 
 AppType_t APPS_Peek();
-bool APPS_key(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
+bool APPS_key(KEY_Code_t Key, Key_State_t state);
 void APPS_init(AppType_t app);
 void APPS_update(void);
 void APPS_render(void);

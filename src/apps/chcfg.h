@@ -8,7 +8,7 @@
 
 void CHCFG_init();
 void CHCFG_deinit();
-bool CHCFG_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld);
+bool CHCFG_key(KEY_Code_t key, Key_State_t state);
 void CHCFG_render();
 
 extern CH gChEd;

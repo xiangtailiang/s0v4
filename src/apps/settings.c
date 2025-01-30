@@ -499,8 +499,8 @@ static void upDown(uint8_t inc) {
   }
 }
 
-bool SETTINGS_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
-  if (!bKeyPressed && !bKeyHeld) {
+bool SETTINGS_key(KEY_Code_t key, Key_State_t state) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(menuIndex + 1, 1, MENU_SIZE);
       gNumNavCallback = setMenuIndexAndRun;
@@ -522,7 +522,7 @@ bool SETTINGS_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
     break;
   }
 
-  if (!bKeyPressed && !bKeyHeld) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_MENU:
       if (item->type == M_UPCONVERTER) {
@@ -535,7 +535,7 @@ bool SETTINGS_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
       if (isSubMenu) {
         accept();
         isSubMenu = false;
-      } else if (!bKeyHeld) {
+      } else if (state != KEY_LONG_PRESSED) {
         isSubMenu = true;
         setInitialSubmenuIndex();
       }

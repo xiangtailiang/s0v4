@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 void APPSLIST_init();
-bool APPSLIST_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld);
+bool APPSLIST_key(KEY_Code_t key, Key_State_t state);
 void APPSLIST_render();
 
 #endif /* end of include guard: APPSLIST_H */

@@ -110,9 +110,9 @@ static void render2VFOPart(uint8_t i) {
 
 void VFO2_init(void) { VFO1_init(); }
 
-bool VFO2_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
+bool VFO2_key(KEY_Code_t key, Key_State_t state) {
   uint8_t g = gCurrentBand.gainIndex;
-  if (!bKeyPressed && !bKeyHeld && SVC_Running(SVC_SCAN) &&
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED && SVC_Running(SVC_SCAN) &&
       (key == KEY_0 ||
        (isScanTuneMode && !RADIO_IsChMode() && key > KEY_0 && key <= KEY_9))) {
     switch (key) {
@@ -162,12 +162,12 @@ bool VFO2_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
     }
   }
 
-  if (VFO1_keyEx(key, bKeyPressed, bKeyHeld, false)) {
+  if (VFO1_keyEx(key, state == KEY_PRESSED, state == KEY_LONG_PRESSED, false)) {
     return true;
   }
 
   // long held
-  if (bKeyHeld && bKeyPressed && !gRepeatHeld) {
+  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_2:
       LOOT_Standby();

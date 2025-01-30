@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-bool ANALYZER_key(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
+bool ANALYZER_key(KEY_Code_t Key, Key_State_t state);
 void ANALYZER_init(void);
 void ANALYZER_deinit(void);
 void ANALYZER_update(void);

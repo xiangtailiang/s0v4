@@ -7,9 +7,9 @@
 
 void VFO1_init();
 void VFO1_update();
-bool VFO1_keyEx(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld,
+bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
                 bool isProMode);
-bool VFO1_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld);
+bool VFO1_key(KEY_Code_t key, Key_State_t state);
 void VFO1_render();
 
 extern bool gVfo1ProMode;

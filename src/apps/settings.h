@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 void SETTINGS_deinit();
-bool SETTINGS_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld);
+bool SETTINGS_key(KEY_Code_t key, Key_State_t state);
 void SETTINGS_render();
 
 #endif /* end of include guard: SETTINGS_H */

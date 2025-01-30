@@ -7,7 +7,7 @@
 
 void VFO2_init(void);
 void VFO2_update(void);
-bool VFO2_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld);
+bool VFO2_key(KEY_Code_t key, Key_State_t state);
 void VFO2_render();
 
 #endif /* end of include guard: VFO2_APP_H */

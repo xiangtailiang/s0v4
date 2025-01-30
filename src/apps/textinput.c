@@ -84,9 +84,9 @@ void TEXTINPUT_init(void) {
 
 void TEXTINPUT_deinit(void) { TaskRemove(blink); }
 
-bool TEXTINPUT_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
+bool TEXTINPUT_key(KEY_Code_t key, Key_State_t state) {
   // up-down keys
-  if (bKeyPressed || (!bKeyPressed && !bKeyHeld)) {
+  if (state == KEY_PRESSED || (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
     switch (key) {
     case KEY_UP:
       if (inputIndex < 14 && inputField[inputIndex] != '\0') {
@@ -104,7 +104,7 @@ bool TEXTINPUT_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
   }
 
   // long held
-  if (bKeyHeld && bKeyPressed && !gRepeatHeld) {
+  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_EXIT:
       memset(inputField, 0, 15);
@@ -116,7 +116,7 @@ bool TEXTINPUT_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
   }
 
   // Simple keypress
-  if (!bKeyPressed && !bKeyHeld) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_1:
     case KEY_2:

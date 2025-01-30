@@ -35,18 +35,18 @@ static void updatePower(int8_t v) {
 
 void GENERATOR_init() { calcPower(); }
 void GENERATOR_update() {}
-bool GENERATOR_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
+bool GENERATOR_key(KEY_Code_t key, Key_State_t state) {
   const uint16_t M[] = {tone1Freq, 0, 0, 0};
   if (key == KEY_PTT) {
-    RADIO_ToggleTXEX(bKeyHeld, RADIO_GetTXF(), power, bkPower);
-    if (bKeyHeld && gTxState == TX_ON) {
+    RADIO_ToggleTXEX(state == KEY_LONG_PRESSED, RADIO_GetTXF(), power, bkPower);
+    if (state == KEY_LONG_PRESSED && gTxState == TX_ON) {
       BK4819_PlaySequence(M);
     }
 
     return true;
   }
   // Simple keypress
-  if (!bKeyPressed && !bKeyHeld) {
+  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_5:
       gFInputCallback = RADIO_TuneTo;
@@ -64,7 +64,7 @@ bool GENERATOR_key(KEY_Code_t key, bool bKeyPressed, bool bKeyHeld) {
     }
   }
   // up-down keys
-  if (bKeyPressed || (!bKeyPressed && !bKeyHeld)) {
+  if (state == KEY_PRESSED || (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
     switch (key) {
     case KEY_UP:
       RADIO_NextBandFreqXBand(true);
