@@ -493,7 +493,7 @@ static void upDown(uint8_t inc) {
 }
 
 bool SETTINGS_key(KEY_Code_t key, Key_State_t state) {
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(menuIndex + 1, 1, MENU_SIZE);
       gNumNavCallback = setMenuIndexAndRun;
@@ -504,18 +504,20 @@ bool SETTINGS_key(KEY_Code_t key, Key_State_t state) {
     }
   }
   const MenuItem *item = &menu[menuIndex];
-  switch (key) {
-  case KEY_UP:
-    upDown(-1);
-    return true;
-  case KEY_DOWN:
-    upDown(1);
-    return true;
-  default:
-    break;
+  if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
+    switch (key) {
+    case KEY_UP:
+      upDown(-1);
+      return true;
+    case KEY_DOWN:
+      upDown(1);
+      return true;
+    default:
+      break;
+    }
   }
 
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_MENU:
       if (item->type == M_UPCONVERTER) {

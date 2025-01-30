@@ -129,7 +129,7 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
 
   bool isSsb = RADIO_IsSSB();
 
-  if (state == KEY_PRESSED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_1:
       RADIO_UpdateStep(true);
@@ -172,7 +172,7 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
     }
   }
 
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_0:
       RADIO_ToggleModulation();
@@ -207,8 +207,9 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
 }
 
 bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
-  if (/* !SVC_Running(SVC_SCAN) && */(!gVfo1ProMode || gCurrentApp == APP_VFO2) &&
-      state != KEY_PRESSED && state != KEY_LONG_PRESSED && RADIO_IsChMode()) {
+  if (/* !SVC_Running(SVC_SCAN) && */ (!gVfo1ProMode ||
+                                       gCurrentApp == APP_VFO2) &&
+      state == KEY_RELEASED && RADIO_IsChMode()) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(radio->channel, 0, CHANNELS_GetCountMax() - 1);
       gNumNavCallback = setChannel;
@@ -229,8 +230,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
   }
 
   // pressed or hold continue
-  if (state == KEY_PRESSED ||
-      (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
+  if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     bool isSsb = RADIO_IsSSB();
     switch (key) {
     case KEY_UP:
@@ -257,7 +257,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
   }
 
   bool longHeld = state == KEY_LONG_PRESSED_CONT;
-  bool simpleKeypress = state == KEY_PRESSED;
+  bool simpleKeypress = state == KEY_RELEASED;
 
   /* if (SVC_Running(SVC_SCAN) && (longHeld || simpleKeypress) &&
       (key > KEY_0 && key < KEY_9)) {

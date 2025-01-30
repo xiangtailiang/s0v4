@@ -18,18 +18,13 @@
 static uint8_t previousBatteryLevel = 255;
 static bool showBattery = true;
 
-static bool lastEepromWrite = false;
+static uint32_t lastEepromWrite = 0;
 static uint32_t lastTickerUpdate = 0;
 
 static char statuslineText[32] = {0};
 static char statuslineTicker[32] = {0};
 static StaticTimer_t eepromRWTimerBuffer;
 static TimerHandle_t eepromRWTimer;
-
-static void eepromRWReset(void) {
-  lastEepromWrite = gEepromWrite = false;
-  gRedrawScreen = true;
-}
 
 void STATUSLINE_SetText(const char *pattern, ...) {
   char statuslineTextNew[32] = {0};
@@ -70,13 +65,13 @@ void STATUSLINE_update(void) {
     gRedrawScreen = true;
   }
 
-  if (lastEepromWrite != gEepromWrite) {
-    lastEepromWrite = gEepromWrite;
+  if ((bool)lastEepromWrite != gEepromWrite) {
+    lastEepromWrite = gEepromWrite ? Now() : 0;
     gRedrawScreen = true;
-    xTimerStop(eepromRWTimer, 0);
-    eepromRWTimer =
-        xTimerCreateStatic("EE RW-", pdMS_TO_TICKS(500), pdFALSE, NULL,
-                           eepromRWReset, &eepromRWTimerBuffer);
+  }
+  if (lastEepromWrite && Now() - lastEepromWrite > 500) {
+    lastEepromWrite = gEepromWrite = false;
+    gRedrawScreen = true;
   }
 
   if (Now() - lastTickerUpdate > 5000) {

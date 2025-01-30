@@ -113,17 +113,21 @@ void SYSTEM_Main(void *params) {
       // Process system notifications
       Log("MSG: m:%u, k:%u, st:%u", notification.message, notification.key,
           notification.state);
-      if (notification.message == MSG_KEYPRESSED &&
-          (notification.state == KEY_PRESSED ||
-           notification.state == KEY_LONG_PRESSED_CONT)) {
+      if (notification.message == MSG_KEYPRESSED) {
         if (APPS_key(notification.key, notification.state)) {
           gRedrawScreen = true;
         } else {
+          Log("Process keys external");
           if (notification.key == KEY_MENU) {
-            if (notification.state == KEY_PRESSED) {
-              APPS_run(APP_APPS_LIST);
-            } else if (notification.state == KEY_LONG_PRESSED) {
+            if (notification.state == KEY_LONG_PRESSED) {
               APPS_run(APP_SETTINGS);
+            } else if (notification.state == KEY_RELEASED) {
+              APPS_run(APP_APPS_LIST);
+            }
+          }
+          if (notification.key == KEY_EXIT) {
+            if (notification.state == KEY_PRESSED) {
+              APPS_exit();
             }
           }
         }
@@ -133,6 +137,7 @@ void SYSTEM_Main(void *params) {
     if (UART_IsCommandAvailable()) {
       UART_HandleCommand();
     }
+    STATUSLINE_update();
   }
 }
 

@@ -187,7 +187,7 @@ bool ANALYZER_key(KEY_Code_t key, Key_State_t state) {
     return true;
 
   default:
-    break;
+    return false;
   }
 }
 
