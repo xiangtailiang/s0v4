@@ -39,6 +39,8 @@ typedef struct {
   Key_State_t state;
 } SystemMessages;
 
+uint32_t gAppUpdateInterval = pdMS_TO_TICKS(1);
+
 static TimerHandle_t sysTimer;
 static StaticTimer_t sysTimerBuffer;
 
@@ -46,26 +48,30 @@ static QueueHandle_t systemMessageQueue; // Message queue handle
 static StaticQueue_t systemTasksQueue;   // Static queue storage area
 static uint8_t systemQueueStorageArea[queueLen * itemSize];
 
-StaticTask_t scanTaskBuffer;
-StackType_t scanTaskStack[configMINIMAL_STACK_SIZE + 100];
-
-static void appRender(void *arg) {
-  UI_ClearScreen();
-  STATUSLINE_render();
-
-  APPS_render();
-
-  ST7565_Blit();
-}
+StaticTask_t appUpdateTaskBuffer;
+StackType_t appUpdateTaskStack[configMINIMAL_STACK_SIZE + 100];
+StaticTask_t appRenderTaskBuffer;
+StackType_t appRenderTaskStack[configMINIMAL_STACK_SIZE + 100];
 
 static void appUpdate(void *arg) {
   for (;;) {
+    APPS_update();
+    vTaskDelay(gAppUpdateInterval);
+  }
+}
+
+static void appRender(void *arg) {
+  for (;;) {
     if (gRedrawScreen) {
-      appRender(NULL);
+      UI_ClearScreen();
+      STATUSLINE_render();
+
+      APPS_render();
+
+      ST7565_Blit();
       gRedrawScreen = false;
     }
-    APPS_update();
-    vTaskDelay(2);
+    vTaskDelay(pdMS_TO_TICKS(40)); // 25 fps
   }
 }
 
@@ -104,8 +110,11 @@ void SYSTEM_Main(void *params) {
   sysTimer = xTimerCreateStatic("sysT", pdMS_TO_TICKS(2000), pdTRUE, NULL,
                                 systemUpdate, &sysTimerBuffer);
   xTimerStart(sysTimer, 0);
-  xTaskCreateStatic(appUpdate, "scan", ARRAY_SIZE(scanTaskStack), NULL, 4,
-                    scanTaskStack, &scanTaskBuffer);
+
+  xTaskCreateStatic(appUpdate, "appU", ARRAY_SIZE(appUpdateTaskStack), NULL, 4,
+                    appUpdateTaskStack, &appUpdateTaskBuffer);
+  xTaskCreateStatic(appRender, "appR", ARRAY_SIZE(appRenderTaskStack), NULL, 4,
+                    appRenderTaskStack, &appRenderTaskBuffer);
 
   SystemMessages notification;
 
