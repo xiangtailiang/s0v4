@@ -6,12 +6,8 @@
 #include "../helper/lootlist.h"
 #include "../helper/measurements.h"
 #include "../helper/numnav.h"
-#include "../helper/scan.h"
 #include "../radio.h"
 #include "../scheduler.h"
-#include "../svc.h"
-#include "../svc_render.h"
-#include "../svc_scan.h"
 #include "../ui/components.h"
 #include "../ui/graphics.h"
 #include "../ui/statusline.h"
@@ -109,20 +105,14 @@ void VFO1_init(void) {
   RADIO_LoadCurrentVFO();
 }
 
-void VFO1_update(void) {
-
-  if (gIsListening && Now() - gLastRender >= 500 &&
-      (RADIO_GetRadio() != RADIO_SI4732 || gShowAllRSSI)) {
-    gRedrawScreen = true;
-  }
-}
+void VFO1_update(void) {}
 
 bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
   if (key == KEY_PTT) {
     RADIO_ToggleTX(state == KEY_LONG_PRESSED);
     return true;
   }
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_4: // freq catch
       if (RADIO_GetRadio() != RADIO_BK4819) {
@@ -139,7 +129,7 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
 
   bool isSsb = RADIO_IsSSB();
 
-  if (state != KEY_LONG_PRESSED || state == KEY_PRESSED) {
+  if (state == KEY_PRESSED) {
     switch (key) {
     case KEY_1:
       RADIO_UpdateStep(true);
@@ -216,9 +206,8 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
   return false;
 }
 
-bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
-                bool isProMode) {
-  if (!SVC_Running(SVC_SCAN) && (!gVfo1ProMode || gCurrentApp == APP_VFO2) &&
+bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
+  if (/* !SVC_Running(SVC_SCAN) && */(!gVfo1ProMode || gCurrentApp == APP_VFO2) &&
       state != KEY_PRESSED && state != KEY_LONG_PRESSED && RADIO_IsChMode()) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(radio->channel, 0, CHANNELS_GetCountMax() - 1);
@@ -230,7 +219,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
     }
   }
 
-  if (isProMode && VFOPRO_key(key, state == KEY_PRESSED, state == KEY_LONG_PRESSED)) {
+  if (isProMode && VFOPRO_key(key, state)) {
     return true;
   }
 
@@ -240,14 +229,15 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
   }
 
   // pressed or hold continue
-  if (state == KEY_PRESSED || (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
+  if (state == KEY_PRESSED ||
+      (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
     bool isSsb = RADIO_IsSSB();
     switch (key) {
     case KEY_UP:
-      SCAN_ToggleDirection(true);
+      // SCAN_ToggleDirection(true);
       return true;
     case KEY_DOWN:
-      SCAN_ToggleDirection(false);
+      // SCAN_ToggleDirection(false);
       return true;
     case KEY_SIDE1:
       if (RADIO_GetRadio() == RADIO_SI4732 && isSsb) {
@@ -266,10 +256,10 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
     }
   }
 
-  bool longHeld = state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT;
-  bool simpleKeypress = state != KEY_PRESSED && state != KEY_LONG_PRESSED;
+  bool longHeld = state == KEY_LONG_PRESSED_CONT;
+  bool simpleKeypress = state == KEY_PRESSED;
 
-  if (SVC_Running(SVC_SCAN) && (longHeld || simpleKeypress) &&
+  /* if (SVC_Running(SVC_SCAN) && (longHeld || simpleKeypress) &&
       (key > KEY_0 && key < KEY_9)) {
     uint16_t oldScanlist = gSettings.currentScanlist;
     gSettings.currentScanlist = CHANNELS_ScanlistByKey(
@@ -284,14 +274,14 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
     }
 
     return true;
-  }
+  } */
 
   // long held
   if (longHeld) {
     OffsetDirection offsetDirection = radio->offsetDir;
     switch (key) {
     case KEY_EXIT:
-      SCAN_StartAB();
+      // SCAN_StartAB();
       return true;
     case KEY_1:
       gChListFilter = TYPE_FILTER_BAND;
@@ -306,15 +296,8 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
       RADIO_ToggleVfoMR();
       VFO1_init();
       return true;
-    case KEY_4: // freq catch
-      if (RADIO_GetRadio() == RADIO_BK4819) {
-        SVC_Toggle(SVC_FC, !SVC_Running(SVC_FC), 100);
-      } else {
-        gShowAllRSSI = !gShowAllRSSI;
-      }
-      return true;
-    case KEY_5: // noaa
-      SVC_Toggle(SVC_BEACON, !SVC_Running(SVC_BEACON), 15000);
+    case KEY_5:
+      // SVC_Toggle(SVC_BEACON, !SVC_Running(SVC_BEACON), 15000);
       return true;
     case KEY_6:
       RADIO_ToggleTxPower();
@@ -336,7 +319,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
       RADIO_ToggleModulation();
       return true;
     case KEY_STAR:
-      SCAN_Start();
+      // SCAN_Start();
       return true;
     case KEY_SIDE1:
       APPS_run(APP_ANALYZER);
@@ -364,7 +347,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
     case KEY_9:
       gFInputCallback = tuneTo;
       APPS_run(APP_FINPUT);
-      APPS_key(key, state == KEY_PRESSED, state == KEY_LONG_PRESSED);
+      APPS_key(key, state);
       return true;
     case KEY_F:
       gChEd = *radio;
@@ -377,25 +360,25 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
       APPS_run(APP_LOOT_LIST);
       return true;
     case KEY_SIDE1:
-      if (SVC_Running(SVC_SCAN)) {
+      /* if (SVC_Running(SVC_SCAN)) {
         LOOT_BlacklistLast();
         RADIO_NextBandFreqXBand(gScanForward);
         return true;
-      }
+      } */
       gMonitorMode = !gMonitorMode;
       return true;
     case KEY_SIDE2:
-      if (SVC_Running(SVC_SCAN)) {
+      /* if (SVC_Running(SVC_SCAN)) {
         LOOT_WhitelistLast();
         RADIO_NextBandFreqXBand(gScanForward);
         return true;
-      }
+      } */
       break;
     case KEY_EXIT:
-      if (SVC_Running(SVC_SCAN)) {
+      /* if (SVC_Running(SVC_SCAN)) {
         SCAN_Stop();
         return true;
-      }
+      } */
       if (!APPS_exit()) {
         LOOT_Standby();
         RADIO_NextVFO();
@@ -409,7 +392,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state,
 }
 
 bool VFO1_key(KEY_Code_t key, Key_State_t state) {
-  return VFO1_keyEx(key, state == KEY_PRESSED, state == KEY_LONG_PRESSED, gVfo1ProMode);
+  return VFO1_keyEx(key, state, gVfo1ProMode);
 }
 
 static void DrawRegs(void) {

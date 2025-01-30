@@ -1,6 +1,5 @@
 #include "textinput.h"
 #include "../driver/st7565.h"
-#include "../scheduler.h"
 #include "../ui/graphics.h"
 #include "apps.h"
 #include <string.h>
@@ -33,7 +32,8 @@ static const char *lettersCapital[9] = {
     "WXYZ"  // 9
 };
 
-static const char *numbers[10] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
+static const char *numbers[10] = {"1", "2", "3", "4", "5",
+                                  "6", "7", "8", "9", "0"};
 static const char *symbols[9] = {
     "",
     ".,!?:;",   // 2
@@ -51,11 +51,6 @@ static const char *currentRow;
 static char inputField[16] = {0};
 static uint8_t inputIndex = 0;
 static bool coursorBlink = true;
-
-static void blink(void) {
-  coursorBlink = !coursorBlink;
-  gRedrawScreen = true;
-}
 
 static void insert(char c) {
   if (inputField[inputIndex] != '\0') {
@@ -79,14 +74,19 @@ static void backspace(void) {
 void TEXTINPUT_init(void) {
   strncpy(inputField, gTextinputText, 15);
   inputIndex = strlen(inputField);
-  TaskAdd("Cursor blnk", blink, 250, true, 100);
 }
 
-void TEXTINPUT_deinit(void) { TaskRemove(blink); }
+void TEXTINPUT_update() {
+  coursorBlink = !coursorBlink;
+  gRedrawScreen = true;
+}
+
+void TEXTINPUT_deinit(void) {}
 
 bool TEXTINPUT_key(KEY_Code_t key, Key_State_t state) {
   // up-down keys
-  if (state == KEY_PRESSED || (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
+  if (state == KEY_PRESSED ||
+      (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
     switch (key) {
     case KEY_UP:
       if (inputIndex < 14 && inputField[inputIndex] != '\0') {
@@ -104,7 +104,8 @@ bool TEXTINPUT_key(KEY_Code_t key, Key_State_t state) {
   }
 
   // long held
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED &&
+      state != KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_EXIT:
       memset(inputField, 0, 15);

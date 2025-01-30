@@ -1,17 +1,13 @@
 #include "reset.h"
-#include "../driver/bk1080.h"
 #include "../driver/eeprom.h"
-#include "../driver/si473x.h"
 #include "../driver/st7565.h"
 #include "../driver/uart.h"
 #include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
-#include "../helper/bands.h"
 #include "../helper/channels.h"
 #include "../helper/measurements.h"
 #include "../radio.h"
 #include "../scheduler.h"
 #include "../settings.h"
-#include "../svc_render.h"
 #include "../ui/graphics.h"
 #include "../ui/statusline.h"
 
@@ -104,6 +100,7 @@ static void startReset(ResetType t) {
 static bool resetFull() {
   if (stats.settings < total.settings) {
     SETTINGS_Save();
+    Log("[i] settings saved!");
     stats.settings++;
     stats.bytes += SETTINGS_SIZE;
     return false;
@@ -173,10 +170,6 @@ void RESET_Update(void) {
     return;
   }
 
-  if (Now() - gLastRender > 150) {
-    gRedrawScreen = true;
-  }
-
   bool status = true;
 
   switch (resetType) {
@@ -192,6 +185,7 @@ void RESET_Update(void) {
     break;
   }
   if (!status) {
+    gRedrawScreen = true;
     return;
   }
 
@@ -226,7 +220,7 @@ void RESET_Render(void) {
 }
 
 bool RESET_key(KEY_Code_t k, Key_State_t state) {
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_PRESSED) {
     if (gSettings.eepromType == EEPROM_UNKNOWN) {
       if (k > KEY_0) {
         uint8_t t = k - 1;

@@ -29,7 +29,6 @@ void MEMVIEW_Render(void) {
   }
 }
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 bool MEMVIEW_key(KEY_Code_t k, Key_State_t state) {
   switch (k) {
   case KEY_EXIT:

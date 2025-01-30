@@ -5,6 +5,6 @@
 
 void MEMVIEW_Init();
 void MEMVIEW_Render();
-bool MEMVIEW_key(KEY_Code_t k, bool p, bool h);
+bool MEMVIEW_key(KEY_Code_t k, Key_State_t st);
 
 #endif /* end of include guard: MEMVIEW_H */

@@ -2,11 +2,9 @@
 #include "../dcs.h"
 #include "../helper/bands.h"
 #include "../helper/lootlist.h"
-#include "../helper/scan.h"
 #include "../misc.h"
 #include "../scheduler.h"
 #include "../settings.h"
-#include "../svc.h"
 #include "../ui/components.h"
 #include "../ui/graphics.h"
 #include "../ui/spectrum.h"
@@ -112,7 +110,7 @@ void VFO2_init(void) { VFO1_init(); }
 
 bool VFO2_key(KEY_Code_t key, Key_State_t state) {
   uint8_t g = gCurrentBand.gainIndex;
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED && SVC_Running(SVC_SCAN) &&
+  if (state == KEY_PRESSED && /*SVC_Running(SVC_SCAN) &&*/
       (key == KEY_0 ||
        (isScanTuneMode && !RADIO_IsChMode() && key > KEY_0 && key <= KEY_9))) {
     switch (key) {
@@ -122,14 +120,14 @@ bool VFO2_key(KEY_Code_t key, Key_State_t state) {
     case KEY_1:
       IncDec8(&gSettings.scanTimeout, 1, 255, 1);
       SETTINGS_DelayedSave();
-      SCAN_UpdateTimeoutFromSetting();
-      SCAN_UpdateOpenLevel();
+      /* SCAN_UpdateTimeoutFromSetting();
+      SCAN_UpdateOpenLevel(); */
       return true;
     case KEY_7:
       IncDec8(&gSettings.scanTimeout, 1, 255, -1);
       SETTINGS_DelayedSave();
-      SCAN_UpdateTimeoutFromSetting();
-      SCAN_UpdateOpenLevel();
+      /* SCAN_UpdateTimeoutFromSetting();
+      SCAN_UpdateOpenLevel(); */
       return true;
     case KEY_3:
       IncDec8(&gNoiseOpenDiff, 1, 127, 1);
@@ -162,12 +160,13 @@ bool VFO2_key(KEY_Code_t key, Key_State_t state) {
     }
   }
 
-  if (VFO1_keyEx(key, state == KEY_PRESSED, state == KEY_LONG_PRESSED, false)) {
+  if (VFO1_keyEx(key, state, false)) {
     return true;
   }
 
   // long held
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED &&
+      state != KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_2:
       LOOT_Standby();
@@ -181,20 +180,14 @@ bool VFO2_key(KEY_Code_t key, Key_State_t state) {
   return false;
 }
 
-#include "../svc_render.h"
-void VFO2_update(void) {
-  VFO1_update();
-  if (gTxState == TX_ON && Now() - gLastRender > 250) {
-    gRedrawScreen = true;
-  }
-}
+void VFO2_update(void) { VFO1_update(); }
 
 void VFO2_render(void) {
   STATUSLINE_renderCurrentBand();
   SPECTRUM_Y = 6 + 35 * (1 - gSettings.activeVFO);
   SPECTRUM_H = 22;
 
-  if (SVC_Running(SVC_SCAN) || gMonitorMode) {
+  if (/*SVC_Running(SVC_SCAN) || */gMonitorMode) {
     render2VFOPart(gSettings.activeVFO);
     if (gMonitorMode) {
       SP_RenderGraph();

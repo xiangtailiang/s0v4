@@ -1,6 +1,8 @@
 #include "system.h"
+#include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #include "apps/apps.h"
 #include "config/FreeRTOSConfig.h"
+#include "driver/eeprom.h"
 #include "driver/keyboard.h"
 #include "driver/st7565.h"
 #include "driver/uart.h"
@@ -57,6 +59,10 @@ static void appRender(void *arg) {
 
 static void appUpdate(void *arg) {
   for (;;) {
+    if (gRedrawScreen) {
+      appRender(NULL);
+      gRedrawScreen = false;
+    }
     APPS_update();
     vTaskDelay(2);
   }
@@ -67,15 +73,39 @@ static void systemUpdate() { BATTERY_UpdateBatteryInfo(); }
 void SYSTEM_Main(void *params) {
   KEYBOARD_Init();
   Log("Sys task OK");
+
+  uint8_t buf[2];
+  uint8_t deadBuf[] = {0xDE, 0xAD};
+  EEPROM_ReadBuffer(0, buf, 2);
+
+  if (false && memcmp(buf, deadBuf, 2) == 0) {
+    gSettings.batteryCalibration = 2000;
+    gSettings.backlight = 5;
+    APPS_run(APP_RESET);
+  } else {
+    SETTINGS_Load();
+    /* if (gSettings.batteryCalibration > 2154 ||
+        gSettings.batteryCalibration < 1900) {
+      gSettings.batteryCalibration = 0;
+      EEPROM_WriteBuffer(0, deadBuf, 2);
+      NVIC_SystemReset();
+    } */
+
+    ST7565_Init();
+    // BACKLIGHT_Init();
+    APPS_run(APP_VFO2);
+  }
+
   BATTERY_UpdateBatteryInfo();
 
   systemMessageQueue = xQueueCreateStatic(
       queueLen, itemSize, systemQueueStorageArea, &systemTasksQueue);
   sysTimer = xTimerCreateStatic("sysT", pdMS_TO_TICKS(2000), pdTRUE, NULL,
                                 systemUpdate, &sysTimerBuffer);
-  xTimerStart(systemTimer, 0);
+  xTimerStart(sysTimer, 0);
   xTaskCreateStatic(appUpdate, "scan", ARRAY_SIZE(scanTaskStack), NULL, 4,
                     scanTaskStack, &scanTaskBuffer);
+
   SystemMessages notification;
 
   for (;;) {
@@ -87,7 +117,15 @@ void SYSTEM_Main(void *params) {
           (notification.state == KEY_PRESSED ||
            notification.state == KEY_LONG_PRESSED_CONT)) {
         if (APPS_key(notification.key, notification.state)) {
-          APPS_render();
+          gRedrawScreen = true;
+        } else {
+          if (notification.key == KEY_MENU) {
+            if (notification.state == KEY_PRESSED) {
+              APPS_run(APP_APPS_LIST);
+            } else if (notification.state == KEY_LONG_PRESSED) {
+              APPS_run(APP_SETTINGS);
+            }
+          }
         }
       }
     }

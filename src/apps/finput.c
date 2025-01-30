@@ -1,10 +1,8 @@
 #include "finput.h"
 #include "../driver/bk4819.h"
 #include "../driver/st7565.h"
-#include "../scheduler.h"
 #include "../ui/graphics.h"
 #include "apps.h"
-// #include <string.h>
 
 uint32_t gFInputTempFreq;
 void (*gFInputCallback)(uint32_t f);
@@ -17,13 +15,6 @@ static uint8_t freqInputDotIndex = 0;
 static uint8_t freqInputIndex = 0;
 
 static bool dotBlink = true;
-
-static void dotBlinkFn(void) {
-  if (!freqInputDotIndex) {
-    dotBlink = !dotBlink;
-    gRedrawScreen = true;
-  }
-}
 
 static void input(KEY_Code_t key) {
   if (key != KEY_EXIT && freqInputIndex >= FREQ_INPUT_LENGTH) {
@@ -92,20 +83,28 @@ void FINPUT_init(void) {
   freqInputIndex = 0;
   freqInputDotIndex = 0;
   fillFromTempFreq();
-  TaskAdd("Dot blink", dotBlinkFn, 250, true, 100);
 }
 
-void FINPUT_deinit(void) { TaskRemove(dotBlinkFn); }
+void FINPUT_update() {
+  if (!freqInputDotIndex) {
+    dotBlink = !dotBlink;
+    gRedrawScreen = true;
+  }
+
+  vTaskDelay(pdMS_TO_TICKS(500));
+}
+
+void FINPUT_deinit(void) {}
 
 bool FINPUT_key(KEY_Code_t key, Key_State_t state) {
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT && key == KEY_EXIT) {
+  if (state == KEY_LONG_PRESSED && key == KEY_EXIT) {
     freqInputIndex = 0;
     freqInputDotIndex = 0;
     gFInputTempFreq = 0;
     memset(freqInputArr, 0, FREQ_INPUT_LENGTH);
     return true;
   }
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_PRESSED) {
     switch (key) {
     case KEY_0:
     case KEY_1:

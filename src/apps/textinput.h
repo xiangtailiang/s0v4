@@ -7,6 +7,7 @@
 
 void TEXTINPUT_init();
 bool TEXTINPUT_key(KEY_Code_t key, Key_State_t state);
+void TEXTINPUT_update();
 void TEXTINPUT_render();
 void TEXTINPUT_deinit();
 

@@ -1,18 +1,10 @@
 #include "analyzer.h"
-#include "../apps/finput.h"
 #include "../driver/st7565.h"
-#include "../driver/system.h"
-#include "../driver/uart.h"
-#include "../helper/bands.h"
 #include "../helper/lootlist.h"
 #include "../helper/measurements.h"
 #include "../radio.h"
-#include "../scheduler.h"
 #include "../ui/graphics.h"
 #include "../ui/spectrum.h"
-#include "../ui/statusline.h"
-#include "apps.h"
-#include "vfo1.h"
 #include <stdint.h>
 
 static Band b = {
@@ -135,9 +127,7 @@ void ANALYZER_update(void) {
   m.f += StepFrequencyTable[b.step];
   if (m.f > b.txF) {
     m.f = b.rxF;
-    appRender(NULL);
-    peakF = 0;
-    peakSnr = 0;
+    gRedrawScreen = true;
   }
 }
 
@@ -150,71 +140,55 @@ bool ANALYZER_key(KEY_Code_t key, Key_State_t state) {
   switch (key) {
   case KEY_1:
     IncDec32(&delay, 200, 10000, 100);
-    appRender(NULL);
-    break;
+    return true;
   case KEY_7:
     IncDec32(&delay, 200, 10000, -100);
-    appRender(NULL);
-    break;
+    return true;
   case KEY_3:
     stp = b.step;
     IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, 1);
     b.step = stp;
     SP_Init(&b);
-    appRender(NULL);
-    break;
+    return true;
   case KEY_9:
     stp = b.step;
     IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, -1);
     b.step = stp;
     SP_Init(&b);
-    break;
+    return true;
   case KEY_2:
     bw = b.bw;
     IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, 1);
     b.bw = bw;
     BK4819_SetFilterBandwidth(b.bw);
-    appRender(NULL);
-    break;
+    return true;
   case KEY_8:
     bw = b.bw;
     IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, -1);
     b.bw = bw;
     BK4819_SetFilterBandwidth(b.bw);
-    appRender(NULL);
-    break;
+    return true;
   case KEY_6:
     IncDec8(&filter, 0, 3, 1);
     selectFilter(filter);
-    appRender(NULL);
-    break;
+    return true;
   case KEY_STAR:
     IncDec8(&msmBy, MSM_RSSI, MSM_EXTRA + 1, 1);
     SP_Init(&b);
     m.f = b.rxF;
-    appRender(NULL);
-    break;
+    return true;
   case KEY_SIDE1:
     IncDec8(&gain, 0, ARRAY_SIZE(gainTable), 1);
     BK4819_SetAGC(true, gain);
-    appRender(NULL);
-    break;
+    return true;
   case KEY_SIDE2:
     IncDec8(&gain, 0, ARRAY_SIZE(gainTable), -1);
     BK4819_SetAGC(true, gain);
-    appRender(NULL);
-    break;
+    return true;
 
   default:
     break;
   }
-
-  /* if (notification.key == KEY_5) {
-    for (uint8_t r = 0; r < 255; ++r) {
-      uint16_t reg = BK4819_ReadRegister(r);
-      Log("0x%x, %u, %u", r, (reg >> 8) & 0xFF, reg & 0xFF);
-    }
-  } */
 }
 
 void ANALYZER_render(void) {
@@ -242,6 +216,7 @@ void ANALYZER_render(void) {
   PrintSmallEx(LCD_WIDTH, LCD_HEIGHT - 1, POS_R, C_FILL, "%u.%05u", b.txF / MHZ,
                b.txF % MHZ);
 
+  peakF = 0;
   peakSnr = 0;
   lowSnr = 255;
 }

@@ -75,6 +75,8 @@ typedef enum {
 
 extern const char *EEPROM_TYPE_NAMES[6];
 extern const uint32_t EEPROM_SIZES[6];
+extern char *SCAN_TIMEOUT_NAMES[15];
+extern uint32_t SCAN_TIMEOUTS[15];
 
 typedef struct {
   uint32_t upconverter : 27;

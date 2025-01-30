@@ -993,9 +993,9 @@ bool RADIO_NextBandFreqXBandEx(bool next, bool precise) {
   }
   if (switchBand) {
     SP_Init(&gCurrentBand);
-    if (SCAN_IsFast()) {
+    // if (SCAN_IsFast()) {
       RADIO_SetupBandParams();
-    }
+    // }
   }
 
   // if (!SVC_Running(SVC_SCAN) || !SCAN_IsFast()) {

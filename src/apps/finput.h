@@ -7,6 +7,7 @@
 
 void FINPUT_init();
 bool FINPUT_key(KEY_Code_t key, Key_State_t state);
+void FINPUT_update();
 void FINPUT_render();
 void FINPUT_deinit();
 

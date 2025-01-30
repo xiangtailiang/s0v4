@@ -26,6 +26,16 @@ const char *EEPROM_TYPE_NAMES[6] = {
     "BL24C1024", // 110
     "M24M02",    // 111
 };
+uint32_t SCAN_TIMEOUTS[15] = {
+    0,         100,       200,           300,           400,
+    500,       1000 * 1,  1000 * 3,      1000 * 5,      1000 * 10,
+    1000 * 30, 1000 * 60, 1000 * 60 * 2, 1000 * 60 * 5, ((uint32_t)0) - 1,
+};
+
+char *SCAN_TIMEOUT_NAMES[15] = {
+    "0",  "100ms", "200ms", "300ms", "400ms", "500ms", "1s",   "3s",
+    "5s", "10s",   "30s",   "1min",  "2min",  "5min",  "None",
+};
 
 /* static const uint8_t PATCH1_PREAMBLE[] = {0x15, 0x00, 0x0F, 0xE0,
                                           0xF2, 0x73, 0x76, 0x2F}; */

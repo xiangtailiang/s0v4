@@ -8,8 +8,6 @@
 #include "../helper/measurements.h"
 #include "../radio.h"
 #include "../scheduler.h"
-#include "../svc.h"
-#include "../svc_render.h"
 #include "../ui/components.h"
 #include "../ui/graphics.h"
 #include "../ui/menu.h"
@@ -129,11 +127,7 @@ static void sort(Sort type) {
   STATUSLINE_SetText("By %s %s", sortNames[sortType], sortRev ? "v" : "^");
 }
 
-void LOOTLIST_update() {
-  if (Now() - gLastRender >= 500) {
-    gRedrawScreen = true;
-  }
-}
+void LOOTLIST_update() {}
 
 void LOOTLIST_render(void) {
   UI_ShowMenuEx(shortList ? getLootItemShort : getLootItem, LOOT_Size(),
@@ -185,14 +179,11 @@ static void saveToFreeChannels(bool saveWhitelist, uint16_t scanlist) {
 
 bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {
   Loot *loot;
-  if (SVC_Running(SVC_FC)) {
-    loot = gLastActiveLoot;
-  } else {
-    loot = LOOT_Item(menuIndex);
-  }
+  loot = LOOT_Item(menuIndex);
   const uint8_t MENU_SIZE = LOOT_Size();
 
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED &&
+      state != KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_0:
       LOOT_Clear();
@@ -206,9 +197,6 @@ bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {
       return true;
     case KEY_5:
       saveToFreeChannels(true, gSettings.currentScanlist);
-      return true;
-    case KEY_4: // freq catch
-      SVC_Toggle(SVC_FC, !SVC_Running(SVC_FC), 100);
       return true;
     case KEY_STAR:
       // TODO: select any of SL
