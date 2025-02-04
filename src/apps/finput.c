@@ -104,7 +104,7 @@ bool FINPUT_key(KEY_Code_t key, Key_State_t state) {
     memset(freqInputArr, 0, FREQ_INPUT_LENGTH);
     return true;
   }
-  if (state == KEY_PRESSED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_0:
     case KEY_1:

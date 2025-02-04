@@ -2,6 +2,7 @@
 #define SETTINGS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define getsize(V) char (*__ #V)(void)[sizeof(V)] = 1;
 

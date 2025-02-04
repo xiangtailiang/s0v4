@@ -42,6 +42,7 @@ extern const char *shortRadioNames[3];
 extern const char *deviationNames[];
 extern const char *sqTypeNames[4];
 extern const char *TX_STATE_NAMES[7];
+extern const char *bwNames[10];
 
 const char *RADIO_GetBWName(const VFO *vfo);
 Radio RADIO_GetRadio();
@@ -73,6 +74,7 @@ void RADIO_SetupByCurrentVFO();
 void RADIO_NextVFO(void);
 bool RADIO_NextBandFreqXBandEx(bool next, bool precise);
 void RADIO_NextBandFreqXBand(bool next);
+bool RADIO_NextFScan(bool next);
 void RADIO_ToggleVfoMR();
 
 void RADIO_SetSquelch(uint8_t sq);

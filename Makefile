@@ -5,8 +5,6 @@ BIN_DIR := bin
 TARGET = $(BIN_DIR)/firmware
 
 SRC = $(wildcard $(SRC_DIR)/driver/*.c)
-SRC += $(wildcard $(SRC_DIR)/external/mcufont/fonts/freesans.c)
-SRC += $(wildcard $(SRC_DIR)/external/mcufont/decoder/*.c)
 SRC += $(wildcard $(SRC_DIR)/helper/*.c)
 SRC += $(wildcard $(SRC_DIR)/ui/*.c)
 SRC += $(wildcard $(SRC_DIR)/apps/*.c)
@@ -76,7 +74,6 @@ DEPS = $(OBJS:.o=.d)
 
 all: $(TARGET)
 	$(OBJCOPY) -O binary $< $<.bin
-	-python fw-pack.py $<.bin $(GIT_HASH) $<.packed.bin
 	-python3 fw-pack.py $<.bin $(GIT_HASH) $<.packed.bin
 
 version.o: .FORCE

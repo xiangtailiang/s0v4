@@ -1,23 +1,23 @@
 #include "system.h"
-#include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #include "apps/apps.h"
 #include "config/FreeRTOSConfig.h"
 #include "driver/eeprom.h"
 #include "driver/keyboard.h"
 #include "driver/st7565.h"
 #include "driver/uart.h"
+#include "external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #include "external/FreeRTOS/include/FreeRTOS.h"
 #include "external/FreeRTOS/include/projdefs.h"
 #include "external/FreeRTOS/include/queue.h"
 #include "external/FreeRTOS/include/task.h"
 #include "external/FreeRTOS/include/timers.h"
 #include "external/FreeRTOS/portable/GCC/ARM_CM0/portmacro.h"
+#include "helper/bands.h"
 #include "helper/battery.h"
 #include "misc.h"
 #include "settings.h"
 #include "ui/graphics.h"
 #include "ui/statusline.h"
-#include <iso646.h>
 
 #define queueLen 20
 #define itemSize sizeof(SystemMessages)
@@ -101,6 +101,7 @@ void SYSTEM_Main(void *params) {
 
     ST7565_Init();
     // BACKLIGHT_Init();
+    BANDS_Load();
     APPS_run(gSettings.mainApp);
   }
 

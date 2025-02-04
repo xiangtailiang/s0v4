@@ -12,6 +12,7 @@
 #include "lootlist.h"
 #include "memview.h"
 #include "reset.h"
+#include "scaner.h"
 #include "settings.h"
 #include "textinput.h"
 #include "vfo1.h"
@@ -55,6 +56,7 @@ const AppType_t appsAvailableToRun[RUN_APPS_COUNT] = {
     APP_VFO2,      //
     APP_CH_LIST,   //
     APP_ANALYZER,  //
+    APP_SCANER,    //
     APP_LOOT_LIST, //
     APP_MEMVIEW,   //
     APP_GENERATOR, //
@@ -66,6 +68,8 @@ const App apps[APPS_COUNT] = {
     {"EEPROM view", MEMVIEW_Init, NULL, MEMVIEW_Render, MEMVIEW_key, NULL},
     {"Analyzer", ANALYZER_init, ANALYZER_update, ANALYZER_render, ANALYZER_key,
      ANALYZER_deinit},
+    {"Scaner", SCANER_init, SCANER_update, SCANER_render, SCANER_key,
+     SCANER_deinit},
     {"Channels", CHLIST_init, NULL, CHLIST_render, CHLIST_key, CHLIST_deinit},
     {"Freq input", FINPUT_init, FINPUT_update, FINPUT_render, FINPUT_key,
      FINPUT_deinit},

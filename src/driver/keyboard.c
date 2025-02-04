@@ -19,7 +19,6 @@ static KEY_Code_t mKeyPressed = KEY_INVALID;
 static KEY_Code_t mPrevKeyPressed = KEY_INVALID;
 static Key_State_t mPrevStatePtt;
 static Key_State_t mPrevKeyState;
-static bool mWasFKeyPressed;
 static TickType_t mLongPressTimer;
 
 typedef const struct {
@@ -148,18 +147,8 @@ void KEYBOARD_CheckKeys() {
 
   if (mKeyPressed != KEY_INVALID) {
     if (mPrevKeyState == KEY_RELEASED) {
-      if (mWasFKeyPressed) {
-        SYSTEM_MsgKey(mKeyPressed, KEY_PRESSED_WITH_F);
-        mPrevKeyState = KEY_PRESSED_WITH_F;
-        mWasFKeyPressed = false;
-      } else {
-        SYSTEM_MsgKey(mKeyPressed, KEY_PRESSED);
-        mPrevKeyState = KEY_PRESSED;
-      }
-
-      if (mKeyPressed == KEY_F) {
-        mWasFKeyPressed = true;
-      }
+      SYSTEM_MsgKey(mKeyPressed, KEY_PRESSED);
+      mPrevKeyState = KEY_PRESSED;
 
       mLongPressTimer = currentTick;
       mPrevKeyPressed = mKeyPressed;
@@ -176,8 +165,7 @@ void KEYBOARD_CheckKeys() {
     }
   } else {
     if (mPrevKeyState != KEY_RELEASED) {
-      if (mPrevKeyState != KEY_PRESSED_WITH_F &&
-          mPrevKeyState != KEY_LONG_PRESSED &&
+      if (mPrevKeyState != KEY_LONG_PRESSED &&
           mPrevKeyState != KEY_LONG_PRESSED_CONT) {
         SYSTEM_MsgKey(mPrevKeyPressed, KEY_RELEASED);
       }
@@ -195,7 +183,6 @@ void KEYBOARD_CheckKeys() {
 }
 
 static void checkKeys(void *attr) {
-  Log("Kbd check task");
   for (;;) {
     KEYBOARD_Poll();
     KEYBOARD_CheckKeys();

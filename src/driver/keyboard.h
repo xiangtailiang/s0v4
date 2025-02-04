@@ -30,7 +30,6 @@ typedef enum {
 typedef enum {
   KEY_RELEASED,
   KEY_PRESSED,
-  KEY_PRESSED_WITH_F,
   KEY_LONG_PRESSED,
   KEY_LONG_PRESSED_CONT
 } Key_State_t;

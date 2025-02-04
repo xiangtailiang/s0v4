@@ -433,6 +433,7 @@ void RADIO_ToggleRX(bool on) {
   if (gIsListening == on) {
     return;
   }
+  BOARD_ToggleGreen(on);
   // Log("TOGGLE RX=%u", on);
   gRedrawScreen = true;
 
@@ -638,15 +639,9 @@ void RADIO_SwitchRadio() {
 }
 
 static void checkVisibleBand() {
-  /* if (!SVC_Running(SVC_SCAN) &&
-      (
-          // to not change current band if overlapping
-          !(radio->fixedBoundsMode && gCurrentBand.meta.type == TYPE_BAND)
-          // if band not in range, try to select one
-          || !BANDS_InRange(radio->rxF, gCurrentBand))) {
+  if (!BANDS_InRange(radio->rxF, gCurrentBand)) {
     BANDS_SelectByFrequency(radio->rxF, radio->fixedBoundsMode);
-    // gCurrentBand = BANDS_ByFrequency(radio->rxF);
-  } */
+  }
 }
 
 void RADIO_SetupByCurrentVFO(void) {
@@ -955,6 +950,38 @@ void RADIO_UpdateSquelchLevel(bool next) {
   RADIO_SetSquelch(sq);
 }
 
+bool RADIO_NextFScan(bool next) {
+  bool switchBand = false;
+  uint32_t steps = CHANNELS_GetSteps(&gCurrentBand);
+  int64_t step = CHANNELS_GetChannel(&gCurrentBand, radio->rxF);
+
+  if (next) {
+    step++;
+  } else {
+    step--;
+  }
+
+  bool canSwitchToNextBand = gCurrentBand.meta.type != TYPE_BAND_DETACHED;
+
+  if (step < 0) {
+    // get previous band
+    if (gSettings.currentScanlist && canSwitchToNextBand) {
+      switchBand = BANDS_SelectBandRelativeByScanlist(false);
+    }
+    steps = CHANNELS_GetSteps(&gCurrentBand);
+    step = steps - 1;
+  } else if (step >= steps) {
+    // get next band
+    if (gSettings.currentScanlist && canSwitchToNextBand) {
+      switchBand = BANDS_SelectBandRelativeByScanlist(true);
+    }
+    step = 0;
+  }
+  radio->rxF = CHANNELS_GetF(&gCurrentBand, step);
+
+  return switchBand;
+}
+
 bool RADIO_NextBandFreqXBandEx(bool next, bool precise) {
   bool switchBand = false;
   if (radio->fixedBoundsMode) {
@@ -994,15 +1021,15 @@ bool RADIO_NextBandFreqXBandEx(bool next, bool precise) {
   if (switchBand) {
     SP_Init(&gCurrentBand);
     // if (SCAN_IsFast()) {
-      RADIO_SetupBandParams();
+    RADIO_SetupBandParams();
     // }
   }
 
   // if (!SVC_Running(SVC_SCAN) || !SCAN_IsFast()) {
-    RADIO_SwitchRadio();
-    RADIO_SetupBandParams();
-    RADIO_TuneToPure(radio->rxF, precise);
-    checkVisibleBand();
+  RADIO_SwitchRadio();
+  RADIO_SetupBandParams();
+  RADIO_TuneToPure(radio->rxF, precise);
+  checkVisibleBand();
   /* } else {
     LOOT_Replace(&gLoot[gSettings.activeVFO], radio->rxF);
   } */

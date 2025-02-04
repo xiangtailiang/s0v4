@@ -87,7 +87,7 @@ typedef struct {
 typedef enum BK4819_CssScanResult_t BK4819_CssScanResult_t;
 extern const Gain gainTable[32];
 
-extern uint32_t AUTO_GAIN_INDEX;
+extern const uint8_t AUTO_GAIN_INDEX;
 
 // extern const uint8_t SQ[2][6][11];
 
@@ -115,6 +115,7 @@ void BK4819_SquelchType(SquelchType t);
 
 void BK4819_SetAF(BK4819_AF_Type_t AF);
 void BK4819_RX_TurnOn(void);
+void BK4819_SelectFilterEx(Filter filter);
 void BK4819_SelectFilter(uint32_t Frequency);
 void BK4819_DisableScramble(void);
 void BK4819_EnableScramble(uint8_t Type);

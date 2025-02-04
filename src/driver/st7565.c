@@ -101,7 +101,7 @@ void ST7565_Blit(void) {
   uint8_t Line;
   uint8_t Column;
 
-  fix();
+  // fix();
   SPI_ToggleMasterMode(&SPI0->CR, false);
   ST7565_WriteByte(0x40);
 

@@ -9,7 +9,7 @@
 #include "audio.h"
 #include "bk4819-regs.h"
 
-uint32_t AUTO_GAIN_INDEX = 20;
+const uint8_t AUTO_GAIN_INDEX = 20;
 
 static uint16_t gBK4819_GpioOutState;
 static Filter selectedFilter = FILTER_OFF;
@@ -493,13 +493,17 @@ void BK4819_RX_TurnOn(void) {
           BK4819_REG_30_DISABLE_TX_DSP | BK4819_REG_30_ENABLE_RX_DSP);
 }
 
+void BK4819_SelectFilterEx(Filter filter) {
+  BK4819_ToggleGpioOut(BK4819_GPIO4_PIN32_VHF_LNA, filter == FILTER_VHF);
+  BK4819_ToggleGpioOut(BK4819_GPIO3_PIN31_UHF_LNA, filter == FILTER_UHF);
+}
+
 void BK4819_SelectFilter(uint32_t f) {
   Filter filter = f < SETTINGS_GetFilterBound() ? FILTER_VHF : FILTER_UHF;
 
   if (selectedFilter != filter) {
     selectedFilter = filter;
-    BK4819_ToggleGpioOut(BK4819_GPIO4_PIN32_VHF_LNA, filter == FILTER_VHF);
-    BK4819_ToggleGpioOut(BK4819_GPIO3_PIN31_UHF_LNA, filter == FILTER_UHF);
+    BK4819_SelectFilterEx(filter);
   }
 }
 

@@ -153,11 +153,9 @@ void LOOT_UpdateEx(Loot *item, Measurement *msm) {
     return;
   }
 
-  // TODO: mv to svc
-  /* if (SVC_Running(SVC_SCAN) &&
-      (item->blacklist || (item->whitelist && !gMonitorMode))) {
+  if (item->blacklist || (item->whitelist && !gMonitorMode)) {
     msm->open = false;
-  } */
+  }
 
   item->snr = msm->snr;
 

@@ -21,23 +21,6 @@ static uint8_t filter = FILTER_VHF;
 static uint32_t peakF = 0;
 static uint8_t peakSnr = 0;
 static uint8_t lowSnr = 255;
-static const char *bwNames[10] = {
-    "U6K",  //
-    "U7K",  //
-    "N9k",  //
-    "N10k", //
-    "W12k", //
-    "W14k", //
-    "W17k", //
-    "W20k", //
-    "W23k", //
-    "W26k", //
-};
-
-static void selectFilter(Filter filter) {
-  BK4819_ToggleGpioOut(BK4819_GPIO4_PIN32_VHF_LNA, filter == FILTER_VHF);
-  BK4819_ToggleGpioOut(BK4819_GPIO3_PIN31_UHF_LNA, filter == FILTER_UHF);
-}
 
 static void updateSecondF(uint32_t f) {
   b.txF = f;
@@ -51,13 +34,13 @@ static const char *fltNames[3] = {"VHF", "UHF", "OFF"};
 typedef enum {
   MSM_RSSI,
   MSM_SNR,
-  MSM_NOISE,
-  MSM_GLITCH,
   MSM_EXTRA,
 } MsmBy;
 
-static const char *msmByNames[5] = {
-    "RSSI", "SNR", "NOISE", "GLITCH", "EXTRA",
+static const char *msmByNames[3] = {
+    "RSSI",
+    "SNR",
+    "EXTRA",
 };
 
 static uint8_t msmBy = MSM_RSSI;
@@ -70,7 +53,7 @@ void ANALYZER_init(void) {
   BK4819_SetAGC(true, gain);
   BK4819_SetAFC(0);
   BK4819_SetFilterBandwidth(b.bw);
-  selectFilter(filter);
+  BK4819_SelectFilterEx(filter);
   BK4819_SetModulation(MOD_FM);
   BK4819_RX_TurnOn();
   m.f = b.rxF;
@@ -81,19 +64,11 @@ void ANALYZER_update(void) {
   m.snr = 0;
   m.rssi = 0;
 
-  BK4819_SetFrequency(m.f);
-  BK4819_WriteRegister(BK4819_REG_30, 0x0000);
-  BK4819_WriteRegister(BK4819_REG_30, 0xBFF1);
+  BK4819_TuneTo(m.f, true);
   vTaskDelay(delay / 100);
   switch (msmBy) {
   case MSM_RSSI:
     m.rssi = BK4819_GetRSSI();
-    break;
-  case MSM_NOISE:
-    m.rssi = BK4819_GetNoise();
-    break;
-  case MSM_GLITCH:
-    m.rssi = BK4819_GetGlitch();
     break;
   case MSM_SNR:
     m.rssi = BK4819_GetSNR();
@@ -182,7 +157,7 @@ bool ANALYZER_key(KEY_Code_t key, Key_State_t state) {
     switch (key) {
     case KEY_6:
       IncDec8(&filter, 0, 3, 1);
-      selectFilter(filter);
+      BK4819_SelectFilterEx(filter);
       return true;
     case KEY_STAR:
       IncDec8(&msmBy, MSM_RSSI, MSM_EXTRA + 1, 1);
@@ -205,10 +180,10 @@ void ANALYZER_render(void) {
   PrintSmallEx(LCD_XCENTER, 16 + 6 * 1, POS_C, C_FILL, "%+d",
                -gainTable[gain].gainDb + 33);
 
-  PrintSmallEx(LCD_WIDTH, 12 + 6 * 0, POS_R, C_FILL, "STP %u.%02uk",
+  PrintSmallEx(LCD_WIDTH, 12 + 6 * 0, POS_R, C_FILL, "%u.%02uk",
                StepFrequencyTable[b.step] / 100,
                StepFrequencyTable[b.step] % 100);
-  PrintSmallEx(LCD_WIDTH, 12 + 6 * 1, POS_R, C_FILL, "BW %s", bwNames[b.bw]);
+  PrintSmallEx(LCD_WIDTH, 12 + 6 * 1, POS_R, C_FILL, "%s", bwNames[b.bw]);
   PrintSmallEx(LCD_WIDTH, 12 + 6 * 2, POS_R, C_FILL, "FLT %s",
                fltNames[filter]);
   PrintSmallEx(LCD_WIDTH, 12 + 6 * 3, POS_R, C_FILL, "%s", msmByNames[msmBy]);
@@ -216,10 +191,11 @@ void ANALYZER_render(void) {
   SP_RenderArrow(&b, peakF);
   PrintMediumEx(LCD_XCENTER, 16, POS_C, C_FILL, "%u.%05u", peakF / MHZ,
                 peakF % MHZ);
-  PrintSmallEx(0, LCD_HEIGHT - 1, POS_L, C_FILL, "%u.%05u", b.rxF / MHZ,
+
+  PrintSmallEx(1, LCD_HEIGHT - 2, POS_L, C_FILL, "%u.%05u", b.rxF / MHZ,
                b.rxF % MHZ);
-  PrintSmallEx(LCD_WIDTH, LCD_HEIGHT - 1, POS_R, C_FILL, "%u.%05u", b.txF / MHZ,
-               b.txF % MHZ);
+  PrintSmallEx(LCD_WIDTH - 1, LCD_HEIGHT - 2, POS_R, C_FILL, "%u.%05u",
+               b.txF / MHZ, b.txF % MHZ);
 
   peakF = 0;
   peakSnr = 0;
