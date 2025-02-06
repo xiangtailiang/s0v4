@@ -7,12 +7,12 @@
 #define configUSE_IDLE_HOOK 0
 #define configUSE_TICK_HOOK 0
 #define configCPU_CLOCK_HZ (48000000U)
-#define configTICK_RATE_HZ ((TickType_t)10000U)
+#define configTICK_RATE_HZ ((TickType_t)1000U)
 #define configMAX_PRIORITIES (5)
-#define configMINIMAL_STACK_SIZE ((uint16_t)84)
+#define configMINIMAL_STACK_SIZE ((uint16_t)200)
 #define configMAX_TASK_NAME_LEN (6)
 #define configUSE_TRACE_FACILITY 0
-#define configUSE_16_BIT_TICKS 1
+#define configUSE_16_BIT_TICKS 0
 #define configUSE_MUTEXES 1
 #define configQUEUE_REGISTRY_SIZE 8
 #define configUSE_RECURSIVE_MUTEXES 0

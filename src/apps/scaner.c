@@ -16,7 +16,7 @@ static Measurement *m;
 
 static bool selStart = true;
 
-static uint32_t delay = 700;
+static uint32_t delay = 1000;
 
 static uint16_t sqLevel = UINT16_MAX;
 static bool thinking = false;
@@ -30,7 +30,7 @@ static uint16_t measure(uint32_t f) {
   BK4819_SetFrequency(m->f);
   BK4819_WriteRegister(BK4819_REG_30, 0x0200);
   BK4819_WriteRegister(BK4819_REG_30, 0xBFF1);
-  vTaskDelay(delay / 100);
+  vTaskDelay(delay / 1000);
   m->rssi = BK4819_GetRSSI();
   if (m->rssi > msmHigh) {
     msmHigh = m->rssi;
@@ -122,9 +122,9 @@ void SCANER_update(void) {
     }
   } */
 
-  // LOOT_Update(m);
+  LOOT_Update(m);
 
-  // RADIO_ToggleRX(m->open);
+  RADIO_ToggleRX(m->open);
 
   if (m->open) {
     gRedrawScreen = true;
@@ -145,7 +145,6 @@ void SCANER_update(void) {
 
   if (RADIO_NextFScan(true)) {
     RADIO_SetupBandParams();
-    Log("New Band");
   }
   if (radio->rxF < m->f) {
     gRedrawScreen = true;
@@ -159,40 +158,27 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_1:
-      IncDec32(&delay, 200, 10000, 100);
-      return true;
     case KEY_7:
-      IncDec32(&delay, 200, 10000, -100);
+      IncDec32(&delay, 200, 10000, key == KEY_1 ? 100 : -100);
       return true;
     case KEY_2:
-      bw = b->bw;
-      IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, 1);
-      b->bw = bw;
-      BK4819_SetFilterBandwidth(b->bw);
-      return true;
     case KEY_8:
       bw = b->bw;
-      IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, -1);
+      IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1,
+              key == KEY_2 ? 1 : -1);
       b->bw = bw;
       BK4819_SetFilterBandwidth(b->bw);
       return true;
     case KEY_3:
-      stp = b->step;
-      IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, 1);
-      b->step = stp;
-      newScan();
-      return true;
     case KEY_9:
       stp = b->step;
-      IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, -1);
+      IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
       b->step = stp;
       newScan();
       return true;
     case KEY_STAR:
-      RADIO_UpdateSquelchLevel(true);
-      return true;
     case KEY_F:
-      RADIO_UpdateSquelchLevel(false);
+      RADIO_UpdateSquelchLevel(key == KEY_STAR);
       return true;
     default:
       break;
@@ -270,13 +256,9 @@ void SCANER_render(void) {
                -gainTable[gain].gainDb + 33); */
 
   // bottom
-  PrintSmallEx(LCD_XCENTER, LCD_HEIGHT - 2, POS_C, C_FILL, "%u.%05u",
-               radio->rxF / MHZ, radio->rxF % MHZ);
-
-  PrintSmallEx(1, LCD_HEIGHT - 2, POS_L, C_FILL, "%u.%05u", b->rxF / MHZ,
-               b->rxF % MHZ);
-  PrintSmallEx(LCD_WIDTH - 1, LCD_HEIGHT - 2, POS_R, C_FILL, "%u.%05u",
-               b->txF / MHZ, b->txF % MHZ);
+  FSmall(1, LCD_HEIGHT - 2, POS_L, b->rxF);
+  FSmall(LCD_XCENTER, LCD_HEIGHT - 2, POS_C, radio->rxF);
+  FSmall(LCD_WIDTH - 1, LCD_HEIGHT - 2, POS_R, b->txF);
 
   FillRect(selStart ? 0 : LCD_WIDTH - 42, LCD_HEIGHT - 7, 42, 7, C_INVERT);
 }

@@ -3,10 +3,9 @@
 
 static const uint32_t TICK_MULTIPLIER = 48;
 
-void SYSTICK_Init(void) { SysTick_Config(48000); }
+void SYSTICK_Init(void) { SysTick_Config(480000); }
 
 void SYSTICK_DelayTicks(const uint32_t ticks) {
-  // vTaskDelay(ticks);
   uint32_t elapsed_ticks = 0;
   uint32_t Start = SysTick->LOAD;
   uint32_t Previous = SysTick->VAL;

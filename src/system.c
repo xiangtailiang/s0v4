@@ -1,5 +1,6 @@
 #include "system.h"
 #include "apps/apps.h"
+#include "board.h"
 #include "config/FreeRTOSConfig.h"
 #include "driver/eeprom.h"
 #include "driver/keyboard.h"
@@ -79,6 +80,8 @@ static void appRender(void *arg) {
 static void systemUpdate() { BATTERY_UpdateBatteryInfo(); }
 
 void SYSTEM_Main(void *params) {
+  BOARD_Init();
+  Log("BOARD OK");
   KEYBOARD_Init();
   Log("Sys task OK");
 

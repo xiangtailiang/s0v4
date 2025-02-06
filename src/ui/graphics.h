@@ -79,5 +79,6 @@ void PrintBiggestDigitsEx(uint8_t x, uint8_t y, TextPos posLCR, Color color,
                           const char *pattern, ...);
 void PrintSymbolsEx(uint8_t x, uint8_t y, TextPos posLCR, Color color,
                     const char *pattern, ...);
+void FSmall(uint8_t x, uint8_t y, TextPos align, uint32_t frequency);
 
 #endif /* end of include guard: GRAPHICS_H */

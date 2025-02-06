@@ -518,15 +518,11 @@ void UART_HandleCommand(void) {
 void LogUart(const char *const str) { UART_Send(str, strlen(str)); }
 
 void UART_printf(const char *str, ...) {
-  char text[128];
-  int len;
-
-  va_list va;
-  va_start(va, str);
-  len = vsnprintf(text, sizeof(text), str, va);
-  va_end(va);
-
-  UART_Send(text, len);
+    char text[128];
+    va_list va;
+    va_start(va, str);
+    UART_Send(text, vsnprintf(text, sizeof(text), str, va));
+    va_end(va);
 }
 
 void Log(const char *pattern, ...) {

@@ -22,6 +22,7 @@
 #include "gpio.h"
 #include "spi.h"
 #include "system.h"
+#include "uart.h"
 #include <stdint.h>
 
 #define NEED_WAIT_FIFO                                                         \
@@ -120,11 +121,17 @@ void ST7565_Blit(void) {
 }
 
 void ST7565_Init(void) {
+  Log("SPI0_Init");
   SPI0_Init();
+  Log("SPI0_Init OK");
   ST7565_Configure_GPIO_B11();
+  Log("CFG GPIO");
   SPI_ToggleMasterMode(&SPI0->CR, false);
+  Log("master");
   ST7565_WriteByte(0xE2);
+  Log("WB");
   SYSTEM_DelayMs(0x78);
+  Log("Delay");
   ST7565_WriteByte(0xA2);
   ST7565_WriteByte(0xC0);
   ST7565_WriteByte(0xA1);

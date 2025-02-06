@@ -23,8 +23,6 @@ void Main(void) {
 
   Log("s0v4");
 
-  BOARD_Init();
-  Log("BOARD OK");
 
   xTaskCreateStatic(SYSTEM_Main, "sys", ARRAY_SIZE(systemTaskStack), NULL, 1,
                     systemTaskStack, &systemTaskBuffer);

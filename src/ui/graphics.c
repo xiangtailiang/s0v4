@@ -343,3 +343,8 @@ void PrintSymbolsEx(uint8_t x, uint8_t y, TextPos posLCR, Color color,
   printString(&Symbols, x, y, color, posLCR, pattern, args);
   va_end(args);
 }
+
+void FSmall(uint8_t x, uint8_t y, TextPos align, uint32_t frequency) {
+  PrintSmallEx(x, y, align, C_FILL, "%u.%05u", frequency / MHZ,
+               frequency % MHZ);
+}

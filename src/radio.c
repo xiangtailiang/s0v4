@@ -951,34 +951,22 @@ void RADIO_UpdateSquelchLevel(bool next) {
 }
 
 bool RADIO_NextFScan(bool next) {
-  bool switchBand = false;
   uint32_t steps = CHANNELS_GetSteps(&gCurrentBand);
   int64_t step = CHANNELS_GetChannel(&gCurrentBand, radio->rxF);
 
-  if (next) {
-    step++;
-  } else {
-    step--;
-  }
+  step += next ? 1 : -1;
 
   bool canSwitchToNextBand = gCurrentBand.meta.type != TYPE_BAND_DETACHED;
+  bool switchBand = false;
 
-  if (step < 0) {
-    // get previous band
+  if (step < 0 || step >= steps) {
     if (gSettings.currentScanlist && canSwitchToNextBand) {
-      switchBand = BANDS_SelectBandRelativeByScanlist(false);
+      switchBand = BANDS_SelectBandRelativeByScanlist(step >= steps);
     }
-    steps = CHANNELS_GetSteps(&gCurrentBand);
-    step = steps - 1;
-  } else if (step >= steps) {
-    // get next band
-    if (gSettings.currentScanlist && canSwitchToNextBand) {
-      switchBand = BANDS_SelectBandRelativeByScanlist(true);
-    }
-    step = 0;
+    step = (step < 0) ? steps - 1 : 0;
   }
-  radio->rxF = CHANNELS_GetF(&gCurrentBand, step);
 
+  radio->rxF = CHANNELS_GetF(&gCurrentBand, step);
   return switchBand;
 }
 
