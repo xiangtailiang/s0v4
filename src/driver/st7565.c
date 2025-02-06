@@ -156,10 +156,3 @@ void ST7565_WriteByte(uint8_t Value) {
     continue;
   SPI0->WDR = Value;
 }
-
-void ST7565_Render(void) {
-  if (gRedrawScreen) {
-    ST7565_Blit();
-    gRedrawScreen = false;
-  }
-}

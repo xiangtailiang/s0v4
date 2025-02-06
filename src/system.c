@@ -113,9 +113,9 @@ void SYSTEM_Main(void *params) {
                                 systemUpdate, &sysTimerBuffer);
   xTimerStart(sysTimer, 0);
 
-  xTaskCreateStatic(appUpdate, "appU", ARRAY_SIZE(appUpdateTaskStack), NULL, 4,
+  xTaskCreateStatic(appUpdate, "appU", ARRAY_SIZE(appUpdateTaskStack), NULL, 3,
                     appUpdateTaskStack, &appUpdateTaskBuffer);
-  xTaskCreateStatic(appRender, "appR", ARRAY_SIZE(appRenderTaskStack), NULL, 4,
+  xTaskCreateStatic(appRender, "appR", ARRAY_SIZE(appRenderTaskStack), NULL, 2,
                     appRenderTaskStack, &appRenderTaskBuffer);
 
   SystemMessages n;
@@ -137,7 +137,7 @@ void SYSTEM_Main(void *params) {
             }
           }
           if (n.key == KEY_EXIT) {
-            if (n.state == KEY_PRESSED) {
+            if (n.state == KEY_RELEASED) {
               APPS_exit();
             }
           }

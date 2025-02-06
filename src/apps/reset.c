@@ -221,7 +221,7 @@ void RESET_Render(void) {
 }
 
 bool RESET_key(KEY_Code_t k, Key_State_t state) {
-  if (state == KEY_PRESSED) {
+  if (state == KEY_RELEASED) {
     if (gSettings.eepromType == EEPROM_UNKNOWN) {
       if (k > KEY_0) {
         uint8_t t = k - 1;

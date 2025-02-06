@@ -12,7 +12,7 @@ typedef struct {
   uint32_t f;
   uint32_t lastTimeOpen;
   uint16_t duration;
-  uint8_t snr;
+  // uint8_t snr;
   uint8_t cd;
   uint8_t ct;
   bool open : 1;

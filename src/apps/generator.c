@@ -46,7 +46,7 @@ bool GENERATOR_key(KEY_Code_t key, Key_State_t state) {
     return true;
   }
   // Simple keypress
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_5:
       gFInputCallback = RADIO_TuneTo;
@@ -64,7 +64,7 @@ bool GENERATOR_key(KEY_Code_t key, Key_State_t state) {
     }
   }
   // up-down keys
-  if (state == KEY_PRESSED || (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
+  if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_UP:
       RADIO_NextBandFreqXBand(true);

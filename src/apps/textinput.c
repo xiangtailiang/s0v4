@@ -85,8 +85,7 @@ void TEXTINPUT_deinit(void) {}
 
 bool TEXTINPUT_key(KEY_Code_t key, Key_State_t state) {
   // up-down keys
-  if (state == KEY_PRESSED ||
-      (state != KEY_PRESSED && state != KEY_LONG_PRESSED)) {
+  if (state == KEY_RELEASED || state == KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_UP:
       if (inputIndex < 14 && inputField[inputIndex] != '\0') {
@@ -103,9 +102,7 @@ bool TEXTINPUT_key(KEY_Code_t key, Key_State_t state) {
     }
   }
 
-  // long held
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED &&
-      state != KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_EXIT:
       memset(inputField, 0, 15);
@@ -117,7 +114,7 @@ bool TEXTINPUT_key(KEY_Code_t key, Key_State_t state) {
   }
 
   // Simple keypress
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_1:
     case KEY_2:

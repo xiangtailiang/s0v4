@@ -110,7 +110,7 @@ void VFO2_init(void) { VFO1_init(); }
 
 bool VFO2_key(KEY_Code_t key, Key_State_t state) {
   uint8_t g = gCurrentBand.gainIndex;
-  if (state == KEY_PRESSED && /*SVC_Running(SVC_SCAN) &&*/
+  if (state == KEY_RELEASED &&
       (key == KEY_0 ||
        (isScanTuneMode && !RADIO_IsChMode() && key > KEY_0 && key <= KEY_9))) {
     switch (key) {
@@ -165,8 +165,7 @@ bool VFO2_key(KEY_Code_t key, Key_State_t state) {
   }
 
   // long held
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED &&
-      state != KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_2:
       LOOT_Standby();
@@ -187,7 +186,7 @@ void VFO2_render(void) {
   SPECTRUM_Y = 6 + 35 * (1 - gSettings.activeVFO);
   SPECTRUM_H = 22;
 
-  if (/*SVC_Running(SVC_SCAN) || */gMonitorMode) {
+  if (/*SVC_Running(SVC_SCAN) || */ gMonitorMode) {
     render2VFOPart(gSettings.activeVFO);
     if (gMonitorMode) {
       SP_RenderGraph();

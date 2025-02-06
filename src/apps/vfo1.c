@@ -325,7 +325,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
       // SCAN_Start();
       return true;
     case KEY_SIDE1:
-      APPS_run(APP_ANALYZER);
+      APPS_run(APP_SCANER);
       return true;
     case KEY_SIDE2:
       // APPS_run(APP_SPECTRUM);

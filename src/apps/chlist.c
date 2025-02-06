@@ -27,7 +27,7 @@ static char *VIEW_MODE_NAMES[] = {
     "TX",     //
     "SL",     //
     "SL SEL", //
-    "DEL", //
+    "DEL",    //
               // "TYPE",     //
               // "CH SEL",   //
 };
@@ -134,14 +134,14 @@ void CHLIST_deinit() { gChSaveMode = false; }
 
 bool CHLIST_key(KEY_Code_t key, Key_State_t state) {
   uint16_t chNum = getChannelNumber(channelIndex);
-  bool longHeld = state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT;
-  bool simpleKeypress = state != KEY_PRESSED && state != KEY_LONG_PRESSED;
+  bool longHeld = state == KEY_LONG_PRESSED;
+  bool simpleKeypress = state == KEY_RELEASED;
   if (!gIsNumNavInput && longHeld && key == KEY_STAR) {
     NUMNAV_Init(channelIndex, 0, gScanlistSize - 1);
     gNumNavCallback = setMenuIndex;
     return true;
   }
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     if (gIsNumNavInput) {
       channelIndex = NUMNAV_Input(key) - 1;
       return true;
@@ -175,7 +175,7 @@ bool CHLIST_key(KEY_Code_t key, Key_State_t state) {
     return true;
   }
 
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED && state != KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_0:
       gSettings.currentScanlist = 0;
@@ -188,7 +188,7 @@ bool CHLIST_key(KEY_Code_t key, Key_State_t state) {
     }
   }
 
-  if (state == KEY_PRESSED || state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_UP:
       IncDec16(&channelIndex, 0, gScanlistSize, -1);
@@ -200,7 +200,7 @@ bool CHLIST_key(KEY_Code_t key, Key_State_t state) {
       break;
     }
   }
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state != KEY_RELEASED) {
     switch (key) {
     case KEY_0:
       switch (gChListFilter) {

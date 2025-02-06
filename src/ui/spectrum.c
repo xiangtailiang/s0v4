@@ -92,7 +92,8 @@ void SP_AddPoint(const Measurement *msm) {
   if (xe > MAX_POINTS) {
     xe = MAX_POINTS;
   }
-  for (x = xs; x < xe; ++x) {
+  // TODO: debug this range
+  for (x = xs; x <= xe; ++x) {
     if (ox != x) {
       ox = x;
       rssiHistory[x] = 0;

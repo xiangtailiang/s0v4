@@ -26,7 +26,7 @@ void Main(void) {
   BOARD_Init();
   Log("BOARD OK");
 
-  xTaskCreateStatic(SYSTEM_Main, "sys", ARRAY_SIZE(systemTaskStack), NULL, 0,
+  xTaskCreateStatic(SYSTEM_Main, "sys", ARRAY_SIZE(systemTaskStack), NULL, 1,
                     systemTaskStack, &systemTaskBuffer);
 
   vTaskStartScheduler();

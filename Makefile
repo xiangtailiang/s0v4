@@ -58,6 +58,7 @@ LDFLAGS += --specs=nano.specs -lc -lnosys -mthumb -mabi=aapcs -lm -fno-rtti -fno
 LDFLAGS += -Wl,--build-id=none
 LDFLAGS += -z noseparate-code -z noexecstack -mcpu=cortex-m0 -nostartfiles -Wl,-L,linker -Wl,--gc-sections
 LDFLAGS += -Wl,--print-memory-usage
+LDFLAGS += -Wl,-Map=./obj/output.map
 
 INC =
 INC += -I ./src/config

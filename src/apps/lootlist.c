@@ -182,8 +182,7 @@ bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {
   loot = LOOT_Item(menuIndex);
   const uint8_t MENU_SIZE = LOOT_Size();
 
-  if (state == KEY_LONG_PRESSED && state == KEY_PRESSED &&
-      state != KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_LONG_PRESSED) {
     switch (key) {
     case KEY_0:
       LOOT_Clear();
@@ -207,22 +206,24 @@ bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {
     }
   }
 
-  switch (key) {
-  case KEY_UP:
-    IncDec8(&menuIndex, 0, MENU_SIZE, -1);
-    loot = LOOT_Item(menuIndex);
-    tuneToLoot(loot, false);
-    return true;
-  case KEY_DOWN:
-    IncDec8(&menuIndex, 0, MENU_SIZE, 1);
-    loot = LOOT_Item(menuIndex);
-    tuneToLoot(loot, false);
-    return true;
-  default:
-    break;
+  if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
+    switch (key) {
+    case KEY_UP:
+      IncDec8(&menuIndex, 0, MENU_SIZE, -1);
+      loot = LOOT_Item(menuIndex);
+      tuneToLoot(loot, false);
+      return true;
+    case KEY_DOWN:
+      IncDec8(&menuIndex, 0, MENU_SIZE, 1);
+      loot = LOOT_Item(menuIndex);
+      tuneToLoot(loot, false);
+      return true;
+    default:
+      break;
+    }
   }
 
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_EXIT:
       APPS_exit();

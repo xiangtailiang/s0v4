@@ -16,12 +16,41 @@ uint32_t ClampF(uint32_t v, uint32_t min, uint32_t max) {
   return v <= min ? min : (v >= max ? max : v);
 }
 
+/* uint32_t ConvertDomainF(uint32_t aValue, uint32_t aMin, uint32_t aMax,
+                        uint32_t bMin, uint32_t bMax) {
+  const uint32_t aRange = aMax - aMin;
+  const uint32_t bRange = bMax - bMin;
+  aValue = ClampF(aValue, aMin, aMax);
+  return bMin + (uint64_t)(aValue - aMin) * bRange / aRange;
+} */
+
 uint32_t ConvertDomainF(uint32_t aValue, uint32_t aMin, uint32_t aMax,
                         uint32_t bMin, uint32_t bMax) {
-  const uint64_t aRange = aMax - aMin;
-  const uint64_t bRange = bMax - bMin;
+  // Проверка на случай, если aMin == aMax (во избежание деления на 0)
+  if (aMin == aMax) {
+    return bMin; // или bMax, в зависимости от логики
+  }
+
+  // Приведение к uint64_t для избежания переполнения
+  const uint64_t aRange = (uint64_t)aMax - aMin;
+  const uint64_t bRange = (uint64_t)bMax - bMin;
+
+  // Ограничение значения aValue в пределах [aMin, aMax]
   aValue = ClampF(aValue, aMin, aMax);
-  return ((aValue - aMin) * bRange + aRange / 2) / aRange + bMin;
+
+  // Вычисление результата с улучшенным округлением
+  uint64_t scaledValue = (uint64_t)(aValue - aMin) * bRange;
+  uint64_t result = (scaledValue + aRange / 2) / aRange + bMin;
+
+  // Ограничение результата в пределах [bMin, bMax]
+  if (result < bMin) {
+    return bMin;
+  }
+  if (result > bMax) {
+    return bMax;
+  }
+
+  return (uint32_t)result;
 }
 
 uint8_t DBm2S(int dbm, bool isVHF) {

@@ -538,7 +538,7 @@ static void upDown(uint8_t inc) {
 }
 
 bool CHCFG_key(KEY_Code_t key, Key_State_t state) {
-  if (state != KEY_PRESSED && state != KEY_LONG_PRESSED) {
+  if (state == KEY_RELEASED) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(menuIndex + 1, 1, menuSize);
       gNumNavCallback = setMenuIndexAndRun;
@@ -553,24 +553,27 @@ bool CHCFG_key(KEY_Code_t key, Key_State_t state) {
       return true;
     }
   }
-  switch (key) {
-  case KEY_UP:
-    upDown(-1);
-    return true;
-  case KEY_DOWN:
-    upDown(1);
-    return true;
-  case KEY_MENU:
-    return accept();
-  case KEY_EXIT:
-    if (isSubMenu) {
-      isSubMenu = false;
-    } else {
-      APPS_exit();
+
+  if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
+    switch (key) {
+    case KEY_UP:
+      upDown(-1);
+      return true;
+    case KEY_DOWN:
+      upDown(1);
+      return true;
+    case KEY_MENU:
+      return accept();
+    case KEY_EXIT:
+      if (isSubMenu) {
+        isSubMenu = false;
+      } else {
+        APPS_exit();
+      }
+      return true;
+    default:
+      break;
     }
-    return true;
-  default:
-    break;
   }
   return false;
 }

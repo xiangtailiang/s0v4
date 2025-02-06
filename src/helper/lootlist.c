@@ -61,7 +61,7 @@ Loot *LOOT_AddEx(uint32_t f, bool reuse) {
       .f = f,
       .lastTimeOpen = Now(),
       .duration = 0,
-      .snr = UINT8_MAX,
+      // .snr = UINT8_MAX,
       .cd = 0xFF,
       .ct = 0xFF,
       .open = true, // as we add it when open
@@ -157,7 +157,7 @@ void LOOT_UpdateEx(Loot *item, Measurement *msm) {
     msm->open = false;
   }
 
-  item->snr = msm->snr;
+  // item->snr = msm->snr;
 
   if (item->open) {
     item->duration += Now() - lastTimeCheck;
