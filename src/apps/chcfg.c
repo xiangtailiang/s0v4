@@ -346,15 +346,23 @@ static void setInitialSubmenuIndex(void) {
 
 static void getMenuItemText(uint16_t index, char *name) {
   MenuItem *m = &menu[index];
-  if (gChEd.meta.type == TYPE_BAND && m->type == M_F_RX) {
-    strncpy(name, "Start f", 31);
-    return;
+  const char *text = m->name;
+
+  if (gChEd.meta.type == TYPE_BAND) {
+    switch (m->type) {
+    case M_F_RX:
+      text = "Start f";
+      break;
+    case M_F_TX:
+      text = "End f";
+      break;
+    default:
+      break;
+    }
   }
-  if (gChEd.meta.type == TYPE_BAND && m->type == M_F_TX) {
-    strncpy(name, "End f", 31);
-    return;
-  }
-  strncpy(name, menu[index].name, 31);
+
+  strncpy(name, text, 31);
+  name[31] = '\0';
 }
 
 static void updateTxCodeListSize() {
@@ -557,10 +565,8 @@ bool CHCFG_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_UP:
-      upDown(-1);
-      return true;
     case KEY_DOWN:
-      upDown(1);
+      upDown(key == KEY_UP ? -1 : 1);
       return true;
     case KEY_MENU:
       return accept();

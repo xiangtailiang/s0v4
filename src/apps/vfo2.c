@@ -14,23 +14,7 @@
 static bool isScanTuneMode = true;
 static char str[32];
 
-static void render2VFOPart(uint8_t i) {
-  const uint8_t BASE = 21;
-  const uint8_t bl = BASE + 34 * i;
-
-  const VFO *vfo = &gVFO[i];
-  const Measurement *msm = &gLoot[i];
-  const bool isActive = gSettings.activeVFO == i;
-
-  uint32_t f =
-      gTxState == TX_ON && isActive ? RADIO_GetTXF() : GetScreenF(vfo->rxF);
-
-  const uint16_t fp1 = f / MHZ;
-  const uint16_t fp2 = f / 100 % 1000;
-  const uint8_t fp3 = f % 100;
-  const char *mod = modulationTypeOptions[vfo->modulation];
-  const uint32_t step = StepFrequencyTable[vfo->step];
-
+static void renderTxRxState(uint8_t i, uint8_t bl, bool isActive) {
   if (isActive && gTxState <= TX_ON) {
     FillRect(0, bl - 14, 28, 7, C_FILL);
     if (gTxState == TX_ON) {
@@ -48,34 +32,37 @@ static void render2VFOPart(uint8_t i) {
   if (gSettings.dw != DW_OFF && gDW.lastActiveVFO == i) {
     PrintMedium(13, bl, ">>");
   }
+}
 
-  if (gTxState && gTxState != TX_ON && isActive) {
-    PrintMediumBoldEx(LCD_XCENTER, bl - 8, POS_C, C_FILL, "%s",
-                      TX_STATE_NAMES[gTxState]);
-    PrintSmallEx(LCD_XCENTER, bl - 8 + 6, POS_C, C_FILL, "%u", RADIO_GetTXF());
-  } else {
-    if (vfo->channel >= 0) {
-      if (gSettings.chDisplayMode == CH_DISPLAY_MODE_F) {
-        PrintBigDigitsEx(LCD_WIDTH - 19, bl, POS_R, C_FILL, "%4u.%03u", fp1,
-                         fp2);
-      } else if (gSettings.chDisplayMode == CH_DISPLAY_MODE_N) {
-        PrintMediumBoldEx(LCD_XCENTER, bl - 4, POS_C, C_FILL, vfo->name);
-      } else {
-        PrintMediumBoldEx(LCD_XCENTER, bl - 8, POS_C, C_FILL, vfo->name);
-        PrintMediumEx(LCD_XCENTER, bl, POS_C, C_FILL, "%4u.%03u", fp1, fp2);
-      }
-      PrintSmallEx(14, bl - 9, POS_C, C_INVERT, "MR %03u", vfo->channel);
-    } else {
+static void renderFrequencyAndName(uint8_t bl, const VFO *vfo, uint32_t f) {
+  const uint16_t fp1 = f / MHZ;
+  const uint16_t fp2 = f / 100 % 1000;
+  const uint8_t fp3 = f % 100;
+
+  if (vfo->channel >= 0) {
+    if (gSettings.chDisplayMode == CH_DISPLAY_MODE_F) {
       PrintBigDigitsEx(LCD_WIDTH - 19, bl, POS_R, C_FILL, "%4u.%03u", fp1, fp2);
-      PrintMediumBoldEx(LCD_WIDTH, bl, POS_R, C_FILL, "%02u", fp3);
-      PrintSmallEx(14, bl - 9, POS_C, C_INVERT, vfo->name);
+    } else if (gSettings.chDisplayMode == CH_DISPLAY_MODE_N) {
+      PrintMediumBoldEx(LCD_XCENTER, bl - 4, POS_C, C_FILL, vfo->name);
+    } else {
+      PrintMediumBoldEx(LCD_XCENTER, bl - 8, POS_C, C_FILL, vfo->name);
+      PrintMediumEx(LCD_XCENTER, bl, POS_C, C_FILL, "%4u.%03u", fp1, fp2);
     }
-    PrintSmallEx(LCD_WIDTH - 1, bl - 9, POS_R, C_FILL, mod);
+    PrintSmallEx(14, bl - 9, POS_C, C_INVERT, "MR %03u", vfo->channel);
+  } else {
+    PrintBigDigitsEx(LCD_WIDTH - 19, bl, POS_R, C_FILL, "%4u.%03u", fp1, fp2);
+    PrintMediumBoldEx(LCD_WIDTH, bl, POS_R, C_FILL, "%02u", fp3);
+    PrintSmallEx(14, bl - 9, POS_C, C_INVERT, vfo->name);
   }
+  PrintSmallEx(LCD_WIDTH - 1, bl - 9, POS_R, C_FILL,
+               modulationTypeOptions[vfo->modulation]);
+}
 
-  Radio r = vfo->radio;
+static void renderAdditionalInfo(uint8_t bl, const VFO *vfo,
+                                 const Measurement *msm) {
+  char str[64];
 
-  if (r == RADIO_BK4819) {
+  if (vfo->radio == RADIO_BK4819) {
     if (msm->ct != 0xFF) {
       PrintSmallEx(0, bl + 6, POS_L, C_FILL, "C%u.%u",
                    CTCSS_Options[msm->ct] / 10, CTCSS_Options[msm->ct] % 10);
@@ -84,7 +71,7 @@ static void render2VFOPart(uint8_t i) {
     }
   }
 
-  sprintf(str, "%s", shortRadioNames[r]);
+  sprintf(str, "%s", shortRadioNames[vfo->radio]);
   sprintf(str, "%s %+d", str, -gainTable[vfo->gainIndex].gainDb + 33);
   sprintf(str, "%s %s", str, RADIO_GetBWName(vfo));
   sprintf(str, "%s %s%u", str, sqTypeNames[vfo->squelch.type],
@@ -102,8 +89,25 @@ static void render2VFOPart(uint8_t i) {
 
   PrintSmallEx(LCD_XCENTER, bl + 6, POS_C, C_FILL, str);
 
+  const uint32_t step = StepFrequencyTable[vfo->step];
   PrintSmallEx(LCD_WIDTH, bl + 6, POS_R, C_FILL, "%d.%02d", step / 100,
                step % 100);
+}
+
+static void render2VFOPart(uint8_t i) {
+  const uint8_t BASE = 21;
+  const uint8_t bl = BASE + 34 * i;
+
+  const VFO *vfo = &gVFO[i];
+  const Measurement *msm = &gLoot[i];
+  const bool isActive = gSettings.activeVFO == i;
+
+  uint32_t f =
+      gTxState == TX_ON && isActive ? RADIO_GetTXF() : GetScreenF(vfo->rxF);
+
+  renderTxRxState(i, bl, isActive);
+  renderFrequencyAndName(bl, vfo, f);
+  renderAdditionalInfo(bl, vfo, msm);
 }
 
 void VFO2_init(void) { VFO1_init(); }
@@ -118,36 +122,18 @@ bool VFO2_key(KEY_Code_t key, Key_State_t state) {
       isScanTuneMode = !isScanTuneMode;
       return true;
     case KEY_1:
-      IncDec8(&gSettings.scanTimeout, 1, 255, 1);
-      SETTINGS_DelayedSave();
-      /* SCAN_UpdateTimeoutFromSetting();
-      SCAN_UpdateOpenLevel(); */
-      return true;
     case KEY_7:
-      IncDec8(&gSettings.scanTimeout, 1, 255, -1);
+      IncDec8(&gSettings.scanTimeout, 1, 255, key == KEY_1 ? 1 : -1);
       SETTINGS_DelayedSave();
-      /* SCAN_UpdateTimeoutFromSetting();
-      SCAN_UpdateOpenLevel(); */
       return true;
     case KEY_3:
-      IncDec8(&gNoiseOpenDiff, 1, 127, 1);
-      return true;
     case KEY_9:
-      IncDec8(&gNoiseOpenDiff, 1, 127, -1);
+      IncDec8(&gNoiseOpenDiff, 1, 127, key == KEY_3 ? 1 : -1);
       return true;
     case KEY_2:
-      g = gCurrentBand.gainIndex;
-      IncDec8(&g, 1, 127, 1);
-      gCurrentBand.gainIndex = g;
-      RADIO_SetGain(g);
-      if (gCurrentBand.meta.type != TYPE_BAND_DETACHED) {
-        RADIO_SaveCurrentVFO();
-        BANDS_SaveCurrent();
-      }
-      return true;
     case KEY_8:
       g = gCurrentBand.gainIndex;
-      IncDec8(&g, 1, 127, -1);
+      IncDec8(&g, 1, 127, key == KEY_2 ? 1 : -1);
       radio->gainIndex = gCurrentBand.gainIndex = g;
       RADIO_SetGain(g);
       if (gCurrentBand.meta.type != TYPE_BAND_DETACHED) {

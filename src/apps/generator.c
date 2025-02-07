@@ -67,16 +67,12 @@ bool GENERATOR_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_UP:
-      RADIO_NextBandFreqXBand(true);
-      return true;
     case KEY_DOWN:
-      RADIO_NextBandFreqXBand(false);
+      RADIO_NextBandFreqXBand(key == KEY_UP);
       return true;
     case KEY_2:
-      updatePower(1);
-      return true;
     case KEY_8:
-      updatePower(-1);
+      updatePower(key == KEY_2 ? 1 : -1);
       return true;
     default:
       break;

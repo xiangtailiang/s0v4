@@ -355,8 +355,6 @@ static void onSubChange(void) {
   const MenuItem *item = &menu[menuIndex];
   switch (item->type) {
   case M_BRIGHTNESS:
-    BACKLIGHT_SetBrightness(subMenuIndex);
-    break;
   case M_BRIGHTNESS_L:
     BACKLIGHT_SetBrightness(subMenuIndex);
     break;
@@ -507,10 +505,8 @@ bool SETTINGS_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_UP:
-      upDown(-1);
-      return true;
     case KEY_DOWN:
-      upDown(1);
+      upDown(key == KEY_UP ? -1 : 1);
       return true;
     default:
       break;

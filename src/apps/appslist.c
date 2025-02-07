@@ -58,10 +58,8 @@ bool APPSLIST_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_UP:
-      IncDec8(&menuIndex, 0, MENU_SIZE, -1);
-      return true;
     case KEY_DOWN:
-      IncDec8(&menuIndex, 0, MENU_SIZE, 1);
+      IncDec8(&menuIndex, 0, MENU_SIZE, key == KEY_UP ? -1 : 1);
       return true;
     case KEY_MENU:
       APPS_exit();

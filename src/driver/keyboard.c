@@ -1,4 +1,6 @@
 #include "keyboard.h"
+#include "../config/FreeRTOSConfig.h"
+#include "../external/FreeRTOS/portable/GCC/ARM_CM0/portmacro.h"
 #include "../inc/dp32g030/gpio.h"
 #include "../misc.h"
 #include "../system.h"
@@ -29,7 +31,7 @@ typedef const struct {
   } pins[4];
 } Keyboard;
 
-Keyboard keyboard[5] = {
+static Keyboard keyboard[5] = {
     /* Zero row  */
     {// Set to zero to handle special case of nothing pulled down.
      .setToZeroMask = 0xffff,
@@ -79,67 +81,64 @@ Keyboard keyboard[5] = {
          }},
 };
 
-void KEYBOARD_Poll(void) {
-  uint16_t reg, reg2;
-  uint8_t ii;
-  uint8_t k;
-
-  // Handle PTT key
+static void HandlePttKey() {
   mKeyPtt = !GPIO_CheckBit(&GPIOC->DATA, GPIOC_PIN_PTT);
+
   if (mPrevStatePtt == KEY_PRESSED && !mKeyPtt) {
     SYSTEM_MsgKey(KEY_PTT, KEY_RELEASED);
     mPrevStatePtt = KEY_RELEASED;
-    return;
   } else if (mPrevStatePtt == KEY_RELEASED && mKeyPtt) {
     SYSTEM_MsgKey(KEY_PTT, KEY_PRESSED);
     mPrevStatePtt = KEY_PRESSED;
-    return;
-  } else if (mPrevStatePtt == KEY_PRESSED && mKeyPtt) {
-    return;
   }
+}
 
-  // Read matrix keyboard
+static void ResetKeyboardRow(uint8_t row) {
+  GPIOA->DATA |= (1u << GPIOA_PIN_KEYBOARD_4) | (1u << GPIOA_PIN_KEYBOARD_5) |
+                 (1u << GPIOA_PIN_KEYBOARD_6) | (1u << GPIOA_PIN_KEYBOARD_7);
+  GPIOA->DATA &= keyboard[row].setToZeroMask;
+}
 
-  mKeyPressed = KEY_INVALID;
-  // Scan main matrix
-  for (uint8_t i = 0; i < ROWS; i++) {
-    // Reset rows
-    GPIOA->DATA |= (1u << GPIOA_PIN_KEYBOARD_4) | (1u << GPIOA_PIN_KEYBOARD_5) |
-                   (1u << GPIOA_PIN_KEYBOARD_6) | (1u << GPIOA_PIN_KEYBOARD_7);
+static uint16_t ReadStableGpioData() {
+  uint16_t reg, reg2;
+  uint8_t ii;
 
-    GPIOA->DATA &= keyboard[i].setToZeroMask;
-
-    for (ii = 0, k = 0, reg = 0; ii < 3 && k < 8; ii++, k++) {
-      // SYSTICK_DelayUs(1);
-      vTaskDelay(pdMS_TO_TICKS(0));
-      reg2 = (uint16_t)GPIOA->DATA;
-      if (reg != reg2) { // noise
-        reg = reg2;
-        ii = 0;
-      }
+  for (ii = 0, reg = 0; ii < 3; ii++) {
+    vTaskDelay(pdMS_TO_TICKS(0));
+    reg2 = (uint16_t)GPIOA->DATA;
+    if (reg != reg2) {
+      reg = reg2;
+      ii = 0;
     }
-    if (ii < 3)
-      break; // noise is too bad
+  }
+  return reg;
+}
+
+static void ResetKeyboardPins() {
+  GPIO_ClearBit(&GPIOA->DATA, GPIOA_PIN_KEYBOARD_6);
+  GPIO_SetBit(&GPIOA->DATA, GPIOA_PIN_KEYBOARD_7);
+}
+
+static uint8_t ScanKeyboardMatrix() {
+  for (uint8_t i = 0; i < ROWS; i++) {
+    ResetKeyboardRow(i);
+
+    uint16_t reg = ReadStableGpioData();
 
     for (uint8_t j = 0; j < COLS; j++) {
       const uint16_t mask = 1u << keyboard[i].pins[j].pin;
       if (!(reg & mask)) {
-        mKeyPressed = keyboard[i].pins[j].key;
-        break;
+        return keyboard[i].pins[j].key;
       }
     }
-    if (mKeyPressed != KEY_INVALID) {
-      break;
-    }
   }
+  return KEY_INVALID;
+}
 
-  // Create I2C stop condition since we might have toggled I2C pins
-  // This leaves GPIOA_PIN_KEYBOARD_4 and GPIOA_PIN_KEYBOARD_5 high
-  // I2C_Stop();
-
-  // Reset VOICE pins
-  GPIO_ClearBit(&GPIOA->DATA, GPIOA_PIN_KEYBOARD_6);
-  GPIO_SetBit(&GPIOA->DATA, GPIOA_PIN_KEYBOARD_7);
+void KEYBOARD_Poll(void) {
+  HandlePttKey();
+  mKeyPressed = ScanKeyboardMatrix();
+  ResetKeyboardPins();
 }
 
 void KEYBOARD_CheckKeys() {
@@ -191,8 +190,6 @@ static void checkKeys(void *attr) {
 }
 
 void KEYBOARD_Init() {
-  Log("Kbd init start");
-  xTaskCreateStatic(checkKeys, "KEY", ARRAY_SIZE(mKeyTaskStack), NULL, 1,
+  xTaskCreateStatic(checkKeys, "KEY", ARRAY_SIZE(mKeyTaskStack), NULL, 2,
                     mKeyTaskStack, &mKeyTaskBuffer);
-  Log("Kbd init end");
 }

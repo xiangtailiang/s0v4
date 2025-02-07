@@ -2,6 +2,7 @@
 #define COMPONENTS_H
 
 #include "../radio.h"
+#include "graphics.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -15,5 +16,6 @@ void UI_DrawScrollBar(const uint16_t size, const uint16_t currentIndex,
 void UI_DrawTicks(uint8_t y, const Band *band);
 void UI_ShowWait();
 void UI_Scanlists(uint8_t baseX, uint8_t baseY, uint16_t sl);
+void UI_DrawLoot(const Loot *loot, uint8_t x, uint8_t y, TextPos pos);
 
 #endif /* end of include guard: COMPONENTS_H */

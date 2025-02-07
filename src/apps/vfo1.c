@@ -135,16 +135,12 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_1:
-      RADIO_UpdateStep(true);
-      return true;
     case KEY_7:
-      RADIO_UpdateStep(false);
+      RADIO_UpdateStep(key == KEY_1);
       return true;
     case KEY_3:
-      RADIO_UpdateSquelchLevel(true);
-      return true;
     case KEY_9:
-      RADIO_UpdateSquelchLevel(false);
+      RADIO_UpdateSquelchLevel(key == KEY_3);
       return true;
     case KEY_4:
       return true;
@@ -153,14 +149,10 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
         gMonitorMode = !gMonitorMode;
         return true;
       }
-      if (RADIO_GetRadio() == RADIO_SI4732 && isSsb) {
-        RADIO_TuneToSave(radio->rxF + 1);
-        return true;
-      }
-      break;
+      // FALL!
     case KEY_SIDE2:
       if (RADIO_GetRadio() == RADIO_SI4732 && isSsb) {
-        RADIO_TuneToSave(radio->rxF - 1);
+        RADIO_TuneToSave(radio->rxF + (key == KEY_SIDE1 ? 1 : -1));
         return true;
       }
       break;
@@ -184,17 +176,12 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
       RADIO_ToggleListeningBW();
       return true;
     case KEY_2:
-      if (registerActive) {
-        UpdateRegMenuValue(registerSpecs[menuIndex], true);
-      } else {
-        IncDec8(&menuIndex, 0, ARRAY_SIZE(registerSpecs), -1);
-      }
-      return true;
     case KEY_8:
       if (registerActive) {
-        UpdateRegMenuValue(registerSpecs[menuIndex], false);
+        UpdateRegMenuValue(registerSpecs[menuIndex], key == KEY_2);
       } else {
-        IncDec8(&menuIndex, 0, ARRAY_SIZE(registerSpecs), 1);
+        IncDec8(&menuIndex, 0, ARRAY_SIZE(registerSpecs),
+                key == KEY_2 ? -1 : 1);
       }
       return true;
     case KEY_5:
@@ -243,14 +230,9 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
       // SCAN_ToggleDirection(false);
       return true;
     case KEY_SIDE1:
-      if (RADIO_GetRadio() == RADIO_SI4732 && isSsb) {
-        RADIO_TuneToSave(radio->rxF + 5);
-        return true;
-      }
-      break;
     case KEY_SIDE2:
       if (RADIO_GetRadio() == RADIO_SI4732 && isSsb) {
-        RADIO_TuneToSave(radio->rxF - 5);
+        RADIO_TuneToSave(radio->rxF + (key == KEY_SIDE1 ? 5 : -5));
         return true;
       }
       break;
@@ -402,39 +384,73 @@ static void DrawRegs(void) {
   RegisterSpec rs = registerSpecs[menuIndex];
 
   if (rs.num == BK4819_REG_13) {
-    if (radio->gainIndex == AUTO_GAIN_INDEX) {
-      sprintf(String, "auto");
-    } else {
-      sprintf(String, "%+ddB", -gainTable[radio->gainIndex].gainDb + 33);
-    }
+    snprintf(String, sizeof(String),
+             (radio->gainIndex == AUTO_GAIN_INDEX) ? "auto" : "%+ddB",
+             -gainTable[radio->gainIndex].gainDb + 33);
   } else if (rs.num == 0x73) {
     uint8_t afc = BK4819_GetAFC();
-    if (afc) {
-      sprintf(String, "%u", afc);
-    } else {
-      sprintf(String, "off");
-    }
+    snprintf(String, sizeof(String), afc ? "%u" : "off", afc);
   } else {
-    sprintf(String, "%u", BK4819_GetRegValue(rs));
+    snprintf(String, sizeof(String), "%u", BK4819_GetRegValue(rs));
   }
 
   PrintMedium(2, LCD_HEIGHT - 4, "%u. %s: %s", menuIndex, rs.name, String);
+
   if (registerActive) {
     FillRect(0, LCD_HEIGHT - 4 - 7, LCD_WIDTH, 9, C_INVERT);
   }
 }
 
-void VFO1_render(void) {
-  STATUSLINE_renderCurrentBand();
+static void renderTxRxState(uint8_t y, bool isTx) {
+  if (isTx && gTxState != TX_ON) {
+    PrintMediumBoldEx(LCD_XCENTER, y, POS_C, C_FILL, "%s",
+                      TX_STATE_NAMES[gTxState]);
+  }
+}
 
-  const uint8_t BASE = 40;
-
-  uint32_t f = gTxState == TX_ON ? RADIO_GetTXF() : GetScreenF(radio->rxF);
-
+static void renderFrequencyAndModulation(uint8_t y, uint32_t f,
+                                         const char *mod) {
   uint16_t fp1 = f / MHZ;
   uint16_t fp2 = f / 100 % 1000;
   uint8_t fp3 = f % 100;
+
+  PrintBiggestDigitsEx(LCD_WIDTH - 22, y, POS_R, C_FILL, "%4u.%03u", fp1, fp2);
+  PrintBigDigitsEx(LCD_WIDTH - 1, y, POS_R, C_FILL, "%02u", fp3);
+  PrintMediumEx(LCD_WIDTH - 1, y - 12, POS_R, C_FILL, mod);
+}
+
+static void renderChannelName(uint8_t y, const char *name, bool isChMode,
+                              uint16_t channel) {
+  FillRect(0, y - 14, 28, 7, C_FILL);
+  if (isChMode) {
+    PrintSmallEx(14, y - 9, POS_C, C_INVERT, "MR %03u", channel);
+  } else {
+    PrintSmallEx(14, y - 9, POS_C, C_INVERT, name);
+  }
+}
+
+static void renderProModeInfo(uint8_t y, const VFO *radio) {
+  PrintSmall(34, 12, "RNG %+3u %+3u %+3u", RADIO_GetRSSI(), BK4819_GetNoise(),
+             BK4819_GetGlitch());
+  PrintSmallEx(LCD_WIDTH - 1, 12, POS_R, C_FILL, "%s%u",
+               sqTypeNames[radio->squelch.type], radio->squelch.value);
+  PrintSmallEx(LCD_WIDTH - 1, 18, POS_R, true, RADIO_GetBWName(radio));
+
+  const uint32_t step = StepFrequencyTable[radio->step];
+  PrintSmall(0, y - 7, "SNR %u", RADIO_GetSNR());
+  PrintSmallEx(0, y, POS_L, C_FILL, "STP %d.%02d", step / 100, step % 100);
+
+  DrawRegs();
+}
+
+void VFO1_render(void) {
+  const uint8_t BASE = 40;
+
+  STATUSLINE_renderCurrentBand();
+
+  uint32_t f = gTxState == TX_ON ? RADIO_GetTXF() : GetScreenF(radio->rxF);
   const char *mod = modulationTypeOptions[radio->modulation];
+
   if (gIsListening || gVfo1ProMode) {
     UI_RSSIBar(BASE + 2);
   }
@@ -443,35 +459,11 @@ void VFO1_render(void) {
     PrintMediumEx(LCD_XCENTER, BASE - 16, POS_C, C_FILL, radio->name);
   }
 
-  if (gTxState && gTxState != TX_ON) {
-    PrintMediumBoldEx(LCD_XCENTER, BASE, POS_C, C_FILL, "%s",
-                      TX_STATE_NAMES[gTxState]);
-  } else {
-    PrintBiggestDigitsEx(LCD_WIDTH - 22, BASE, POS_R, C_FILL, "%4u.%03u", fp1,
-                         fp2);
-    PrintBigDigitsEx(LCD_WIDTH - 1, BASE, POS_R, C_FILL, "%02u", fp3);
-    PrintMediumEx(LCD_WIDTH - 1, BASE - 12, POS_R, C_FILL, mod);
-  }
+  renderTxRxState(BASE, gTxState == TX_ON);
+  renderFrequencyAndModulation(BASE, f, mod);
+  renderChannelName(21, radio->name, RADIO_IsChMode(), radio->channel);
 
-  FillRect(0, 21 - 14, 28, 7, C_FILL);
-  if (RADIO_IsChMode()) {
-    PrintSmallEx(14, 21 - 9, POS_C, C_INVERT, "MR %03u", radio->channel);
-  } else {
-    PrintSmallEx(14, 21 - 9, POS_C, C_INVERT, radio->name);
-  }
   if (gVfo1ProMode) {
-    PrintSmall(34, 12, "RNG %+3u %+3u %+3u", RADIO_GetRSSI(), BK4819_GetNoise(),
-               BK4819_GetGlitch());
-
-    PrintSmallEx(LCD_WIDTH - 1, 12, POS_R, C_FILL, "%s%u",
-                 sqTypeNames[radio->squelch.type], radio->squelch.value);
-
-    PrintSmallEx(LCD_WIDTH - 1, 18, POS_R, true, RADIO_GetBWName(radio));
-
-    const uint32_t step = StepFrequencyTable[radio->step];
-    PrintSmall(0, BASE - 7, "SNR %u", RADIO_GetSNR());
-    PrintSmallEx(0, BASE, POS_L, C_FILL, "STP %d.%02d", step / 100, step % 100);
-
-    DrawRegs();
+    renderProModeInfo(BASE, radio);
   }
 }

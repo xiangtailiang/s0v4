@@ -16,43 +16,52 @@ static uint8_t freqInputIndex = 0;
 
 static bool dotBlink = true;
 
+static uint32_t calculateFrequency(const uint8_t *inputArr, uint8_t length,
+                                   uint8_t dotIndex) {
+  uint32_t frequency = 0;
+
+  uint32_t base = MHZ;
+  for (int i = dotIndex - 1; i >= 0; --i) {
+    frequency += inputArr[i] * base;
+    base *= 10;
+  }
+
+  base = MHZ / 10;
+  for (uint8_t i = dotIndex + 1; i < length; ++i) {
+    frequency += inputArr[i] * base;
+    base /= 10;
+  }
+
+  return frequency;
+}
+
 static void input(KEY_Code_t key) {
   if (key != KEY_EXIT && freqInputIndex >= FREQ_INPUT_LENGTH) {
     return;
   }
+
   if (key == KEY_STAR) {
-    if (freqInputDotIndex) {
-      return;
+    if (freqInputDotIndex == 0) {
+      freqInputDotIndex = freqInputIndex;
     }
-    freqInputDotIndex = freqInputIndex;
-  }
-  if (key == KEY_EXIT) {
-    if (freqInputIndex && freqInputArr[freqInputIndex - 1] == KEY_STAR) {
-      freqInputDotIndex = 0;
-    }
-    freqInputIndex--;
-  } else {
-    freqInputArr[freqInputIndex++] = key;
+    return;
   }
 
-  gFInputTempFreq = 0;
+  if (key == KEY_EXIT) {
+    if (freqInputIndex > 0) {
+      if (freqInputArr[freqInputIndex - 1] == KEY_STAR) {
+        freqInputDotIndex = 0;
+      }
+      freqInputIndex--;
+    }
+    return;
+  }
+
+  freqInputArr[freqInputIndex++] = key;
 
   uint8_t dotIndex =
       freqInputDotIndex == 0 ? freqInputIndex : freqInputDotIndex;
-
-  uint32_t base = 100000; // 1MHz in BK units
-  for (int i = dotIndex - 1; i >= 0; --i) {
-    gFInputTempFreq += freqInputArr[i] * base;
-    base *= 10;
-  }
-
-  base = 10000; // 0.1MHz in BK units
-  if (dotIndex < freqInputIndex) {
-    for (uint8_t i = dotIndex + 1; i < freqInputIndex; ++i) {
-      gFInputTempFreq += freqInputArr[i] * base;
-      base /= 10;
-    }
-  }
+  gFInputTempFreq = calculateFrequency(freqInputArr, freqInputIndex, dotIndex);
 }
 
 static void fillFromTempFreq(void) {

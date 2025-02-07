@@ -2,7 +2,6 @@
 #include "../driver/st7565.h"
 #include "../helper/channels.h"
 #include "../helper/measurements.h"
-#include "graphics.h"
 #include <stdint.h>
 
 void UI_Battery(uint8_t Level) {
@@ -97,4 +96,18 @@ void UI_Scanlists(uint8_t baseX, uint8_t baseY, uint16_t sl) {
     uint8_t y = baseY + yi * 3 + (yi && !isActive);
     FillRect(x, y, 2, 1 + isActive, C_INVERT);
   }
+}
+
+void UI_DrawLoot(const Loot *loot, uint8_t x, uint8_t y, TextPos pos) {
+  char c = ' ';
+  if (loot->blacklist) {
+    c = '-';
+  }
+  if (loot->whitelist) {
+    c = '+';
+  }
+
+  PrintMediumEx(x, y, pos, C_INVERT, "%c%u.%05u %c", c, loot->f / MHZ,
+                loot->f % MHZ,
+                gIsListening && loot->f == radio->rxF ? '!' : ' ');
 }

@@ -57,17 +57,7 @@ static void tuneToLoot(const Loot *loot, bool save) {
 }
 
 static void displayFreqBlWl(uint8_t y, const Loot *loot) {
-  if (loot->blacklist) {
-    PrintMediumEx(1, y + 7, POS_L, C_INVERT, "-");
-  }
-  if (loot->whitelist) {
-    PrintMediumEx(1, y + 7, POS_L, C_INVERT, "+");
-  }
-  PrintMediumEx(8, y + 7, POS_L, C_INVERT, "%u.%05u", loot->f / MHZ,
-                loot->f % MHZ);
-  if (gIsListening && loot->f == radio->rxF) {
-    PrintSymbolsEx(LCD_WIDTH - 24, y + 7, POS_R, C_INVERT, "%c", SYM_BEEP);
-  }
+  UI_DrawLoot(loot, 1, y + 7, POS_L);
 }
 
 static void getLootItem(uint16_t i, uint16_t index, bool isCurrent) {
@@ -209,12 +199,8 @@ bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_UP:
-      IncDec8(&menuIndex, 0, MENU_SIZE, -1);
-      loot = LOOT_Item(menuIndex);
-      tuneToLoot(loot, false);
-      return true;
     case KEY_DOWN:
-      IncDec8(&menuIndex, 0, MENU_SIZE, 1);
+      IncDec8(&menuIndex, 0, MENU_SIZE, key == KEY_UP ? -1 : 1);
       loot = LOOT_Item(menuIndex);
       tuneToLoot(loot, false);
       return true;

@@ -5,8 +5,10 @@
 #include "../helper/lootlist.h"
 #include "../helper/measurements.h"
 #include "../radio.h"
-#include "../ui/graphics.h"
+#include "../scheduler.h"
+#include "../ui/components.h"
 #include "../ui/spectrum.h"
+#include "../ui/statusline.h"
 #include "apps.h"
 #include "finput.h"
 #include <stdint.h>
@@ -17,29 +19,62 @@ static Measurement *m;
 static bool selStart = true;
 
 static uint32_t delay = 1000;
+static uint8_t afc = 0;
 
-static uint16_t sqLevel = UINT16_MAX;
+static uint16_t sqLevel;
 static bool thinking = false;
 static bool wasThinkingEarlier = false;
 
 static uint16_t msmLow;
 static uint16_t msmHigh;
 
-static uint16_t measure(uint32_t f) {
-  m->snr = 0;
-  BK4819_SetFrequency(m->f);
-  BK4819_WriteRegister(BK4819_REG_30, 0x0200);
-  BK4819_WriteRegister(BK4819_REG_30, 0xBFF1);
-  vTaskDelay(delay / 100);
-  m->rssi = BK4819_GetRSSI();
-  if (m->rssi > msmHigh) {
-    msmHigh = m->rssi;
-  }
-  if (m->rssi < msmLow) {
-    msmLow = m->rssi;
-  }
+typedef enum {
+  SET_AGC,
+  SET_BW,
+  SET_AFC,
+  SET_SQL_T,
+  SET_SQL_V,
+  SET_COUNT,
+} Setting;
 
-  return m->rssi;
+#define RANGES_STACK_SIZE 4
+static Band rangesStack[RANGES_STACK_SIZE] = {0};
+static int8_t rangesStackIndex = -1;
+
+static void rangeClear() { rangesStackIndex = -1; }
+
+static bool rangePush(Band r) {
+  if (rangesStackIndex < RANGES_STACK_SIZE - 1) {
+    rangesStack[++rangesStackIndex] = r;
+  } else {
+    for (uint8_t i = 1; i < RANGES_STACK_SIZE; ++i) {
+      rangesStack[i - 1] = rangesStack[i];
+    }
+    rangesStack[rangesStackIndex] = r;
+  }
+  return true;
+}
+
+static Band rangePop(void) {
+  if (rangesStackIndex > 0) {
+    return rangesStack[rangesStackIndex--];
+  }
+  return rangesStack[rangesStackIndex];
+}
+
+static Band *rangePeek(void) {
+  if (rangesStackIndex >= 0) {
+    return &rangesStack[rangesStackIndex];
+  }
+  return NULL;
+}
+
+static Setting setting;
+
+static uint16_t measure(uint32_t f) {
+  BK4819_TuneTo(f, true);
+  vTaskDelay(delay / 100);
+  return BK4819_GetRSSI();
 }
 
 static void prepareSqLevel() {
@@ -55,14 +90,19 @@ static void prepareSqLevel() {
   sqLevel = Mid(msms, ARRAY_SIZE(msms)) + 2;
 }
 
-static void newScan() {
-  prepareSqLevel();
-
-  RADIO_TuneTo(b->rxF);
-
-  BK4819_TuneTo(b->rxF, true);
+static void setupRadio() {
+  BK4819_SetAFC(afc);
   BK4819_SetFilterBandwidth(b->bw);
-  BK4819_SetAGC(true, AUTO_GAIN_INDEX);
+  BK4819_SetAGC(true, b->gainIndex);
+  // BK4819_SetModulation(b->modulation);
+  BK4819_Squelch(b->squelch.value, gSettings.sqlOpenTime,
+                 gSettings.sqlCloseTime);
+}
+
+static void newScan() {
+  radio->rxF = b->rxF;
+  prepareSqLevel();
+  setupRadio();
   SP_Init(b);
 }
 
@@ -85,7 +125,9 @@ void SCANER_init(void) {
   m = &gLoot[gSettings.activeVFO];
   m->snr = 0;
 
-  b = &gCurrentBand;
+  rangePush(gCurrentBand);
+
+  b = rangePeek();
   b->meta.type = TYPE_BAND_DETACHED;
 
   b->rxF = 17200000;
@@ -96,21 +138,29 @@ void SCANER_init(void) {
   newScan();
 }
 
+uint32_t lastListenTime;
+
 void SCANER_update(void) {
   if (m->open) {
     m->open = BK4819_IsSquelchOpen();
   } else {
-    m->open = measure(m->f) >= sqLevel;
+    m->rssi = measure(m->f);
+    m->open = m->rssi >= sqLevel;
     SP_AddPoint(m);
+    if (m->rssi > msmHigh) {
+      msmHigh = m->rssi;
+    }
+    if (m->rssi < msmLow) {
+      msmLow = m->rssi;
+    }
   }
 
   if (gSettings.skipGarbageFrequencies && (radio->rxF % 1300000 == 0)) {
     m->open = false;
   }
-  m->open = false; // FIXME: DELETE AFTER TEST
 
   // really good level?
-  /* if (m->open && !gIsListening) {
+  if (m->open && !gIsListening) {
     thinking = true;
     wasThinkingEarlier = true;
     gRedrawScreen = true;
@@ -121,7 +171,7 @@ void SCANER_update(void) {
     if (!m->open) {
       sqLevel++;
     }
-  } */
+  }
 
   LOOT_Update(m);
 
@@ -133,29 +183,26 @@ void SCANER_update(void) {
   }
 
   static uint8_t stepsPassed;
-  stepsPassed++;
 
-  if (stepsPassed > 64) {
-    gRedrawScreen = true;
+  if (stepsPassed++ > 64) {
     stepsPassed = 0;
+    gRedrawScreen = true;
     if (!wasThinkingEarlier) {
       sqLevel--;
     }
     wasThinkingEarlier = false;
   }
 
-  if (RADIO_NextFScan(true)) {
-    RADIO_SetupBandParams();
-  }
-  if (radio->rxF < m->f) {
+  if (RADIO_NextFScan(b, true) || radio->rxF < m->f) {
+    setupRadio(); // NOTE somewhy makes first measurement artifact, maybe need
+                  // delay
     gRedrawScreen = true;
   }
   m->f = radio->rxF;
 }
 
 bool SCANER_key(KEY_Code_t key, Key_State_t state) {
-  uint8_t stp;
-  uint8_t bw;
+  uint8_t u8v;
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_1:
@@ -164,22 +211,49 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       return true;
     case KEY_2:
     case KEY_8:
-      bw = b->bw;
-      IncDec8(&bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1,
-              key == KEY_2 ? 1 : -1);
-      b->bw = bw;
-      BK4819_SetFilterBandwidth(b->bw);
+      switch (setting) {
+      case SET_AFC:
+        IncDec8(&afc, 0, 8, key == KEY_2 ? 1 : -1);
+        break;
+      case SET_BW:
+        u8v = b->bw;
+        IncDec8(&u8v, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1,
+                key == KEY_2 ? 1 : -1);
+        b->bw = u8v;
+        break;
+      case SET_AGC:
+        u8v = b->gainIndex;
+        IncDec8(&u8v, 0, ARRAY_SIZE(gainTable), key == KEY_2 ? 1 : -1);
+        b->gainIndex = u8v;
+        break;
+      case SET_SQL_T:
+        u8v = b->squelch.type;
+        IncDec8(&u8v, 0, ARRAY_SIZE(sqTypeNames), key == KEY_2 ? 1 : -1);
+        b->squelch.type = u8v;
+        break;
+      case SET_SQL_V:
+        u8v = b->squelch.value;
+        IncDec8(&u8v, 0, 11, key == KEY_2 ? 1 : -1);
+        b->squelch.value = u8v;
+        break;
+      default:
+        break;
+      }
+      setupRadio();
       return true;
     case KEY_3:
     case KEY_9:
-      stp = b->step;
-      IncDec8(&stp, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
-      b->step = stp;
+      u8v = b->step;
+      IncDec8(&u8v, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
+      b->step = u8v;
       newScan();
       return true;
     case KEY_STAR:
-    case KEY_F:
-      RADIO_UpdateSquelchLevel(key == KEY_STAR);
+      APPS_run(APP_LOOT_LIST);
+      return true;
+    case KEY_UP:
+    case KEY_DOWN:
+      CUR_Move(key == KEY_UP);
       return true;
     default:
       break;
@@ -188,6 +262,9 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
 
   if (state == KEY_RELEASED) {
     switch (key) {
+    case KEY_4:
+      IncDec8(&setting, 0, SET_COUNT, 1);
+      return true;
     case KEY_5:
       gFInputCallback = selStart ? setStartF : setEndF;
       APPS_run(APP_FINPUT);
@@ -201,13 +278,19 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
     case KEY_STAR:
       APPS_run(APP_LOOT_LIST);
       return true;
-    case KEY_UP:
-      RADIO_ToggleRX(false);
-      if (RADIO_NextFScan(true)) {
-        RADIO_SetupBandParams();
+
+    case KEY_0:
+      if (rangesStackIndex < RANGES_STACK_SIZE - 1) {
+        rangePush(CUR_GetRange(rangePeek(), StepFrequencyTable[b->step]));
+        newScan();
+        return true;
       }
-      m->f = radio->rxF;
+      break;
+    case KEY_F:
+      rangePop();
+      newScan();
       return true;
+
     default:
       break;
     }
@@ -221,12 +304,27 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
 }
 
 static void renderAnalyzerUI() {
-  PrintSmallEx(0, 12 + 6 * 0, POS_L, C_FILL, "%uus", delay);
-  PrintSmallEx(0, 12 + 6 * 1, POS_L, C_FILL, "%u", msmHigh);
-  PrintSmallEx(0, 12 + 6 * 2, POS_L, C_FILL, "%u", msmLow);
-  PrintSmallEx(LCD_XCENTER, 16 + 6 * 1, POS_C, C_FILL, "%+d",
-               -gainTable[b->gainIndex].gainDb + 33);
+  PrintSmallEx(0, 18, POS_L, C_FILL, "%u", msmHigh);
+  PrintSmallEx(0, 24, POS_L, C_FILL, "%u", msmLow);
 }
+
+/*
+MENU
+
+ANALYZER
+vMax
+vMin
+
+SCANER
+gLastActiveLoot
+
+BOTH
+delay 1/7
+step 3/9
+msm->f
+sql star/F?
+
+*/
 
 void SCANER_render(void) {
   const uint32_t step = StepFrequencyTable[b->step];
@@ -235,26 +333,34 @@ void SCANER_render(void) {
     PrintSmallEx(LCD_XCENTER, 4, POS_C, C_FILL, "...");
   }
 
+  STATUSLINE_SetText("");
+
+  const uint8_t MUL = 22;
+
+  PrintSmallEx(setting * MUL, 4, POS_L, C_FILL, ">");
+  PrintSmallEx(4 + MUL * 0, 4, POS_L, C_FILL, "%+d",
+               -gainTable[b->gainIndex].gainDb + 33);
+  PrintSmallEx(4 + MUL * 1, 4, POS_L, C_FILL, "%s", bwNames[b->bw]);
+  PrintSmallEx(4 + MUL * 2, 4, POS_L, C_FILL, "AFC%u", afc);
+  PrintSmallEx(4 + MUL * 3, 4, POS_L, C_FILL, "%s",
+               sqTypeNames[b->squelch.type]);
+  PrintSmallEx(4 + MUL * 4, 4, POS_L, C_FILL, "%u", b->squelch.value);
+
   SP_Render(b);
   SP_RenderArrow(b, radio->rxF);
+  CUR_Render(SPECTRUM_Y + 22);
 
   // top
   if (gLastActiveLoot) {
-    PrintMediumEx(LCD_XCENTER, 14, POS_C, C_FILL, "%u.%05u",
-                  gLastActiveLoot->f / MHZ, gLastActiveLoot->f % MHZ);
+    UI_DrawLoot(gLastActiveLoot, LCD_XCENTER, 14, POS_C);
   }
 
-  PrintSmallEx(0, 12 + 6 * 0, POS_L, C_FILL, "%uus", delay);
+  PrintSmallEx(0, 12, POS_L, C_FILL, "%uus", delay);
 
   PrintSmallEx(LCD_WIDTH, 12, POS_R, C_FILL, "%u.%02uk", step / 100,
                step % 100);
 
-  PrintSmallEx(LCD_WIDTH - 1, 18, POS_R, C_FILL, "%s%u",
-               sqTypeNames[radio->squelch.type], radio->squelch.value);
-  PrintSmallEx(LCD_WIDTH, 12 + 6 * 2, POS_R, C_FILL, "%s", bwNames[b->bw]);
-
-  /* PrintSmallEx(LCD_XCENTER, 16 + 6 * 1, POS_C, C_FILL, "%+d",
-               -gainTable[gain].gainDb + 33); */
+  // renderAnalyzerUI();
 
   // bottom
   FSmall(1, LCD_HEIGHT - 2, POS_L, b->rxF);

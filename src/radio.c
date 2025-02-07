@@ -950,13 +950,13 @@ void RADIO_UpdateSquelchLevel(bool next) {
   RADIO_SetSquelch(sq);
 }
 
-bool RADIO_NextFScan(bool next) {
-  uint32_t steps = CHANNELS_GetSteps(&gCurrentBand);
-  int64_t step = CHANNELS_GetChannel(&gCurrentBand, radio->rxF);
+bool RADIO_NextFScan(Band *b, bool next) {
+  uint32_t steps = CHANNELS_GetSteps(b);
+  int64_t step = CHANNELS_GetChannel(b, radio->rxF);
 
   step += next ? 1 : -1;
 
-  bool canSwitchToNextBand = gCurrentBand.meta.type != TYPE_BAND_DETACHED;
+  bool canSwitchToNextBand = b->meta.type != TYPE_BAND_DETACHED;
   bool switchBand = false;
 
   if (step < 0 || step >= steps) {
@@ -966,7 +966,7 @@ bool RADIO_NextFScan(bool next) {
     step = (step < 0) ? steps - 1 : 0;
   }
 
-  radio->rxF = CHANNELS_GetF(&gCurrentBand, step);
+  radio->rxF = CHANNELS_GetF(b, step);
   return switchBand;
 }
 

@@ -191,10 +191,8 @@ bool CHLIST_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_UP:
-      IncDec16(&channelIndex, 0, gScanlistSize, -1);
-      return true;
     case KEY_DOWN:
-      IncDec16(&channelIndex, 0, gScanlistSize, 1);
+      IncDec16(&channelIndex, 0, gScanlistSize, key == KEY_UP ? -1 : 1);
       return true;
     default:
       break;

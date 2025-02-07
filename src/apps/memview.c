@@ -29,22 +29,18 @@ void MEMVIEW_Render(void) {
   }
 }
 
-bool MEMVIEW_key(KEY_Code_t k, Key_State_t state) {
-  switch (k) {
+bool MEMVIEW_key(KEY_Code_t key, Key_State_t state) {
+  switch (key) {
   case KEY_EXIT:
     APPS_exit();
     return true;
   case KEY_UP:
-    IncDec32(&page, 0, pagesCount, -1);
-    return true;
   case KEY_DOWN:
-    IncDec32(&page, 0, pagesCount, 1);
+    IncDec32(&page, 0, pagesCount, key == KEY_UP ? -1 : 1);
     return true;
   case KEY_3:
-    IncDec32(&page, 0, pagesCount, -8196 / PAGE_SZ);
-    return true;
   case KEY_9:
-    IncDec32(&page, 0, pagesCount, 8196 / PAGE_SZ);
+    IncDec32(&page, 0, pagesCount, (key == KEY_3 ? -8196 : 8196) / PAGE_SZ);
     return true;
   case KEY_MENU:
     return false;

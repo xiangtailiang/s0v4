@@ -74,7 +74,7 @@ void RADIO_SetupByCurrentVFO();
 void RADIO_NextVFO(void);
 bool RADIO_NextBandFreqXBandEx(bool next, bool precise);
 void RADIO_NextBandFreqXBand(bool next);
-bool RADIO_NextFScan(bool next);
+bool RADIO_NextFScan(Band *b, bool next);
 void RADIO_ToggleVfoMR();
 
 void RADIO_SetSquelch(uint8_t sq);
