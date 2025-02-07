@@ -30,7 +30,7 @@ static uint16_t measure(uint32_t f) {
   BK4819_SetFrequency(m->f);
   BK4819_WriteRegister(BK4819_REG_30, 0x0200);
   BK4819_WriteRegister(BK4819_REG_30, 0xBFF1);
-  vTaskDelay(delay / 1000);
+  vTaskDelay(delay / 100);
   m->rssi = BK4819_GetRSSI();
   if (m->rssi > msmHigh) {
     msmHigh = m->rssi;
@@ -60,8 +60,9 @@ static void newScan() {
 
   RADIO_TuneTo(b->rxF);
 
+  BK4819_TuneTo(b->rxF, true);
   BK4819_SetFilterBandwidth(b->bw);
-  BK4819_SetAGC(true, b->gainIndex);
+  BK4819_SetAGC(true, AUTO_GAIN_INDEX);
   SP_Init(b);
 }
 
