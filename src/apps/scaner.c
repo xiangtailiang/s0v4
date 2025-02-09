@@ -91,8 +91,8 @@ static void setEndF(uint32_t f) {
 }
 
 void SCANER_init(void) {
-  SPECTRUM_Y = 6;
-  SPECTRUM_H = 44;
+  SPECTRUM_Y = 8;
+  SPECTRUM_H = 42;
 
   m = &gLoot[gSettings.activeVFO];
   m->snr = 0;
@@ -288,24 +288,6 @@ static void renderAnalyzerUI() {
   PrintSmallEx(0, 24, POS_L, C_FILL, "%u", msmLow);
 }
 
-/*
-MENU
-
-ANALYZER
-vMax
-vMin
-
-SCANER
-gLastActiveLoot
-
-BOTH
-delay 1/7
-step 3/9
-msm->f
-sql star/F?
-
-*/
-
 void SCANER_render(void) {
   const uint32_t step = StepFrequencyTable[radio->step];
 
@@ -313,22 +295,19 @@ void SCANER_render(void) {
     PrintSmallEx(LCD_XCENTER, 4, POS_C, C_FILL, "...");
   }
 
-  STATUSLINE_SetText("");
+  const int8_t vGain = -gainTable[radio->gainIndex].gainDb + 33;
 
-  const uint8_t MUL = 22;
-
-  PrintSmallEx(setting * MUL, 4, POS_L, C_FILL, ">");
-  PrintSmallEx(4 + MUL * 0, 4, POS_L, C_FILL, "%+d",
-               -gainTable[radio->gainIndex].gainDb + 33);
-  PrintSmallEx(4 + MUL * 1, 4, POS_L, C_FILL, "%s", bwNames[radio->bw]);
-  PrintSmallEx(4 + MUL * 2, 4, POS_L, C_FILL, "AFC%u", afc);
-  PrintSmallEx(4 + MUL * 3, 4, POS_L, C_FILL, "%s",
-               sqTypeNames[radio->squelch.type]);
-  PrintSmallEx(4 + MUL * 4, 4, POS_L, C_FILL, "%u", radio->squelch.value);
+  STATUSLINE_SetText(                                                     //
+      "%c%+d %c%s %cAFC%u %c%s%c%u",                                      //
+      setting == SET_AGC ? '>' : ' ', vGain,                              //
+      setting == SET_BW ? '>' : ' ', bwNames[radio->bw],                  //
+      setting == SET_AFC ? '>' : ' ', afc,                                //
+      setting == SET_SQL_T ? '>' : ' ', sqTypeNames[radio->squelch.type], //
+      setting == SET_SQL_V ? '>' : ' ', radio->squelch.value              //
+  );
 
   SP_Render(b);
   SP_RenderArrow(b, radio->rxF);
-  CUR_Render();
 
   // top
   if (gLastActiveLoot) {
@@ -348,6 +327,8 @@ void SCANER_render(void) {
   FSmall(LCD_WIDTH - 1, LCD_HEIGHT - 2, POS_R, b->txF);
 
   FillRect(selStart ? 0 : LCD_WIDTH - 42, LCD_HEIGHT - 7, 42, 7, C_INVERT);
+
+  CUR_Render();
 }
 
 void SCANER_deinit(void) {}

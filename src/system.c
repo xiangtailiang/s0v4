@@ -151,7 +151,7 @@ void SYS_Main(void *params) {
     if (UART_IsCommandAvailable()) {
       UART_HandleCommand();
     }
-    // STATUSLINE_update();
+    STATUSLINE_update();
     vTaskDelay(1);
   }
 }

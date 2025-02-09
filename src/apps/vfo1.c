@@ -10,6 +10,7 @@
 #include "../scheduler.h"
 #include "../ui/components.h"
 #include "../ui/graphics.h"
+#include "../ui/spectrum.h"
 #include "../ui/statusline.h"
 #include "apps.h"
 #include "chcfg.h"
@@ -106,8 +107,19 @@ void VFO1_init(void) {
 }
 
 void VFO1_update(void) {
-  // TODO: scan
-  vTaskDelay(pdMS_TO_TICKS(500));
+  Measurement m = {
+      .rssi = RADIO_GetRSSI(),
+      .snr = RADIO_GetSNR(),
+      .noise = BK4819_GetNoise(),
+      .glitch = BK4819_GetGlitch(),
+  };
+  m.open = BK4819_IsSquelchOpen();
+  LOOT_Update(&m);
+  RADIO_ToggleRX(m.open);
+  SP_ShiftGraph(-1);
+  SP_AddGraphPoint(&m);
+  gRedrawScreen = true;
+  vTaskDelay(pdMS_TO_TICKS(100));
 }
 
 bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
@@ -224,10 +236,9 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
     bool isSsb = RADIO_IsSSB();
     switch (key) {
     case KEY_UP:
-      // SCAN_ToggleDirection(true);
-      return true;
     case KEY_DOWN:
-      // SCAN_ToggleDirection(false);
+      RADIO_NextF(key == KEY_UP);
+      RADIO_SaveCurrentVFO();
       return true;
     case KEY_SIDE1:
     case KEY_SIDE2:

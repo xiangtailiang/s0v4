@@ -92,20 +92,15 @@ void SP_AddPoint(const Measurement *msm) {
   if (xe > MAX_POINTS) {
     xe = MAX_POINTS;
   }
+  uint16_t v = msm->rssi ? msm->rssi : msm->rssi;
   // TODO: debug this range
   for (x = xs; x <= xe; ++x) {
     if (ox != x) {
       ox = x;
       rssiHistory[x] = 0;
     }
-    if (msm->rssi) {
-      if (msm->rssi > rssiHistory[x]) {
-        rssiHistory[x] = msm->rssi;
-      }
-    } else {
-      if (msm->snr > rssiHistory[x]) {
-        rssiHistory[x] = msm->snr;
-      }
+    if (v > rssiHistory[x]) {
+      rssiHistory[x] = v;
     }
   }
   if (x + 1 > filledPoints) {
@@ -136,7 +131,7 @@ void SP_Render(const Band *p) {
   }
 
   DrawHLine(0, S_BOTTOM, MAX_POINTS, C_FILL);
-  DrawHLine(0, SPECTRUM_Y, LCD_WIDTH, C_FILL);
+  // DrawHLine(0, SPECTRUM_Y, LCD_WIDTH, C_FILL);
 
   for (uint8_t i = 0; i < filledPoints; ++i) {
     uint8_t yVal = ConvertDomain(rssiHistory[i], v.vMin, v.vMax, 0, SPECTRUM_H);
@@ -235,9 +230,15 @@ static uint8_t curX = MAX_POINTS / 2;
 static uint8_t curSbWidth = 16;
 
 void CUR_Render() {
-  DrawVLine(curX - curSbWidth, S_BOTTOM + 4, 3, C_FILL);
+  /* DrawVLine(curX - curSbWidth, S_BOTTOM + 4, 3, C_FILL);
   DrawVLine(curX, S_BOTTOM + 5, 2, C_FILL);
-  DrawVLine(curX + curSbWidth, S_BOTTOM + 4, 3, C_FILL);
+  DrawVLine(curX + curSbWidth, S_BOTTOM + 4, 3, C_FILL); */
+  // FillRect(curX - curSbWidth, SPECTRUM_Y, curSbWidth * 2, SPECTRUM_H,
+  // C_INVERT);
+  for (uint8_t y = SPECTRUM_Y; y < S_BOTTOM; y += 4) {
+    DrawVLine(curX - curSbWidth, y, 2, C_INVERT);
+    DrawVLine(curX + curSbWidth, y, 2, C_INVERT);
+  }
 }
 
 bool CUR_Move(bool up) {
@@ -297,6 +298,6 @@ uint32_t CUR_GetCenterF(Band *p, uint32_t step) {
 }
 
 void CUR_Reset() {
-  curX = 80;
+  curX = MAX_POINTS / 2;
   curSbWidth = 16;
 }

@@ -16,19 +16,20 @@ static uint8_t freqInputIndex = 0;
 
 static bool dotBlink = true;
 
-static uint32_t calculateFrequency(const uint8_t *inputArr, uint8_t length,
-                                   uint8_t dotIndex) {
+static uint32_t calculateFrequency() {
+  uint8_t dotIndex =
+      freqInputDotIndex == 0 ? freqInputIndex : freqInputDotIndex;
   uint32_t frequency = 0;
 
   uint32_t base = MHZ;
   for (int i = dotIndex - 1; i >= 0; --i) {
-    frequency += inputArr[i] * base;
+    frequency += freqInputArr[i] * base;
     base *= 10;
   }
 
   base = MHZ / 10;
-  for (uint8_t i = dotIndex + 1; i < length; ++i) {
-    frequency += inputArr[i] * base;
+  for (uint8_t i = dotIndex + 1; i < freqInputIndex; ++i) {
+    frequency += freqInputArr[i] * base;
     base /= 10;
   }
 
@@ -36,7 +37,7 @@ static uint32_t calculateFrequency(const uint8_t *inputArr, uint8_t length,
 }
 
 static void input(KEY_Code_t key) {
-  if (key != KEY_EXIT && freqInputIndex >= FREQ_INPUT_LENGTH) {
+  if (freqInputIndex >= FREQ_INPUT_LENGTH && key != KEY_EXIT) {
     return;
   }
 
@@ -59,9 +60,7 @@ static void input(KEY_Code_t key) {
 
   freqInputArr[freqInputIndex++] = key;
 
-  uint8_t dotIndex =
-      freqInputDotIndex == 0 ? freqInputIndex : freqInputDotIndex;
-  gFInputTempFreq = calculateFrequency(freqInputArr, freqInputIndex, dotIndex);
+  gFInputTempFreq = calculateFrequency();
 }
 
 static void fillFromTempFreq(void) {
