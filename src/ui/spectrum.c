@@ -119,11 +119,11 @@ void SP_AddPoint(const Measurement *msm) {
 static VMinMax getV() {
   const uint16_t rssiMin = minRssi(rssiHistory, filledPoints);
   const uint16_t rssiMax = Max(rssiHistory, filledPoints);
-  const uint16_t noiseFloor = SP_GetNoiseFloor();
-  const uint16_t vMin = rssiMin - 2;
-  const uint16_t vMax =
-      rssiMax + Clamp((rssiMax - noiseFloor), 15, rssiMax - noiseFloor);
-  return (VMinMax){vMin, vMax};
+  const uint16_t rssiDiff = rssiMax - rssiMin;
+  return (VMinMax){
+      .vMin = rssiMin,
+      .vMax = rssiMax + Clamp(rssiDiff, 20, rssiDiff),
+  };
 }
 
 uint16_t peaks[MAX_POINTS];
