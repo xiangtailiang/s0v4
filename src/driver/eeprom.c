@@ -45,7 +45,7 @@ void EEPROM_WriteBuffer(uint32_t address, void *pBuffer, uint16_t size) {
       I2C_WriteBuffer(pBuffer, n);
 
       I2C_Stop();
-      SYSTEM_DelayMs(10);
+      SYS_DelayMs(10);
     }
 
     pBuffer += n;
@@ -71,7 +71,7 @@ void EEPROM_ClearPage(uint16_t page) {
   }
 
   I2C_Stop();
-  SYSTEM_DelayMs(10);
+  SYS_DelayMs(10);
 
   gEepromWrite = true;
 }

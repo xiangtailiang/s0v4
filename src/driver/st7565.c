@@ -34,11 +34,11 @@ bool gRedrawScreen = true;
 
 static void ST7565_Configure_GPIO_B11(void) {
   GPIO_SetBit(&GPIOB->DATA, GPIOB_PIN_ST7565_RES);
-  SYSTEM_DelayMs(1);
+  SYS_DelayMs(1);
   GPIO_ClearBit(&GPIOB->DATA, GPIOB_PIN_ST7565_RES);
-  SYSTEM_DelayMs(20);
+  SYS_DelayMs(20);
   GPIO_SetBit(&GPIOB->DATA, GPIOB_PIN_ST7565_RES);
-  SYSTEM_DelayMs(120);
+  SYS_DelayMs(120);
 }
 
 static void ST7565_SelectColumnAndLine(uint8_t Column, uint8_t Line) {
@@ -130,7 +130,7 @@ void ST7565_Init(void) {
   Log("master");
   ST7565_WriteByte(0xE2);
   Log("WB");
-  SYSTEM_DelayMs(0x78);
+  SYS_DelayMs(0x78);
   Log("Delay");
   ST7565_WriteByte(0xA2);
   ST7565_WriteByte(0xC0);
@@ -142,14 +142,14 @@ void ST7565_Init(void) {
   // ST7565_WriteByte(0x1F); // contrast
   ST7565_WriteByte(23 + gSettings.contrast); // brightness 0 ~ 63
   ST7565_WriteByte(0x2B);
-  SYSTEM_DelayMs(1);
+  SYS_DelayMs(1);
   ST7565_WriteByte(0x2E);
-  SYSTEM_DelayMs(1);
+  SYS_DelayMs(1);
   ST7565_WriteByte(0x2F);
   ST7565_WriteByte(0x2F);
   ST7565_WriteByte(0x2F);
   ST7565_WriteByte(0x2F);
-  SYSTEM_DelayMs(0x28);
+  SYS_DelayMs(0x28);
   ST7565_WriteByte(0x40);
   ST7565_WriteByte(0xAF);
   SPI_WaitForUndocumentedTxFifoStatusBit();

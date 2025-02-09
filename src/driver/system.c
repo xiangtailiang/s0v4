@@ -3,9 +3,9 @@
 #include "../inc/dp32g030/syscon.h"
 #include "systick.h"
 
-void SYSTEM_DelayMs(uint32_t Delay) { SYSTICK_DelayUs(Delay * 1000); }
+void SYS_DelayMs(uint32_t Delay) { SYSTICK_DelayUs(Delay * 1000); }
 
-void SYSTEM_ConfigureClocks(void) {
+void SYS_ConfigureClocks(void) {
   // Set source clock from external crystal
   PMU_SRC_CFG =
       (PMU_SRC_CFG & ~(PMU_SRC_CFG_RCHF_SEL_MASK | PMU_SRC_CFG_RCHF_EN_MASK)) |
@@ -20,7 +20,7 @@ void SYSTEM_ConfigureClocks(void) {
       SYSCON_DIV_CLK_GATE_DIV_CLK_GATE_BITS_DISABLE;
 }
 
-void SYSTEM_ConfigureSysCon() {
+void SYS_ConfigureSysCon() {
   // Enable clock gating of blocks we need.
   SYSCON_DEV_CLK_GATE = 0 | SYSCON_DEV_CLK_GATE_GPIOA_BITS_ENABLE |
                         SYSCON_DEV_CLK_GATE_GPIOB_BITS_ENABLE |

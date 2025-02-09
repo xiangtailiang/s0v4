@@ -37,38 +37,6 @@ typedef enum {
   SET_COUNT,
 } Setting;
 
-#define RANGES_STACK_SIZE 4
-static Band rangesStack[RANGES_STACK_SIZE] = {0};
-static int8_t rangesStackIndex = -1;
-
-static void rangeClear() { rangesStackIndex = -1; }
-
-static bool rangePush(Band r) {
-  if (rangesStackIndex < RANGES_STACK_SIZE - 1) {
-    rangesStack[++rangesStackIndex] = r;
-  } else {
-    for (uint8_t i = 1; i < RANGES_STACK_SIZE; ++i) {
-      rangesStack[i - 1] = rangesStack[i];
-    }
-    rangesStack[rangesStackIndex] = r;
-  }
-  return true;
-}
-
-static Band rangePop(void) {
-  if (rangesStackIndex > 0) {
-    return rangesStack[rangesStackIndex--];
-  }
-  return rangesStack[rangesStackIndex];
-}
-
-static Band *rangePeek(void) {
-  if (rangesStackIndex >= 0) {
-    return &rangesStack[rangesStackIndex];
-  }
-  return NULL;
-}
-
 static Setting setting;
 
 static uint16_t measure(uint32_t f) {
@@ -91,18 +59,20 @@ static void prepareSqLevel() {
 }
 
 static void setupRadio() {
+  Log("AFC:%u, BW:%s, G:%+d", afc, bwNames[radio->bw],
+      -gainTable[radio->gainIndex].gainDb + 33);
   BK4819_SetAFC(afc);
-  BK4819_SetFilterBandwidth(b->bw);
-  BK4819_SetAGC(true, b->gainIndex);
-  // BK4819_SetModulation(b->modulation);
-  BK4819_Squelch(b->squelch.value, gSettings.sqlOpenTime,
+  BK4819_SetFilterBandwidth(radio->bw);
+  BK4819_SetAGC(true, radio->gainIndex);
+  // BK4819_SetModulation(radio->modulation);
+  BK4819_Squelch(radio->squelch.value, gSettings.sqlOpenTime,
                  gSettings.sqlCloseTime);
 }
 
 static void newScan() {
-  radio->rxF = b->rxF;
+  m->f = radio->rxF = b->rxF;
   prepareSqLevel();
-  setupRadio();
+  // setupRadio();
   SP_Init(b);
 }
 
@@ -118,33 +88,33 @@ static void setEndF(uint32_t f) {
 
 void SCANER_init(void) {
   SPECTRUM_Y = 6;
-  SPECTRUM_H = 46;
+  SPECTRUM_H = 44;
 
   RADIO_LoadCurrentVFO();
 
   m = &gLoot[gSettings.activeVFO];
   m->snr = 0;
 
-  rangePush(gCurrentBand);
+  BANDS_RangePush(gCurrentBand);
 
-  b = rangePeek();
+  b = BANDS_RangePeek();
   b->meta.type = TYPE_BAND_DETACHED;
-
   b->rxF = 17200000;
   b->txF = 17300000;
-  b->bw = BK4819_FILTER_BW_12k;
-  b->gainIndex = AUTO_GAIN_INDEX;
+
+  radio->bw = BK4819_FILTER_BW_12k;
+  radio->gainIndex = AUTO_GAIN_INDEX;
 
   newScan();
+  setupRadio();
 }
-
-uint32_t lastListenTime;
 
 void SCANER_update(void) {
   if (m->open) {
     m->open = BK4819_IsSquelchOpen();
   } else {
-    m->rssi = measure(m->f);
+    m->f = radio->rxF;
+    m->rssi = measure(radio->rxF);
     m->open = m->rssi >= sqLevel;
     SP_AddPoint(m);
     if (m->rssi > msmHigh) {
@@ -193,59 +163,32 @@ void SCANER_update(void) {
     wasThinkingEarlier = false;
   }
 
-  if (RADIO_NextFScan(b, true) || radio->rxF < m->f) {
-    setupRadio(); // NOTE somewhy makes first measurement artifact, maybe need
-                  // delay
+  radio->rxF += StepFrequencyTable[radio->step];
+
+  if (radio->rxF > b->txF) {
+    radio->rxF = b->rxF;
     gRedrawScreen = true;
   }
-  m->f = radio->rxF;
 }
 
 bool SCANER_key(KEY_Code_t key, Key_State_t state) {
   uint8_t u8v;
+  if (state == KEY_LONG_PRESSED && key == KEY_5) {
+    selStart = !selStart;
+    return true;
+  }
+
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_1:
     case KEY_7:
       IncDec32(&delay, 200, 10000, key == KEY_1 ? 100 : -100);
       return true;
-    case KEY_2:
-    case KEY_8:
-      switch (setting) {
-      case SET_AFC:
-        IncDec8(&afc, 0, 8, key == KEY_2 ? 1 : -1);
-        break;
-      case SET_BW:
-        u8v = b->bw;
-        IncDec8(&u8v, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1,
-                key == KEY_2 ? 1 : -1);
-        b->bw = u8v;
-        break;
-      case SET_AGC:
-        u8v = b->gainIndex;
-        IncDec8(&u8v, 0, ARRAY_SIZE(gainTable), key == KEY_2 ? 1 : -1);
-        b->gainIndex = u8v;
-        break;
-      case SET_SQL_T:
-        u8v = b->squelch.type;
-        IncDec8(&u8v, 0, ARRAY_SIZE(sqTypeNames), key == KEY_2 ? 1 : -1);
-        b->squelch.type = u8v;
-        break;
-      case SET_SQL_V:
-        u8v = b->squelch.value;
-        IncDec8(&u8v, 0, 11, key == KEY_2 ? 1 : -1);
-        b->squelch.value = u8v;
-        break;
-      default:
-        break;
-      }
-      setupRadio();
-      return true;
     case KEY_3:
     case KEY_9:
-      u8v = b->step;
+      u8v = radio->step;
       IncDec8(&u8v, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
-      b->step = u8v;
+      radio->step = u8v;
       newScan();
       return true;
     case KEY_STAR:
@@ -254,6 +197,39 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
     case KEY_UP:
     case KEY_DOWN:
       CUR_Move(key == KEY_UP);
+      return true;
+
+    case KEY_2:
+    case KEY_8:
+      switch (setting) {
+      case SET_AFC:
+        IncDec8(&afc, 0, 8, key == KEY_2 ? 1 : -1);
+        break;
+      case SET_BW:
+        u8v = radio->bw;
+        IncDec8(&u8v, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1,
+                key == KEY_2 ? 1 : -1);
+        radio->bw = u8v;
+        break;
+      case SET_AGC:
+        u8v = radio->gainIndex;
+        IncDec8(&u8v, 0, ARRAY_SIZE(gainTable), key == KEY_2 ? 1 : -1);
+        radio->gainIndex = u8v;
+        break;
+      case SET_SQL_T:
+        u8v = radio->squelch.type;
+        IncDec8(&u8v, 0, ARRAY_SIZE(sqTypeNames), key == KEY_2 ? 1 : -1);
+        radio->squelch.type = u8v;
+        break;
+      case SET_SQL_V:
+        u8v = radio->squelch.value;
+        IncDec8(&u8v, 0, 11, key == KEY_2 ? 1 : -1);
+        radio->squelch.value = u8v;
+        break;
+      default:
+        break;
+      }
+      setupRadio();
       return true;
     default:
       break;
@@ -280,14 +256,14 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       return true;
 
     case KEY_0:
-      if (rangesStackIndex < RANGES_STACK_SIZE - 1) {
-        rangePush(CUR_GetRange(rangePeek(), StepFrequencyTable[b->step]));
-        newScan();
-        return true;
-      }
-      break;
+      BANDS_RangePush(
+          CUR_GetRange(BANDS_RangePeek(), StepFrequencyTable[radio->step]));
+      b = BANDS_RangePeek();
+      newScan();
+      return true;
     case KEY_F:
-      rangePop();
+      BANDS_RangePop();
+      b = BANDS_RangePeek();
       newScan();
       return true;
 
@@ -296,10 +272,6 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
     }
   }
 
-  if (state == KEY_LONG_PRESSED && key == KEY_2) {
-    selStart = !selStart;
-    return true;
-  }
   return false;
 }
 
@@ -327,7 +299,7 @@ sql star/F?
 */
 
 void SCANER_render(void) {
-  const uint32_t step = StepFrequencyTable[b->step];
+  const uint32_t step = StepFrequencyTable[radio->step];
 
   if (thinking) {
     PrintSmallEx(LCD_XCENTER, 4, POS_C, C_FILL, "...");
@@ -339,16 +311,16 @@ void SCANER_render(void) {
 
   PrintSmallEx(setting * MUL, 4, POS_L, C_FILL, ">");
   PrintSmallEx(4 + MUL * 0, 4, POS_L, C_FILL, "%+d",
-               -gainTable[b->gainIndex].gainDb + 33);
-  PrintSmallEx(4 + MUL * 1, 4, POS_L, C_FILL, "%s", bwNames[b->bw]);
+               -gainTable[radio->gainIndex].gainDb + 33);
+  PrintSmallEx(4 + MUL * 1, 4, POS_L, C_FILL, "%s", bwNames[radio->bw]);
   PrintSmallEx(4 + MUL * 2, 4, POS_L, C_FILL, "AFC%u", afc);
   PrintSmallEx(4 + MUL * 3, 4, POS_L, C_FILL, "%s",
-               sqTypeNames[b->squelch.type]);
-  PrintSmallEx(4 + MUL * 4, 4, POS_L, C_FILL, "%u", b->squelch.value);
+               sqTypeNames[radio->squelch.type]);
+  PrintSmallEx(4 + MUL * 4, 4, POS_L, C_FILL, "%u", radio->squelch.value);
 
   SP_Render(b);
   SP_RenderArrow(b, radio->rxF);
-  CUR_Render(SPECTRUM_Y + 22);
+  CUR_Render();
 
   // top
   if (gLastActiveLoot) {

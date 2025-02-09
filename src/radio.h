@@ -72,9 +72,7 @@ void RADIO_SwitchRadioPure();
 void RADIO_VfoLoadCH(uint8_t i);
 void RADIO_SetupByCurrentVFO();
 void RADIO_NextVFO(void);
-bool RADIO_NextBandFreqXBandEx(bool next, bool precise);
-void RADIO_NextBandFreqXBand(bool next);
-bool RADIO_NextFScan(Band *b, bool next);
+void RADIO_NextF(bool inc);
 void RADIO_ToggleVfoMR();
 
 void RADIO_SetSquelch(uint8_t sq);

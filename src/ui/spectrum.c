@@ -234,10 +234,10 @@ void SP_ShiftGraph(int16_t n) { shiftEx(rssiGraphHistory, MAX_POINTS, n); }
 static uint8_t curX = MAX_POINTS / 2;
 static uint8_t curSbWidth = 16;
 
-void CUR_Render(uint8_t y) {
-  DrawVLine(curX - curSbWidth, y, 4, C_FILL);
-  DrawVLine(curX, y, 2, C_FILL);
-  DrawVLine(curX + curSbWidth, y, 4, C_FILL);
+void CUR_Render() {
+  DrawVLine(curX - curSbWidth, S_BOTTOM + 4, 3, C_FILL);
+  DrawVLine(curX, S_BOTTOM + 5, 2, C_FILL);
+  DrawVLine(curX + curSbWidth, S_BOTTOM + 4, 3, C_FILL);
 }
 
 bool CUR_Move(bool up) {
@@ -281,12 +281,11 @@ static uint32_t roundToStep(uint32_t f, uint32_t step) {
 }
 
 Band CUR_GetRange(Band *p, uint32_t step) {
-  Band range = {
-      .rxF =
-          ConvertDomainF(curX - curSbWidth, 0, MAX_POINTS - 1, p->rxF, p->txF),
-      .txF =
-          ConvertDomainF(curX + curSbWidth, 0, MAX_POINTS - 1, p->rxF, p->txF),
-  };
+  Band range = *p;
+  range.rxF =
+      ConvertDomainF(curX - curSbWidth, 0, MAX_POINTS - 1, p->rxF, p->txF),
+  range.txF =
+      ConvertDomainF(curX + curSbWidth, 0, MAX_POINTS - 1, p->rxF, p->txF),
   range.rxF = roundToStep(range.rxF, step);
   range.txF = roundToStep(range.txF, step);
   return range;

@@ -9,12 +9,9 @@
 #include "misc.h"
 #include "system.h"
 
-StaticTask_t systemTaskBuffer;
-StackType_t systemTaskStack[configMINIMAL_STACK_SIZE + 300];
-
 void Main(void) {
   SYSTICK_Init();
-  SYSTEM_ConfigureSysCon();
+  SYS_ConfigureSysCon();
   BOARD_GPIO_Init();
   BOARD_PORTCON_Init();
   BOARD_ADC_Init();
@@ -23,12 +20,13 @@ void Main(void) {
 
   Log("s0v4");
 
-  xTaskCreateStatic(SYSTEM_Main, "sys", ARRAY_SIZE(systemTaskStack), NULL, 1,
-                    systemTaskStack, &systemTaskBuffer);
+  StaticTask_t tBuf;
+  StackType_t tStack[configMINIMAL_STACK_SIZE + 200];
+
+  xTaskCreateStatic(SYS_Main, "sys", ARRAY_SIZE(tStack), NULL, 1, tStack,
+                    &tBuf);
 
   vTaskStartScheduler();
-
-  Log("Scheduler exit =(");
 
   for (;;) {
   }

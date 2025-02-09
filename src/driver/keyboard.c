@@ -85,10 +85,10 @@ static void HandlePttKey() {
   mKeyPtt = !GPIO_CheckBit(&GPIOC->DATA, GPIOC_PIN_PTT);
 
   if (mPrevStatePtt == KEY_PRESSED && !mKeyPtt) {
-    SYSTEM_MsgKey(KEY_PTT, KEY_RELEASED);
+    SYS_MsgKey(KEY_PTT, KEY_RELEASED);
     mPrevStatePtt = KEY_RELEASED;
   } else if (mPrevStatePtt == KEY_RELEASED && mKeyPtt) {
-    SYSTEM_MsgKey(KEY_PTT, KEY_PRESSED);
+    SYS_MsgKey(KEY_PTT, KEY_PRESSED);
     mPrevStatePtt = KEY_PRESSED;
   }
 }
@@ -146,7 +146,7 @@ void KEYBOARD_CheckKeys() {
 
   if (mKeyPressed != KEY_INVALID) {
     if (mPrevKeyState == KEY_RELEASED) {
-      SYSTEM_MsgKey(mKeyPressed, KEY_PRESSED);
+      SYS_MsgKey(mKeyPressed, KEY_PRESSED);
       mPrevKeyState = KEY_PRESSED;
 
       mLongPressTimer = currentTick;
@@ -159,19 +159,19 @@ void KEYBOARD_CheckKeys() {
       }
     } else if (mPrevKeyState == KEY_LONG_PRESSED ||
                mPrevKeyState == KEY_LONG_PRESSED_CONT) {
-      SYSTEM_MsgKey(mKeyPressed, mPrevKeyState);
+      SYS_MsgKey(mKeyPressed, mPrevKeyState);
       mPrevKeyState = KEY_LONG_PRESSED_CONT;
     }
   } else {
     if (mPrevKeyState != KEY_RELEASED) {
       if (mPrevKeyState != KEY_LONG_PRESSED &&
           mPrevKeyState != KEY_LONG_PRESSED_CONT) {
-        SYSTEM_MsgKey(mPrevKeyPressed, KEY_RELEASED);
+        SYS_MsgKey(mPrevKeyPressed, KEY_RELEASED);
       }
 
       if (mPrevKeyState == KEY_LONG_PRESSED_CONT &&
           (mPrevKeyPressed == KEY_UP || mPrevKeyPressed == KEY_DOWN)) {
-        SYSTEM_MsgKey(mPrevKeyPressed, KEY_RELEASED);
+        SYS_MsgKey(mPrevKeyPressed, KEY_RELEASED);
       }
 
       mLongPressTimer = 0;

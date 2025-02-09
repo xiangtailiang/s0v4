@@ -37,6 +37,11 @@ bool BANDS_InRange(const uint32_t f, const Band p);
 uint8_t BANDS_GetScanlistIndex();
 void BANDS_Select(int16_t num, bool copyToVfo);
 
+void BANDS_RangeClear();
+bool BANDS_RangePush(Band r);
+Band BANDS_RangePop(void);
+Band *BANDS_RangePeek(void);
+
 extern Band defaultBand;
 extern Band gCurrentBand;
 

@@ -6,6 +6,8 @@
 #include "measurements.h"
 #include <stdint.h>
 
+#define RANGES_STACK_SIZE 4
+
 // NOTE
 // for SCAN use cached band by index
 // for DISPLAY use bands in memory to select it by frequency faster
@@ -35,6 +37,9 @@ static int16_t allBandIndex; // -1 if default is current
 static uint8_t allBandsSize = 0;
 
 static uint8_t scanlistBandIndex;
+
+static Band rangesStack[RANGES_STACK_SIZE] = {0};
+static int8_t rangesStackIndex = -1;
 
 static const PowerCalibration DEFAULT_POWER_CALIB = {
     43, 68, 140}; // Standard UV-K6 Power Calibration
@@ -246,4 +251,31 @@ PowerCalibration BANDS_GetPowerCalib(uint32_t f) {
     }
   }
   return DEFAULT_POWER_CALIB;
+}
+
+void BANDS_RangeClear() { rangesStackIndex = -1; }
+
+bool BANDS_RangePush(Band r) {
+  if (rangesStackIndex < RANGES_STACK_SIZE - 1) {
+    Log("range +");
+    rangesStack[++rangesStackIndex] = r;
+  }
+  return true;
+}
+
+Band BANDS_RangePop(void) {
+  if (rangesStackIndex > 0) {
+    Log("range -");
+    return rangesStack[rangesStackIndex--];
+  }
+  return rangesStack[rangesStackIndex];
+}
+
+Band *BANDS_RangePeek(void) {
+  if (rangesStackIndex >= 0) {
+    Log("range peek ok");
+    return &rangesStack[rangesStackIndex];
+  }
+  Log("range peek NULL!!!11");
+  return NULL;
 }

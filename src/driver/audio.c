@@ -20,19 +20,19 @@ void AUDIO_PlayTone(uint32_t frequency, uint16_t duration) {
   uint16_t ToneConfig = BK4819_ReadRegister(BK4819_REG_71);
 
   AUDIO_ToggleSpeaker(false);
-  SYSTEM_DelayMs(10);
+  SYS_DelayMs(10);
 
   BK4819_PlayTone(frequency, true);
 
   AUDIO_ToggleSpeaker(true);
-  SYSTEM_DelayMs(60);
+  SYS_DelayMs(60);
 
   BK4819_ExitTxMute();
-  SYSTEM_DelayMs(duration);
+  SYS_DelayMs(duration);
   BK4819_EnterTxMute();
 
   AUDIO_ToggleSpeaker(false);
-  SYSTEM_DelayMs(10);
+  SYS_DelayMs(10);
 
   BK4819_TurnsOffTones_TurnsOnRX();
 

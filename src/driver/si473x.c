@@ -75,7 +75,7 @@ void sendProperty(uint16_t prop, uint16_t parameter) {
   uint8_t tmp[6] = {CMD_SET_PROPERTY, 0, prop >> 8, prop & 0xff, parameter >> 8,
                     parameter & 0xff};
   SI47XX_WriteBuffer(tmp, 6);
-  SYSTEM_DelayMs(8); // irrespective of CTS coming up earlier than that
+  SYS_DelayMs(8); // irrespective of CTS coming up earlier than that
 }
 
 uint16_t getProperty(uint16_t prop, bool *valid) {
@@ -157,7 +157,7 @@ void SI47XX_PowerUp() {
   }
   waitToSend();
   SI47XX_WriteBuffer(cmd, 3);
-  SYSTEM_DelayMs(500);
+  SYS_DelayMs(500);
 
   isSi4732On = true;
 
@@ -192,7 +192,7 @@ void SI47XX_PatchPowerUp() {
   uint8_t cmd[3] = {CMD_POWER_UP, 0b00110001, OUT_ANALOG};
   waitToSend();
   SI47XX_WriteBuffer(cmd, 3);
-  SYSTEM_DelayMs(60);
+  SYS_DelayMs(60);
 
   isSi4732On = true;
 
@@ -305,7 +305,7 @@ void SI47XX_SetFreq(uint16_t freq) {
   SI47XX_WriteBuffer(cmd, size);
   siCurrentFreq = freq;
 
-  // SYSTEM_DelayMs(30);
+  // SYS_DelayMs(30);
   // RSQ_GET();
 }
 

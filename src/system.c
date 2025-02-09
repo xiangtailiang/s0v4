@@ -79,7 +79,7 @@ static void appRender(void *arg) {
 
 static void systemUpdate() { BATTERY_UpdateBatteryInfo(); }
 
-void SYSTEM_Main(void *params) {
+void SYS_Main(void *params) {
   BOARD_Init();
   Log("BOARD OK");
   KEYBOARD_Init();
@@ -156,7 +156,7 @@ void SYSTEM_Main(void *params) {
   }
 }
 
-void SYSTEM_MsgKey(KEY_Code_t key, Key_State_t state) {
+void SYS_MsgKey(KEY_Code_t key, Key_State_t state) {
   SystemMessages appMSG = {MSG_KEYPRESSED, 0, key, state};
   BaseType_t xHigherPriorityTaskWoken = pdTRUE;
   xQueueSendFromISR(systemMessageQueue, (void *)&appMSG,

@@ -71,7 +71,7 @@ void BK4819_Init(void) {
 
   while (BK4819_ReadRegister(BK4819_REG_0C) & 1U) {
     BK4819_WriteRegister(BK4819_REG_02, 0);
-    SYSTEM_DelayMs(1);
+    SYS_DelayMs(1);
   }
   BK4819_WriteRegister(BK4819_REG_3F, 0);
   BK4819_WriteRegister(BK4819_REG_7D, 0xE94F | 10); // mic
@@ -483,7 +483,7 @@ void BK4819_RX_TurnOn(void) {
   BK4819_WriteRegister(BK4819_REG_36, 0x0000);
   BK4819_WriteRegister(BK4819_REG_37, 0x1F0F);
   BK4819_WriteRegister(BK4819_REG_30, 0x0200);
-  // SYSTEM_DelayMs(10);
+  // SYS_DelayMs(10);
   BK4819_WriteRegister(
       BK4819_REG_30,
       BK4819_REG_30_ENABLE_VCO_CALIB | BK4819_REG_30_DISABLE_UNKNOWN |
@@ -578,7 +578,7 @@ void BK4819_ResetFSK(void) {
   BK4819_WriteRegister(BK4819_REG_3F, 0x0000); // Disable interrupts
   BK4819_WriteRegister(BK4819_REG_59,
                        0x0068); // Sync length 4 bytes, 7 byte preamble
-  SYSTEM_DelayMs(30);
+  SYS_DelayMs(30);
   BK4819_Idle();
 }
 
@@ -741,9 +741,9 @@ void BK4819_PlayDTMFString(const char *pString, bool bDelayFirst,
     } else {
       delay = CodePersistTime;
     }
-    SYSTEM_DelayMs(delay);
+    SYS_DelayMs(delay);
     BK4819_EnterTxMute();
-    SYSTEM_DelayMs(CodeInternalTime);
+    SYS_DelayMs(CodeInternalTime);
   }
 }
 
@@ -905,7 +905,7 @@ void BK4819_PlaySequence(const uint16_t *M) {
       initialTone = false;
       BK4819_TransmitTone(note);
       if (gSettings.toneLocal) {
-        SYSTEM_DelayMs(10);
+        SYS_DelayMs(10);
         AUDIO_ToggleSpeaker(true);
       }
     } else {
@@ -915,11 +915,11 @@ void BK4819_PlaySequence(const uint16_t *M) {
     if (note && !t) {
       return;
     }
-    SYSTEM_DelayMs(t);
+    SYS_DelayMs(t);
   }
   if (gSettings.toneLocal) {
     AUDIO_ToggleSpeaker(false);
-    SYSTEM_DelayMs(10);
+    SYS_DelayMs(10);
   }
   BK4819_EnterTxMute();
 }
@@ -940,7 +940,7 @@ void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code) {
   BK4819_SetAF(bLocalLoopback ? BK4819_AF_BEEP : BK4819_AF_MUTE);
   BK4819_WriteRegister(BK4819_REG_70, 0xD3D3);
   BK4819_EnableTXLink();
-  SYSTEM_DelayMs(50);
+  SYS_DelayMs(50);
   BK4819_PlayDTMF(Code);
   BK4819_ExitTxMute();
 }

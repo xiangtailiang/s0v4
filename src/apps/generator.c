@@ -68,7 +68,7 @@ bool GENERATOR_key(KEY_Code_t key, Key_State_t state) {
     switch (key) {
     case KEY_UP:
     case KEY_DOWN:
-      RADIO_NextBandFreqXBand(key == KEY_UP);
+      RADIO_NextF(key == KEY_UP);
       return true;
     case KEY_2:
     case KEY_8:

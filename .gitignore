@@ -3,6 +3,7 @@ bin/
 src/external/
 .vsconfig/
 .vscode/
+.clangd/
 .DS_Store
 
 *.log

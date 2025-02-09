@@ -1,10 +1,10 @@
-#ifndef SYSTEM_H
-#define SYSTEM_H
+#ifndef SYS_H
+#define SYS_H
 #include "driver/keyboard.h"
 
 extern uint32_t gAppUpdateInterval;
 
-void SYSTEM_Main(void *params);
-void SYSTEM_MsgKey(KEY_Code_t key, Key_State_t state);
+void SYS_Main(void *params);
+void SYS_MsgKey(KEY_Code_t key, Key_State_t state);
 
-#endif /* end of include guard: SYSTEM_H */
+#endif /* end of include guard: SYS_H */

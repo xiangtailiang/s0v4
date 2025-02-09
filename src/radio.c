@@ -221,7 +221,7 @@ void RADIO_SetupRegisters(void) {
 
   while (BK4819_ReadRegister(BK4819_REG_0C) & 1U) {
     BK4819_WriteRegister(BK4819_REG_02, 0);
-    SYSTEM_DelayMs(1);
+    SYS_DelayMs(1);
   }
   BK4819_WriteRegister(BK4819_REG_3F, 0);
   BK4819_WriteRegister(BK4819_REG_7D, 0xE94F | 10); // mic
@@ -302,11 +302,11 @@ static void toggleBK4819(bool on) {
   if (on) {
     BK4819_ToggleAFDAC(true);
     BK4819_ToggleAFBit(true);
-    SYSTEM_DelayMs(8);
+    SYS_DelayMs(8);
     AUDIO_ToggleSpeaker(true);
   } else {
     AUDIO_ToggleSpeaker(false);
-    SYSTEM_DelayMs(8);
+    SYS_DelayMs(8);
     BK4819_ToggleAFDAC(false);
     BK4819_ToggleAFBit(false);
   }
@@ -315,11 +315,11 @@ static void toggleBK4819(bool on) {
 static void toggleBK1080SI4732(bool on) {
   // Log("Toggle bk1080si audio %u", on);
   if (on) {
-    SYSTEM_DelayMs(8);
+    SYS_DelayMs(8);
     AUDIO_ToggleSpeaker(true);
   } else {
     AUDIO_ToggleSpeaker(false);
-    SYSTEM_DelayMs(8);
+    SYS_DelayMs(8);
   }
 }
 
@@ -365,10 +365,10 @@ static void sendEOT() {
     break;
   }
   if (gSettings.ste) {
-    SYSTEM_DelayMs(50);
+    SYS_DelayMs(50);
     BK4819_GenTail(4);
     BK4819_WriteRegister(BK4819_REG_51, 0x9033);
-    SYSTEM_DelayMs(200);
+    SYS_DelayMs(200);
   }
   BK4819_ExitSubAu();
 }
@@ -472,7 +472,7 @@ void RADIO_EnableCxCSS(void) {
     break;
   }
 
-  // SYSTEM_DelayMs(200);
+  // SYS_DelayMs(200);
 }
 
 uint32_t RADIO_GetTXFEx(const VFO *vfo) {
@@ -564,12 +564,12 @@ void RADIO_ToggleTXEX(bool on, uint32_t txF, uint8_t power, bool paEnabled) {
     BOARD_ToggleRed(gSettings.brightness > 1);
     BK4819_PrepareTransmit();
 
-    SYSTEM_DelayMs(10);
+    SYS_DelayMs(10);
     BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, paEnabled);
-    SYSTEM_DelayMs(5);
+    SYS_DelayMs(5);
     gCurrentTxPower = power;
     BK4819_SetupPowerAmplifier(power, txF);
-    SYSTEM_DelayMs(10);
+    SYS_DelayMs(10);
 
     RADIO_EnableCxCSS();
 
@@ -950,86 +950,10 @@ void RADIO_UpdateSquelchLevel(bool next) {
   RADIO_SetSquelch(sq);
 }
 
-bool RADIO_NextFScan(Band *b, bool next) {
-  uint32_t steps = CHANNELS_GetSteps(b);
-  int64_t step = CHANNELS_GetChannel(b, radio->rxF);
-
-  step += next ? 1 : -1;
-
-  bool canSwitchToNextBand = b->meta.type != TYPE_BAND_DETACHED;
-  bool switchBand = false;
-
-  if (step < 0 || step >= steps) {
-    if (gSettings.currentScanlist && canSwitchToNextBand) {
-      switchBand = BANDS_SelectBandRelativeByScanlist(step >= steps);
-    }
-    step = (step < 0) ? steps - 1 : 0;
-  }
-
-  radio->rxF = CHANNELS_GetF(b, step);
-  return switchBand;
-}
-
-bool RADIO_NextBandFreqXBandEx(bool next, bool precise) {
-  bool switchBand = false;
-  if (radio->fixedBoundsMode) {
-    uint32_t steps = CHANNELS_GetSteps(&gCurrentBand);
-    int64_t step = CHANNELS_GetChannel(&gCurrentBand, radio->rxF);
-
-    if (next) {
-      step++;
-    } else {
-      step--;
-    }
-
-    bool canSwitchToNextBand = gCurrentBand.meta.type != TYPE_BAND_DETACHED;
-
-    if (step < 0) {
-      // get previous band
-      if (gSettings.currentScanlist && canSwitchToNextBand) {
-        switchBand = BANDS_SelectBandRelativeByScanlist(false);
-      }
-      steps = CHANNELS_GetSteps(&gCurrentBand);
-      step = steps - 1;
-    } else if (step >= steps) {
-      // get next band
-      if (gSettings.currentScanlist && canSwitchToNextBand) {
-        switchBand = BANDS_SelectBandRelativeByScanlist(true);
-      }
-      step = 0;
-    }
-    radio->rxF = CHANNELS_GetF(&gCurrentBand, step);
-  } else {
-    if (next) {
-      radio->rxF += StepFrequencyTable[radio->step];
-    } else {
-      radio->rxF -= StepFrequencyTable[radio->step];
-    }
-  }
-  if (switchBand) {
-    SP_Init(&gCurrentBand);
-    // if (SCAN_IsFast()) {
-    RADIO_SetupBandParams();
-    // }
-  }
-
-  // if (!SVC_Running(SVC_SCAN) || !SCAN_IsFast()) {
-  RADIO_SwitchRadio();
-  RADIO_SetupBandParams();
-  RADIO_TuneToPure(radio->rxF, precise);
-  checkVisibleBand();
-  /* } else {
-    LOOT_Replace(&gLoot[gSettings.activeVFO], radio->rxF);
-  } */
-  /* if (SVC_Running(SVC_SCAN) && gIsListening) {
-    RADIO_ToggleRX(false);
-  } */
-  RADIO_SaveCurrentVFODelayed();
-  return switchBand;
-}
-
-void RADIO_NextBandFreqXBand(bool next) {
-  RADIO_NextBandFreqXBandEx(next, true);
+void RADIO_NextF(bool inc) {
+  uint32_t step = StepFrequencyTable[radio->step];
+  radio->rxF += inc ? step : -step;
+  RADIO_TuneToPure(radio->rxF, !gIsListening);
 }
 
 void RADIO_UpdateStep(bool inc) {
@@ -1082,7 +1006,7 @@ void RADIO_SendDTMF(const char *pattern, ...) {
   va_end(args);
   RADIO_ToggleTX(true);
   if (gTxState == TX_ON) {
-    SYSTEM_DelayMs(200);
+    SYS_DelayMs(200);
     BK4819_EnterDTMF_TX(true);
     BK4819_PlayDTMFString(str, true, 100, 100, 100, 100);
     RADIO_ToggleTX(false);

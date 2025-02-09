@@ -37,7 +37,7 @@ void BK1080_SetFrequency(uint32_t f) {
 
   BK1080_WriteRegister(BK1080_REG_05_SYSTEM_CONFIGURATION2, sysCfg2);
   BK1080_WriteRegister(BK1080_REG_03_CHANNEL, channel);
-  SYSTEM_DelayMs(10);
+  SYS_DelayMs(10);
   BK1080_WriteRegister(BK1080_REG_03_CHANNEL, channel | 0x8000);
 }
 
@@ -51,10 +51,10 @@ void BK1080_Init(uint32_t f, bool bEnable) {
       for (i = 0; i < ARRAY_SIZE(BK1080_RegisterTable); i++) {
         BK1080_WriteRegister(i, BK1080_RegisterTable[i]);
       }
-      SYSTEM_DelayMs(250);
+      SYS_DelayMs(250);
       BK1080_WriteRegister(BK1080_REG_25_INTERNAL, 0xA83C);
       BK1080_WriteRegister(BK1080_REG_25_INTERNAL, 0xA8BC);
-      SYSTEM_DelayMs(60);
+      SYS_DelayMs(60);
       gIsInitBK1080 = true;
     } else {
       BK1080_WriteRegister(BK1080_REG_02_POWER_CONFIGURATION, 0x0201);
