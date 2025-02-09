@@ -69,44 +69,50 @@ static void setupRadio() {
                  gSettings.sqlCloseTime);
 }
 
-static void newScan() {
-  m->f = radio->rxF = b->rxF;
-  prepareSqLevel();
-  // setupRadio();
+static void onNewBand() {
+  radio->rxF = b->rxF;
+  radio->step = b->step;
+  radio->bw = b->bw;
+  radio->gainIndex = b->gainIndex;
+  radio->squelch = b->squelch;
+  setupRadio();
+  // prepareSqLevel();
   SP_Init(b);
 }
 
 static void setStartF(uint32_t f) {
   b->rxF = f;
-  newScan();
+  onNewBand();
 }
 
 static void setEndF(uint32_t f) {
   b->txF = f;
-  newScan();
+  onNewBand();
 }
 
 void SCANER_init(void) {
   SPECTRUM_Y = 6;
   SPECTRUM_H = 44;
 
-  RADIO_LoadCurrentVFO();
-
   m = &gLoot[gSettings.activeVFO];
   m->snr = 0;
 
-  BANDS_RangePush(gCurrentBand);
-
-  b = BANDS_RangePeek();
+  b = &gCurrentBand;
   b->meta.type = TYPE_BAND_DETACHED;
   b->rxF = 17200000;
   b->txF = 17300000;
+  b->step = STEP_25_0kHz;
+  b->bw = BK4819_FILTER_BW_12k;
+  b->gainIndex = AUTO_GAIN_INDEX;
+  b->squelch.type = SQUELCH_RSSI_NOISE_GLITCH;
+  b->squelch.value = 4;
 
-  radio->bw = BK4819_FILTER_BW_12k;
-  radio->gainIndex = AUTO_GAIN_INDEX;
+  RADIO_LoadCurrentVFO();
 
-  newScan();
-  setupRadio();
+  BANDS_RangePush(gCurrentBand);
+  b = BANDS_RangePeek();
+
+  onNewBand();
 }
 
 void SCANER_update(void) {
@@ -189,7 +195,7 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       u8v = radio->step;
       IncDec8(&u8v, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
       radio->step = u8v;
-      newScan();
+      setupRadio();
       return true;
     case KEY_STAR:
       APPS_run(APP_LOOT_LIST);
@@ -259,12 +265,14 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       BANDS_RangePush(
           CUR_GetRange(BANDS_RangePeek(), StepFrequencyTable[radio->step]));
       b = BANDS_RangePeek();
-      newScan();
+      CUR_Reset();
+      onNewBand();
       return true;
     case KEY_F:
       BANDS_RangePop();
       b = BANDS_RangePeek();
-      newScan();
+      CUR_Reset();
+      onNewBand();
       return true;
 
     default:
