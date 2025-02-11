@@ -518,6 +518,14 @@ void BK4819_EnableScramble(uint8_t type) {
   BK4819_WriteRegister(BK4819_REG_71, (type * 0x0408) + 0x68DC);
 }
 
+void BK4819_SetScrambler(uint8_t type) {
+  if (type) {
+    BK4819_EnableScramble(type);
+  } else {
+    BK4819_DisableScramble();
+  }
+}
+
 void BK4819_DisableVox(void) {
   uint16_t v = BK4819_ReadRegister(BK4819_REG_31);
   BK4819_WriteRegister(BK4819_REG_31, v & 0xFFFB);

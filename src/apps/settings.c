@@ -244,11 +244,6 @@ static void accept(void) {
   case M_DW:
     gSettings.dw = subMenuIndex;
     SETTINGS_Save();
-
-    gDW.isSync = false;
-    gDW.doSwitch = false;
-    gDW.doSwitchBack = false;
-    gDW.doSync = gSettings.dw != DW_OFF;
     break;
   case M_ROGER:
     gSettings.roger = subMenuIndex;

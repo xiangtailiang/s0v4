@@ -82,7 +82,11 @@ void SP_Init(Band *b) {
 }
 
 uint8_t SP_F2X(uint32_t f) {
-  return ConvertDomainF(f, range->rxF, range->txF, 0, MAX_POINTS);
+  return ConvertDomainF(f, range->rxF, range->txF, 0, MAX_POINTS - 1);
+}
+
+uint32_t SP_X2F(uint8_t x) {
+  return ConvertDomainF(x, 0, MAX_POINTS - 1, range->rxF, range->txF);
 }
 
 void SP_AddPoint(const Measurement *msm) {
@@ -230,14 +234,12 @@ static uint8_t curX = MAX_POINTS / 2;
 static uint8_t curSbWidth = 16;
 
 void CUR_Render() {
-  /* DrawVLine(curX - curSbWidth, S_BOTTOM + 4, 3, C_FILL);
-  DrawVLine(curX, S_BOTTOM + 5, 2, C_FILL);
-  DrawVLine(curX + curSbWidth, S_BOTTOM + 4, 3, C_FILL); */
-  // FillRect(curX - curSbWidth, SPECTRUM_Y, curSbWidth * 2, SPECTRUM_H,
-  // C_INVERT);
-  for (uint8_t y = SPECTRUM_Y; y < S_BOTTOM; y += 4) {
+  for (uint8_t y = SPECTRUM_Y + 10; y < S_BOTTOM; y += 4) {
     DrawVLine(curX - curSbWidth, y, 2, C_INVERT);
     DrawVLine(curX + curSbWidth, y, 2, C_INVERT);
+  }
+  for (uint8_t y = SPECTRUM_Y + 10; y < S_BOTTOM; y += 1) {
+    DrawVLine(curX, y, 1, C_INVERT);
   }
 }
 
@@ -283,18 +285,15 @@ static uint32_t roundToStep(uint32_t f, uint32_t step) {
 
 Band CUR_GetRange(Band *p, uint32_t step) {
   Band range = *p;
-  range.rxF =
-      ConvertDomainF(curX - curSbWidth, 0, MAX_POINTS - 1, p->rxF, p->txF),
-  range.txF =
-      ConvertDomainF(curX + curSbWidth, 0, MAX_POINTS - 1, p->rxF, p->txF),
+  range.rxF = SP_X2F(curX - curSbWidth);
+  range.txF = SP_X2F(curX + curSbWidth),
   range.rxF = roundToStep(range.rxF, step);
   range.txF = roundToStep(range.txF, step);
   return range;
 }
 
 uint32_t CUR_GetCenterF(Band *p, uint32_t step) {
-  return roundToStep(ConvertDomainF(curX, 0, MAX_POINTS - 1, p->rxF, p->txF),
-                     step);
+  return roundToStep(SP_X2F(curX), step);
 }
 
 void CUR_Reset() {

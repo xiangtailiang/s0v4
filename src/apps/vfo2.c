@@ -23,14 +23,9 @@ static void renderTxRxState(uint8_t i, uint8_t bl, bool isActive) {
     }
   }
 
-  if (gIsListening && ((gSettings.dw != DW_OFF && gDW.activityOnVFO == i) ||
-                       (gSettings.dw == DW_OFF && isActive))) {
+  if (gIsListening && isActive) {
     PrintMedium(0, bl, "RX");
     UI_RSSIBar(31);
-  }
-
-  if (gSettings.dw != DW_OFF && gDW.lastActiveVFO == i) {
-    PrintMedium(13, bl, ">>");
   }
 }
 

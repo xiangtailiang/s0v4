@@ -149,7 +149,9 @@ void SYS_Main(void *params) {
     }
 
     if (UART_IsCommandAvailable()) {
+      __disable_irq();
       UART_HandleCommand();
+      __enable_irq();
     }
     STATUSLINE_update();
     vTaskDelay(1);

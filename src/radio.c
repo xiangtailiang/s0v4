@@ -760,10 +760,8 @@ void RADIO_SetFilterBandwidth(BK4819_FilterBandwidth_t bw) {
 }
 
 void RADIO_SetupBandParams() {
-  // Log("RADIO_SetupBandParams");
   ModulationType mod = RADIO_GetModulation();
   RADIO_SetGain(radio->gainIndex);
-  // Log("Set mod %s", modulationTypeOptions[mod]);
   RADIO_SetFilterBandwidth(radio->bw);
   switch (RADIO_GetRadio()) {
   case RADIO_BK4819:
@@ -771,11 +769,7 @@ void RADIO_SetupBandParams() {
     BK4819_Squelch(radio->squelch.value, gSettings.sqlOpenTime,
                    gSettings.sqlCloseTime);
     BK4819_SetModulation(mod);
-    if (radio->scrambler) {
-      BK4819_EnableScramble(radio->scrambler);
-    } else {
-      BK4819_DisableScramble();
-    }
+    BK4819_SetScrambler(radio->scrambler);
 
     // HACK? to enable STE RX
     BK4819_WriteRegister(BK4819_REG_7E, 0x302E); // DC flt BW 0=BYP
@@ -798,7 +792,6 @@ void RADIO_SetupBandParams() {
   default:
     break;
   }
-  // Log("RADIO_SetupBandParams end");
 }
 
 uint16_t RADIO_GetRSSI(void) {
@@ -851,14 +844,10 @@ uint16_t RADIO_GetS() {
 
 bool RADIO_IsSquelchOpen(const Measurement *msm) {
   if (RADIO_GetRadio() == RADIO_BK4819) {
-    if (SCAN_IsFast()) {
-      return SP_IsSquelchOpen(msm);
-    }
-
     return BK4819_IsSquelchOpen();
   }
 
-  return true;
+  return RADIO_GetSNR() > 0;
 }
 
 void RADIO_VfoLoadCH(uint8_t i) {

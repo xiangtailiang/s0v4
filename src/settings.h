@@ -8,16 +8,6 @@
 
 #define SCANLIST_ALL 0
 
-typedef struct {
-  int8_t lastActiveVFO : 2;
-  uint8_t activityOnVFO : 1; // activity on VFO#
-  bool isSync : 1;           // do we have sync?
-  bool doSync : 1;           // do sync in svc_listening service
-  bool doSwitch : 1;         // do switch VFO
-  bool doSwitchBack : 1;
-} __attribute__((packed)) DwState;
-extern DwState gDW;
-
 typedef enum {
   BL_SQL_OFF,
   BL_SQL_ON,

@@ -30,7 +30,7 @@ uint32_t ConvertDomainF(uint32_t aValue, uint32_t aMin, uint32_t aMax,
   uint64_t scaledValue = (uint64_t)(aValue - aMin) * bRange;
   uint64_t result = (scaledValue + aRange / 2) / aRange + bMin;
 
-  return (uint32_t)Clamp(result, bMin, bMax);
+  return (uint32_t)ClampF(result, bMin, bMax);
 }
 
 uint8_t DBm2S(int dbm, bool isVHF) {

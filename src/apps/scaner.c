@@ -21,12 +21,14 @@ static bool selStart = true;
 static uint32_t delay = 1000;
 static uint8_t afc = 0;
 
-static uint16_t sqLevel;
+static uint16_t sqLevel = 0;
 static bool thinking = false;
 static bool wasThinkingEarlier = false;
 
 static uint16_t msmLow;
 static uint16_t msmHigh;
+
+static uint32_t cursorRangeTimeout = 0;
 
 typedef enum {
   SET_AGC,
@@ -40,33 +42,9 @@ typedef enum {
 static Setting setting;
 
 static uint16_t measure(uint32_t f) {
-  BK4819_TuneTo(f, true);
+  RADIO_TuneToPure(f, true);
   vTaskDelay(delay / 100);
-  return BK4819_GetRSSI();
-}
-
-static void prepareSqLevel() {
-  uint16_t msms[5];
-  const uint32_t BW = b->txF - b->rxF;
-
-  msms[0] = measure(b->rxF);
-  msms[1] = measure(b->rxF + BW / 3);
-  msms[2] = measure(b->rxF + BW / 2);
-  msms[3] = measure(b->rxF - BW / 3);
-  msms[4] = measure(b->txF);
-
-  sqLevel = Mid(msms, ARRAY_SIZE(msms)) + 2;
-}
-
-static void setupRadio() {
-  Log("AFC:%u, BW:%s, G:%+d", afc, bwNames[radio->bw],
-      -gainTable[radio->gainIndex].gainDb + 33);
-  BK4819_SetAFC(afc);
-  BK4819_SetFilterBandwidth(radio->bw);
-  BK4819_SetAGC(true, radio->gainIndex);
-  // BK4819_SetModulation(radio->modulation);
-  BK4819_Squelch(radio->squelch.value, gSettings.sqlOpenTime,
-                 gSettings.sqlCloseTime);
+  return RADIO_GetRSSI();
 }
 
 static void onNewBand() {
@@ -75,8 +53,7 @@ static void onNewBand() {
   radio->bw = b->bw;
   radio->gainIndex = b->gainIndex;
   radio->squelch = b->squelch;
-  setupRadio();
-  // prepareSqLevel();
+  RADIO_SetupBandParams();
   SP_Init(b);
 }
 
@@ -88,6 +65,38 @@ static void setStartF(uint32_t f) {
 static void setEndF(uint32_t f) {
   b->txF = f;
   onNewBand();
+}
+
+static void changeSetting(bool up) {
+  uint8_t u8v;
+  switch (setting) {
+  case SET_AFC:
+    IncDec8(&afc, 0, 8, up ? 1 : -1);
+    break;
+  case SET_BW:
+    u8v = radio->bw;
+    IncDec8(&u8v, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, up ? 1 : -1);
+    radio->bw = u8v;
+    break;
+  case SET_AGC:
+    u8v = radio->gainIndex;
+    IncDec8(&u8v, 0, ARRAY_SIZE(gainTable), up ? 1 : -1);
+    radio->gainIndex = u8v;
+    break;
+  case SET_SQL_T:
+    u8v = radio->squelch.type;
+    IncDec8(&u8v, 0, ARRAY_SIZE(sqTypeNames), up ? 1 : -1);
+    radio->squelch.type = u8v;
+    break;
+  case SET_SQL_V:
+    u8v = radio->squelch.value;
+    IncDec8(&u8v, 0, 11, up ? 1 : -1);
+    radio->squelch.value = u8v;
+    break;
+  default:
+    break;
+  }
+  RADIO_SetupBandParams();
 }
 
 void SCANER_init(void) {
@@ -117,7 +126,7 @@ void SCANER_init(void) {
 
 void SCANER_update(void) {
   if (m->open) {
-    m->open = BK4819_IsSquelchOpen();
+    m->open = RADIO_IsSquelchOpen(m);
   } else {
     m->f = radio->rxF;
     m->rssi = measure(radio->rxF);
@@ -141,7 +150,7 @@ void SCANER_update(void) {
     wasThinkingEarlier = true;
     gRedrawScreen = true;
     vTaskDelay(pdMS_TO_TICKS(100));
-    m->open = BK4819_IsSquelchOpen();
+    m->open = RADIO_IsSquelchOpen(m);
     thinking = false;
     gRedrawScreen = true;
     if (!m->open) {
@@ -195,7 +204,7 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       u8v = radio->step;
       IncDec8(&u8v, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
       radio->step = u8v;
-      setupRadio();
+      RADIO_SetupBandParams();
       return true;
     case KEY_STAR:
       APPS_run(APP_LOOT_LIST);
@@ -203,39 +212,12 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
     case KEY_UP:
     case KEY_DOWN:
       CUR_Move(key == KEY_UP);
+      cursorRangeTimeout = Now() + 2000;
       return true;
 
     case KEY_2:
     case KEY_8:
-      switch (setting) {
-      case SET_AFC:
-        IncDec8(&afc, 0, 8, key == KEY_2 ? 1 : -1);
-        break;
-      case SET_BW:
-        u8v = radio->bw;
-        IncDec8(&u8v, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1,
-                key == KEY_2 ? 1 : -1);
-        radio->bw = u8v;
-        break;
-      case SET_AGC:
-        u8v = radio->gainIndex;
-        IncDec8(&u8v, 0, ARRAY_SIZE(gainTable), key == KEY_2 ? 1 : -1);
-        radio->gainIndex = u8v;
-        break;
-      case SET_SQL_T:
-        u8v = radio->squelch.type;
-        IncDec8(&u8v, 0, ARRAY_SIZE(sqTypeNames), key == KEY_2 ? 1 : -1);
-        radio->squelch.type = u8v;
-        break;
-      case SET_SQL_V:
-        u8v = radio->squelch.value;
-        IncDec8(&u8v, 0, 11, key == KEY_2 ? 1 : -1);
-        radio->squelch.value = u8v;
-        break;
-      default:
-        break;
-      }
-      setupRadio();
+      changeSetting(key == KEY_2);
       return true;
     default:
       break;
@@ -322,9 +304,12 @@ void SCANER_render(void) {
   // renderAnalyzerUI();
 
   // bottom
-  FSmall(1, LCD_HEIGHT - 2, POS_L, b->rxF);
-  FSmall(LCD_XCENTER, LCD_HEIGHT - 2, POS_C, radio->rxF);
-  FSmall(LCD_WIDTH - 1, LCD_HEIGHT - 2, POS_R, b->txF);
+  Band r = CUR_GetRange(b, step);
+  bool showCurRange = Now() < cursorRangeTimeout;
+  FSmall(1, LCD_HEIGHT - 2, POS_L, showCurRange ? r.rxF : b->rxF);
+  FSmall(LCD_XCENTER, LCD_HEIGHT - 2, POS_C,
+         showCurRange ? CUR_GetCenterF(b, step) : radio->rxF);
+  FSmall(LCD_WIDTH - 1, LCD_HEIGHT - 2, POS_R, showCurRange ? r.txF : b->txF);
 
   FillRect(selStart ? 0 : LCD_WIDTH - 42, LCD_HEIGHT - 7, 42, 7, C_INVERT);
 

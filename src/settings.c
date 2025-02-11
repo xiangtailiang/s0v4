@@ -6,7 +6,6 @@
 #include "external/FreeRTOS/include/timers.h"
 #include <string.h>
 
-DwState gDW;
 bool isPatchPresent = false;
 
 uint8_t BL_TIME_VALUES[7] = {0, 5, 10, 20, 60, 120, 255};

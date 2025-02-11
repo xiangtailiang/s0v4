@@ -99,7 +99,6 @@ static void sendDtmf() {
 }
 
 void VFO1_init(void) {
-  gDW.activityOnVFO = -1;
   if (!gVfo1ProMode) {
     gVfo1ProMode = gSettings.iAmPro;
   }

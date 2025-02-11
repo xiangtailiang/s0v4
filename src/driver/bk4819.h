@@ -119,6 +119,7 @@ void BK4819_SelectFilterEx(Filter filter);
 void BK4819_SelectFilter(uint32_t Frequency);
 void BK4819_DisableScramble(void);
 void BK4819_EnableScramble(uint8_t Type);
+void BK4819_SetScrambler(uint8_t type);
 void BK4819_DisableVox(void);
 void BK4819_DisableDTMF(void);
 void BK4819_EnableDTMF(void);
