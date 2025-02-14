@@ -143,7 +143,7 @@ static void saveVFO(uint8_t num) {
   CHANNELS_Save(CHANNELS_GetCountMax() - 2 + num, &gVFO[num]);
 }
 
-static uint8_t indexOfMod(ModulationType *arr, uint8_t n, ModulationType t) {
+static uint8_t indexOfMod(const ModulationType *arr, uint8_t n, ModulationType t) {
   for (uint8_t i = 0; i < n; ++i) {
     if (arr[i] == t) {
       return i;
@@ -215,7 +215,7 @@ const char *RADIO_GetBWName(const VFO *vfo) {
   }
 }
 
-void RADIO_SetupRegisters(void) {
+void RADIO_Init(void) {
   BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);
   BK4819_SetupPowerAmplifier(0, 0); // 0 is default, but...
 
@@ -471,20 +471,19 @@ void RADIO_EnableCxCSS(void) {
     BK4819_ExitSubAu();
     break;
   }
-
-  // SYS_DelayMs(200);
 }
 
 uint32_t RADIO_GetTXFEx(const VFO *vfo) {
-  uint32_t txF = vfo->rxF;
-
-  if (vfo->txF && vfo->offsetDir == OFFSET_FREQ) {
-    txF = vfo->txF;
-  } else if (vfo->txF && vfo->offsetDir != OFFSET_NONE) {
-    txF = vfo->rxF + (vfo->offsetDir == OFFSET_PLUS ? vfo->txF : -vfo->txF);
+  switch (vfo->offsetDir) {
+  case OFFSET_FREQ:
+    return vfo->txF;
+  case OFFSET_PLUS:
+    return vfo->rxF + vfo->txF;
+  case OFFSET_MINUS:
+    return vfo->rxF - vfo->txF;
+  default:
+    return vfo->rxF;
   }
-
-  return txF;
 }
 
 uint32_t RADIO_GetTXF(void) { return RADIO_GetTXFEx(radio); }
@@ -517,34 +516,13 @@ uint32_t RADIO_GetTxPower(uint32_t txF) {
   return Clamp(calculateOutputPower(txF), 0, 0x91);
 }
 
-static void RADIO_UpdateAMSSBPower() {
-  uint32_t txF = RADIO_GetTXF();
-  uint8_t amplitude = BK4819_GetVoiceAmplitude() >> 7;
-
-  uint8_t carrierPercentage = RADIO_IsSSB() ? 0 : 50;
-  uint8_t maxPower = RADIO_GetTxPower(txF);
-
-  if (carrierPercentage == 0) {
-    gCurrentTxPower = (uint8_t)((amplitude * maxPower) / 255);
-  } else {
-    uint8_t carrierAmplitude = (carrierPercentage * maxPower) / 100;
-    uint8_t modulationDepth = maxPower - carrierAmplitude;
-    gCurrentTxPower = carrierAmplitude + (modulationDepth * amplitude / 255);
-  }
-
-  BK4819_SetupPowerAmplifier(gCurrentTxPower, txF);
-}
-
 void RADIO_ToggleTX(bool on) {
   uint32_t txF = RADIO_GetTXF();
   uint8_t power = RADIO_GetTxPower(txF);
-  // SVC_Toggle(SVC_FC, false, 0);
   RADIO_ToggleTXEX(on, txF, power, true);
 }
 
 bool RADIO_IsChMode() { return radio->channel >= 0; }
-StaticTimer_t updateAmSsbPowerTimerBuffer;
-TimerHandle_t updateAmSsbPowerTimer;
 
 void RADIO_ToggleTXEX(bool on, uint32_t txF, uint8_t power, bool paEnabled) {
   bool lastOn = gTxState == TX_ON;
@@ -573,13 +551,7 @@ void RADIO_ToggleTXEX(bool on, uint32_t txF, uint8_t power, bool paEnabled) {
 
     RADIO_EnableCxCSS();
 
-    if (radio->modulation == MOD_AM || RADIO_IsSSB()) {
-      updateAmSsbPowerTimer = xTimerCreateStatic(
-          "AM TX PWR", pdMS_TO_TICKS(0), pdFALSE, NULL, RADIO_UpdateAMSSBPower,
-          &updateAmSsbPowerTimerBuffer);
-    }
   } else if (lastOn) {
-    xTimerStop(updateAmSsbPowerTimer, 0);
     BK4819_ExitDTMF_TX(true); // also prepares to tx ste
 
     sendEOT();
@@ -648,7 +620,7 @@ void RADIO_SetupByCurrentVFO(void) {
   checkVisibleBand();
 
   RADIO_SwitchRadio();
-  RADIO_SetupBandParams();
+  RADIO_Setup();
   RADIO_TuneToPure(radio->rxF, !gMonitorMode);
 }
 
@@ -759,7 +731,7 @@ void RADIO_SetFilterBandwidth(BK4819_FilterBandwidth_t bw) {
   }
 }
 
-void RADIO_SetupBandParams() {
+void RADIO_Setup() {
   ModulationType mod = RADIO_GetModulation();
   RADIO_SetGain(radio->gainIndex);
   RADIO_SetFilterBandwidth(radio->bw);
@@ -981,7 +953,7 @@ void RADIO_ToggleModulation(void) {
   radio->modulation = getNextModulation(true);
 
   // NOTE: for right BW after switching from WFM to another
-  RADIO_SetupBandParams();
+  RADIO_Setup();
   RADIO_SaveCurrentVFODelayed();
 }
 

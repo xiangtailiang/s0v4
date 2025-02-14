@@ -53,7 +53,7 @@ static void onNewBand() {
   radio->bw = b->bw;
   radio->gainIndex = b->gainIndex;
   radio->squelch = b->squelch;
-  RADIO_SetupBandParams();
+  RADIO_Setup();
   SP_Init(b);
 }
 
@@ -96,7 +96,7 @@ static void changeSetting(bool up) {
   default:
     break;
   }
-  RADIO_SetupBandParams();
+  RADIO_Setup();
 }
 
 void SCANER_init(void) {
@@ -126,6 +126,7 @@ void SCANER_init(void) {
 
 void SCANER_update(void) {
   if (m->open) {
+    m->rssi = RADIO_GetRSSI();
     m->open = RADIO_IsSquelchOpen(m);
   } else {
     m->f = radio->rxF;
@@ -150,6 +151,7 @@ void SCANER_update(void) {
     wasThinkingEarlier = true;
     gRedrawScreen = true;
     vTaskDelay(pdMS_TO_TICKS(100));
+    m->rssi = RADIO_GetRSSI();
     m->open = RADIO_IsSquelchOpen(m);
     thinking = false;
     gRedrawScreen = true;
@@ -204,7 +206,7 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       u8v = radio->step;
       IncDec8(&u8v, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
       radio->step = u8v;
-      RADIO_SetupBandParams();
+      RADIO_Setup();
       return true;
     case KEY_STAR:
       APPS_run(APP_LOOT_LIST);

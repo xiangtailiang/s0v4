@@ -47,7 +47,7 @@ extern const char *bwNames[10];
 const char *RADIO_GetBWName(const VFO *vfo);
 Radio RADIO_GetRadio();
 ModulationType RADIO_GetModulation();
-void RADIO_SetupRegisters();
+void RADIO_Init();
 
 void RADIO_SaveCurrentVFO();
 void RADIO_SaveCurrentVFODelayed(void);
@@ -66,7 +66,7 @@ bool RADIO_TuneToMR(int16_t num);
 void RADIO_TuneToCH(int16_t num);
 void RADIO_TuneToBand(int16_t num);
 
-void RADIO_SetupBandParams();
+void RADIO_Setup();
 void RADIO_SwitchRadioPure();
 
 void RADIO_VfoLoadCH(uint8_t i);

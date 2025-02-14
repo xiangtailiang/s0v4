@@ -1,7 +1,6 @@
 #include "board.h"
 #include "driver/adc.h"
 #include "driver/backlight.h"
-// #include "driver/bk1080.h"
 #include "driver/bk4819-regs.h"
 #include "driver/bk4819.h"
 #include "driver/crc.h"
@@ -413,12 +412,7 @@ void BOARD_ToggleRed(bool on) {
 }
 
 void BOARD_Init(void) {
-  Log("A");
   ST7565_Init();
-  // BK1080_Init(0, false);
-  Log("B");
   BK4819_Init();
-  Log("C");
   BACKLIGHT_Init();
-  Log("D");
 }
