@@ -22,7 +22,6 @@ void SP_AddGraphPoint(const Measurement *msm);
 void SP_Shift(int16_t n);
 void SP_ShiftGraph(int16_t n);
 
-bool SP_IsSquelchOpen(const Measurement *msm);
 uint8_t SP_F2X(uint32_t f);
 
 void CUR_Render();
@@ -30,8 +29,6 @@ bool CUR_Move(bool up);
 Band CUR_GetRange(Band *p, uint32_t step);
 uint32_t CUR_GetCenterF(Band *p, uint32_t step);
 void CUR_Reset();
-
-extern uint8_t gNoiseOpenDiff;
 
 extern uint8_t SPECTRUM_Y;
 extern uint8_t SPECTRUM_H;

@@ -188,7 +188,7 @@ bool CHLIST_key(KEY_Code_t key, Key_State_t state) {
     }
   }
 
-  if (state == KEY_RELEASED) {
+if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_UP:
     case KEY_DOWN:
@@ -198,7 +198,7 @@ bool CHLIST_key(KEY_Code_t key, Key_State_t state) {
       break;
     }
   }
-  if (state != KEY_RELEASED) {
+  if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_0:
       switch (gChListFilter) {

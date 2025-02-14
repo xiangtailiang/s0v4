@@ -13,10 +13,8 @@ typedef struct {
   uint16_t vMax;
 } VMinMax;
 
-uint8_t SPECTRUM_Y = 16;
-uint8_t SPECTRUM_H = 40;
-
-uint8_t gNoiseOpenDiff = 14; // fast scan SQ level
+uint8_t SPECTRUM_Y = 8;
+uint8_t SPECTRUM_H = 42;
 
 static uint8_t S_BOTTOM;
 
@@ -51,14 +49,6 @@ static uint8_t maxNoise(const uint8_t *array, uint8_t n) {
     } */
   }
   return max;
-}
-
-uint8_t listenRssi = 0;
-
-bool SP_IsSquelchOpen(const Measurement *msm) {
-  // var is needed, cos of compiler(?)
-  uint8_t openLevel = gIsListening ? 43 /* (*_*) */ : gNoiseOpenDiff;
-  return msm->snr >= openLevel;
 }
 
 void SP_ResetHistory(void) {

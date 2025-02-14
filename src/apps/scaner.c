@@ -103,20 +103,12 @@ void SCANER_init(void) {
   SPECTRUM_Y = 8;
   SPECTRUM_H = 42;
 
+  RADIO_LoadCurrentVFO();
+
   m = &gLoot[gSettings.activeVFO];
   m->snr = 0;
 
-  b = &gCurrentBand;
-  b->meta.type = TYPE_BAND_DETACHED;
-  b->rxF = 17200000;
-  b->txF = 17300000;
-  b->step = STEP_25_0kHz;
-  b->bw = BK4819_FILTER_BW_12k;
-  b->gainIndex = AUTO_GAIN_INDEX;
-  b->squelch.type = SQUELCH_RSSI_NOISE_GLITCH;
-  b->squelch.value = 4;
-
-  RADIO_LoadCurrentVFO();
+  gCurrentBand.meta.type = TYPE_BAND_DETACHED;
 
   BANDS_RangePush(gCurrentBand);
   b = BANDS_RangePeek();

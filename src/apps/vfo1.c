@@ -208,9 +208,8 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
 }
 
 bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
-  if (/* !SVC_Running(SVC_SCAN) && */ (!gVfo1ProMode ||
-                                       gCurrentApp == APP_VFO2) &&
-      state == KEY_RELEASED && RADIO_IsChMode()) {
+  if ((!gVfo1ProMode || gCurrentApp == APP_VFO2) && state == KEY_RELEASED &&
+      RADIO_IsChMode()) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(radio->channel, 0, CHANNELS_GetCountMax() - 1);
       gNumNavCallback = setChannel;
@@ -226,7 +225,9 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
   }
 
   if (key == KEY_PTT && !gIsNumNavInput) {
-    RADIO_ToggleTX(state == KEY_LONG_PRESSED);
+    Log("PTT %u", state);
+    RADIO_ToggleTX(state == KEY_LONG_PRESSED ||
+                   state == KEY_LONG_PRESSED_CONT || state == KEY_PRESSED);
     return true;
   }
 
@@ -253,23 +254,6 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
 
   bool longHeld = state == KEY_LONG_PRESSED_CONT;
   bool simpleKeypress = state == KEY_RELEASED;
-
-  /* if (SVC_Running(SVC_SCAN) && (longHeld || simpleKeypress) &&
-      (key > KEY_0 && key < KEY_9)) {
-    uint16_t oldScanlist = gSettings.currentScanlist;
-    gSettings.currentScanlist = CHANNELS_ScanlistByKey(
-        gSettings.currentScanlist, key, longHeld && !simpleKeypress);
-    VFO1_init();
-    if (gScanlistSize == 0) {
-      gSettings.currentScanlist = oldScanlist;
-      VFO1_init();
-    } else {
-      SETTINGS_Save();
-      SCAN_Start();
-    }
-
-    return true;
-  } */
 
   // long held
   if (longHeld) {

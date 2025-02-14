@@ -11,9 +11,6 @@
 #include "../ui/statusline.h"
 #include "vfo1.h"
 
-static bool isScanTuneMode = true;
-static char str[32];
-
 static void renderTxRxState(uint8_t i, uint8_t bl, bool isActive) {
   if (isActive && gTxState <= TX_ON) {
     FillRect(0, bl - 14, 28, 7, C_FILL);
@@ -30,6 +27,7 @@ static void renderTxRxState(uint8_t i, uint8_t bl, bool isActive) {
 }
 
 static void renderFrequencyAndName(uint8_t bl, const VFO *vfo, uint32_t f) {
+
   const uint16_t fp1 = f / MHZ;
   const uint16_t fp2 = f / 100 % 1000;
   const uint8_t fp3 = f % 100;
@@ -101,7 +99,15 @@ static void render2VFOPart(uint8_t i) {
       gTxState == TX_ON && isActive ? RADIO_GetTXF() : GetScreenF(vfo->rxF);
 
   renderTxRxState(i, bl, isActive);
-  renderFrequencyAndName(bl, vfo, f);
+
+  if (gTxState && gTxState != TX_ON && isActive) {
+    PrintMediumBoldEx(LCD_XCENTER, bl - 8, POS_C, C_FILL, "%s",
+                      TX_STATE_NAMES[gTxState]);
+    PrintSmallEx(LCD_XCENTER, bl - 8 + 6, POS_C, C_FILL, "%u", RADIO_GetTXF());
+  } else {
+    renderFrequencyAndName(bl, vfo, f);
+  }
+
   renderAdditionalInfo(bl, vfo, msm);
 }
 
@@ -109,37 +115,6 @@ void VFO2_init(void) { VFO1_init(); }
 
 bool VFO2_key(KEY_Code_t key, Key_State_t state) {
   uint8_t g = gCurrentBand.gainIndex;
-  if (state == KEY_RELEASED &&
-      (key == KEY_0 ||
-       (isScanTuneMode && !RADIO_IsChMode() && key > KEY_0 && key <= KEY_9))) {
-    switch (key) {
-    case KEY_0:
-      isScanTuneMode = !isScanTuneMode;
-      return true;
-    case KEY_1:
-    case KEY_7:
-      IncDec8(&gSettings.scanTimeout, 1, 255, key == KEY_1 ? 1 : -1);
-      SETTINGS_DelayedSave();
-      return true;
-    case KEY_3:
-    case KEY_9:
-      IncDec8(&gNoiseOpenDiff, 1, 127, key == KEY_3 ? 1 : -1);
-      return true;
-    case KEY_2:
-    case KEY_8:
-      g = gCurrentBand.gainIndex;
-      IncDec8(&g, 1, 127, key == KEY_2 ? 1 : -1);
-      radio->gainIndex = gCurrentBand.gainIndex = g;
-      RADIO_SetGain(g);
-      if (gCurrentBand.meta.type != TYPE_BAND_DETACHED) {
-        RADIO_SaveCurrentVFO();
-        BANDS_SaveCurrent();
-      }
-      return true;
-    default:
-      return false;
-    }
-  }
 
   if (VFO1_keyEx(key, state, false)) {
     return true;
@@ -167,26 +142,11 @@ void VFO2_render(void) {
   SPECTRUM_Y = 6 + 35 * (1 - gSettings.activeVFO);
   SPECTRUM_H = 22;
 
-  if (/*SVC_Running(SVC_SCAN) || */ gMonitorMode) {
+  if (gMonitorMode) {
     render2VFOPart(gSettings.activeVFO);
-    if (gMonitorMode) {
-      SP_RenderGraph();
-    } else {
-      SP_Render(&gCurrentBand);
-    }
-    if (isScanTuneMode) {
-      if (gMonitorMode) {
-        PrintSmallEx(LCD_WIDTH, SPECTRUM_Y + 6, POS_R, C_FILL, "BK SNR %u",
-                     BK4819_GetSNR());
-      } else {
-        PrintSmallEx(0, SPECTRUM_Y + 6, POS_L, C_FILL, "%ums",
-                     gSettings.scanTimeout);
-        PrintSmallEx(LCD_XCENTER, SPECTRUM_Y + 6, POS_C, C_FILL, "%+ddB",
-                     -gainTable[radio->gainIndex].gainDb + 33);
-        PrintSmallEx(LCD_WIDTH, SPECTRUM_Y + 6, POS_R, C_FILL, "SNR SQ %u",
-                     gNoiseOpenDiff);
-      }
-    }
+    SP_RenderGraph();
+    PrintSmallEx(LCD_WIDTH, SPECTRUM_Y + 6, POS_R, C_FILL, "BK SNR %u",
+                 BK4819_GetSNR());
   } else {
     render2VFOPart(0);
     render2VFOPart(1);
