@@ -339,25 +339,11 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
       APPS_run(APP_LOOT_LIST);
       return true;
     case KEY_SIDE1:
-      /* if (SVC_Running(SVC_SCAN)) {
-        LOOT_BlacklistLast();
-        RADIO_NextBandFreqXBand(gScanForward);
-        return true;
-      } */
       gMonitorMode = !gMonitorMode;
       return true;
     case KEY_SIDE2:
-      /* if (SVC_Running(SVC_SCAN)) {
-        LOOT_WhitelistLast();
-        RADIO_NextBandFreqXBand(gScanForward);
-        return true;
-      } */
       break;
     case KEY_EXIT:
-      /* if (SVC_Running(SVC_SCAN)) {
-        SCAN_Stop();
-        return true;
-      } */
       if (!APPS_exit()) {
         LOOT_Standby();
         RADIO_NextVFO();

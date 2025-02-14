@@ -53,7 +53,9 @@ static void onNewBand() {
   radio->bw = b->bw;
   radio->gainIndex = b->gainIndex;
   radio->squelch = b->squelch;
+  taskENTER_CRITICAL();
   RADIO_Setup();
+  taskEXIT_CRITICAL();
   SP_Init(b);
 }
 
@@ -72,6 +74,7 @@ static void changeSetting(bool up) {
   switch (setting) {
   case SET_AFC:
     IncDec8(&afc, 0, 8, up ? 1 : -1);
+    BK4819_SetAFC(afc);
     break;
   case SET_BW:
     u8v = radio->bw;
@@ -96,12 +99,14 @@ static void changeSetting(bool up) {
   default:
     break;
   }
+  taskENTER_CRITICAL();
   RADIO_Setup();
+  taskEXIT_CRITICAL();
 }
 
 void SCANER_init(void) {
   SPECTRUM_Y = 8;
-  SPECTRUM_H = 42;
+  SPECTRUM_H = 44;
 
   RADIO_LoadCurrentVFO();
 
@@ -198,7 +203,9 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       u8v = radio->step;
       IncDec8(&u8v, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
       radio->step = u8v;
+      taskENTER_CRITICAL();
       RADIO_Setup();
+      taskEXIT_CRITICAL();
       return true;
     case KEY_STAR:
       APPS_run(APP_LOOT_LIST);
@@ -308,6 +315,10 @@ void SCANER_render(void) {
   FillRect(selStart ? 0 : LCD_WIDTH - 42, LCD_HEIGHT - 7, 42, 7, C_INVERT);
 
   CUR_Render();
+
+  if (gIsListening) {
+    UI_RSSIBar(16);
+  }
 }
 
 void SCANER_deinit(void) {}

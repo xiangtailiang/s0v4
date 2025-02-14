@@ -143,7 +143,8 @@ static void saveVFO(uint8_t num) {
   CHANNELS_Save(CHANNELS_GetCountMax() - 2 + num, &gVFO[num]);
 }
 
-static uint8_t indexOfMod(const ModulationType *arr, uint8_t n, ModulationType t) {
+static uint8_t indexOfMod(const ModulationType *arr, uint8_t n,
+                          ModulationType t) {
   for (uint8_t i = 0; i < n; ++i) {
     if (arr[i] == t) {
       return i;
@@ -691,6 +692,7 @@ void RADIO_SetSquelchType(SquelchType t) {
 
 void RADIO_SetGain(uint8_t gainIndex) {
   radio->gainIndex = gainIndex;
+  Log("GAIN: %+d", -gainTable[gainIndex].gainDb + 33);
   bool disableAGC;
   switch (RADIO_GetRadio()) {
   case RADIO_BK4819:
@@ -712,6 +714,7 @@ void RADIO_SetGain(uint8_t gainIndex) {
 }
 
 void RADIO_SetFilterBandwidth(BK4819_FilterBandwidth_t bw) {
+  Log("BW: %s", bwNames[bw]);
   ModulationType mod = RADIO_GetModulation();
   switch (RADIO_GetRadio()) {
   case RADIO_BK4819:
@@ -740,6 +743,7 @@ void RADIO_Setup() {
     BK4819_SquelchType(radio->squelch.type);
     BK4819_Squelch(radio->squelch.value, gSettings.sqlOpenTime,
                    gSettings.sqlCloseTime);
+    Log("MOD: %s", modulationTypeOptions[mod]);
     BK4819_SetModulation(mod);
     BK4819_SetScrambler(radio->scrambler);
 

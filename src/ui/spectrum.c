@@ -14,7 +14,7 @@ typedef struct {
 } VMinMax;
 
 uint8_t SPECTRUM_Y = 8;
-uint8_t SPECTRUM_H = 42;
+uint8_t SPECTRUM_H = 44;
 
 static uint8_t S_BOTTOM;
 
