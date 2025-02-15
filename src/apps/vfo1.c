@@ -2,6 +2,10 @@
 #include "../apps/textinput.h"
 #include "../driver/bk4819.h"
 #include "../driver/uart.h"
+#include "../external/FreeRTOS/include/FreeRTOS.h"
+#include "../external/FreeRTOS/include/portable.h"
+#include "../external/FreeRTOS/include/timers.h"
+#include "../external/FreeRTOS/portable/GCC/ARM_CM0/portmacro.h"
 #include "../helper/bands.h"
 #include "../helper/channels.h"
 #include "../helper/lootlist.h"
@@ -18,12 +22,17 @@
 #include "chlist.h"
 #include "finput.h"
 
+#define EEPROM_WRITE_DELAY_MS 500
+
 bool gVfo1ProMode = false;
 
 static uint8_t menuIndex = 0;
 static bool registerActive = false;
 
 static char String[16];
+
+static TimerHandle_t eepromWriteTimer = NULL;
+static StaticTimer_t vfoSaveTimerBuffer;
 
 static const RegisterSpec registerSpecs[] = {
     {"Gain", BK4819_REG_13, 0, 0xFFFF, 1},
@@ -44,6 +53,12 @@ static const RegisterSpec registerSpecs[] = {
     {"AGCH", 0x49, 7, 0b1111111, 1},
     {"AFC", 0x73, 0, 0xFF, 1},
 };
+
+static void delayedVfoSave() {
+  if (eepromWriteTimer != NULL) {
+    xTimerReset(eepromWriteTimer, portMAX_DELAY);
+  }
+}
 
 static void UpdateRegMenuValue(RegisterSpec s, bool add) {
   uint16_t v, maxValue;
@@ -121,6 +136,11 @@ void VFO1_init(void) {
     gVfo1ProMode = gSettings.iAmPro;
   }
   RADIO_LoadCurrentVFO();
+  eepromWriteTimer = xTimerCreateStatic(
+      "VFOsav", pdMS_TO_TICKS(EEPROM_WRITE_DELAY_MS), pdFALSE, NULL,
+      RADIO_SaveCurrentVFO, &vfoSaveTimerBuffer);
+
+  xTimerStart(eepromWriteTimer, portMAX_DELAY);
 }
 
 void VFO1_update(void) {
@@ -132,7 +152,9 @@ void VFO1_update(void) {
       .glitch = BK4819_GetGlitch(),
   };
   m.open = RADIO_IsSquelchOpen(&m);
-  LOOT_Update(&m);
+  if (!gMonitorMode) {
+    LOOT_Update(&m);
+  }
   RADIO_ToggleRX(m.open);
   SP_ShiftGraph(-1);
   SP_AddGraphPoint(&m);
@@ -255,7 +277,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
     case KEY_UP:
     case KEY_DOWN:
       RADIO_NextF(key == KEY_UP);
-      RADIO_SaveCurrentVFO();
+      delayedVfoSave();
       return true;
     case KEY_SIDE1:
     case KEY_SIDE2:

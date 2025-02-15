@@ -71,7 +71,7 @@ static void changeSetting(bool up) {
   uint8_t u8v;
   switch (setting) {
   case SET_AFC:
-    IncDec8(&afc, 0, 8, up ? 1 : -1);
+    IncDec8(&afc, 0, 8 + 1, up ? 1 : -1);
     BK4819_SetAFC(afc);
     break;
   case SET_BW:
