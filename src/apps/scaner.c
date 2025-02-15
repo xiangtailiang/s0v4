@@ -104,7 +104,10 @@ void SCANER_init(void) {
   SPECTRUM_Y = 8;
   SPECTRUM_H = 44;
 
-  // RADIO_LoadCurrentVFO();
+  if (!gCurrentBand.rxF) {
+    RADIO_LoadCurrentVFO();
+    BANDS_SelectByFrequency(radio->rxF, true);
+  }
 
   m = &gLoot[gSettings.activeVFO];
   m->snr = 0;
