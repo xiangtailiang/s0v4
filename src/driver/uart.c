@@ -14,7 +14,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-static const char Version[] = "R3b0rn";
+static const char Version[] = "s0v4";
 
 static uint8_t UART_DMA_Buffer[256];
 
@@ -518,11 +518,11 @@ void UART_HandleCommand(void) {
 void LogUart(const char *const str) { UART_Send(str, strlen(str)); }
 
 void UART_printf(const char *str, ...) {
-    char text[128];
-    va_list va;
-    va_start(va, str);
-    UART_Send(text, vsnprintf(text, sizeof(text), str, va));
-    va_end(va);
+  char text[128];
+  va_list va;
+  va_start(va, str);
+  UART_Send(text, vsnprintf(text, sizeof(text), str, va));
+  va_end(va);
 }
 
 void Log(const char *pattern, ...) {

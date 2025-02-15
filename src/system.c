@@ -2,6 +2,7 @@
 #include "apps/apps.h"
 #include "board.h"
 #include "config/FreeRTOSConfig.h"
+#include "driver/backlight.h"
 #include "driver/eeprom.h"
 #include "driver/keyboard.h"
 #include "driver/st7565.h"
@@ -77,7 +78,10 @@ static void appRender(void *arg) {
   }
 }
 
-static void systemUpdate() { BATTERY_UpdateBatteryInfo(); }
+static void systemUpdate() {
+  BATTERY_UpdateBatteryInfo();
+  BACKLIGHT_Update();
+}
 
 void SYS_Main(void *params) {
   BOARD_Init();
@@ -103,7 +107,7 @@ void SYS_Main(void *params) {
     }
 
     ST7565_Init();
-    // BACKLIGHT_Init();
+    BACKLIGHT_Init();
     BANDS_Load();
     APPS_run(gSettings.mainApp);
   }
@@ -112,7 +116,7 @@ void SYS_Main(void *params) {
 
   systemMessageQueue = xQueueCreateStatic(
       queueLen, itemSize, systemQueueStorageArea, &systemTasksQueue);
-  sysTimer = xTimerCreateStatic("sysT", pdMS_TO_TICKS(2000), pdTRUE, NULL,
+  sysTimer = xTimerCreateStatic("sysT", pdMS_TO_TICKS(1000), pdTRUE, NULL,
                                 systemUpdate, &sysTimerBuffer);
   xTimerStart(sysTimer, 0);
 
@@ -128,6 +132,7 @@ void SYS_Main(void *params) {
       // Process system notifications
       Log("MSG: m:%u, k:%u, st:%u", n.message, n.key, n.state);
       if (n.message == MSG_KEYPRESSED) {
+        BACKLIGHT_On();
         if (APPS_key(n.key, n.state)) {
           gRedrawScreen = true;
         } else {
@@ -149,9 +154,9 @@ void SYS_Main(void *params) {
     }
 
     if (UART_IsCommandAvailable()) {
-      __disable_irq();
+      taskENTER_CRITICAL();
       UART_HandleCommand();
-      __enable_irq();
+      taskEXIT_CRITICAL();
     }
     STATUSLINE_update();
     vTaskDelay(1);

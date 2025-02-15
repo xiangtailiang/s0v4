@@ -13,6 +13,7 @@ static StaticTask_t mKeyTaskBuffer;
 static StackType_t mKeyTaskStack[configMINIMAL_STACK_SIZE + 100];
 
 static const uint32_t LONG_PRESS_TIME = 500;
+static const uint32_t LONG_PRESS_REPEAT_TIME = 100;
 static const uint32_t ROWS = 5;
 static const uint32_t COLS = 4;
 
@@ -22,6 +23,7 @@ static KEY_Code_t mPrevKeyPressed = KEY_INVALID;
 static Key_State_t mPrevStatePtt;
 static Key_State_t mPrevKeyState;
 static TickType_t mLongPressTimer;
+static TickType_t mLongPressRepeatTimer;
 
 typedef const struct {
   uint16_t setToZeroMask;
@@ -159,8 +161,12 @@ void KEYBOARD_CheckKeys() {
       }
     } else if (mPrevKeyState == KEY_LONG_PRESSED ||
                mPrevKeyState == KEY_LONG_PRESSED_CONT) {
-      SYS_MsgKey(mKeyPressed, mPrevKeyState);
-      mPrevKeyState = KEY_LONG_PRESSED_CONT;
+      TickType_t elapsedTime = currentTick - mLongPressRepeatTimer;
+      if (elapsedTime >= pdMS_TO_TICKS(LONG_PRESS_REPEAT_TIME)) {
+        mLongPressRepeatTimer = currentTick;
+        SYS_MsgKey(mKeyPressed, mPrevKeyState);
+        mPrevKeyState = KEY_LONG_PRESSED_CONT;
+      }
     }
   } else {
     if (mPrevKeyState != KEY_RELEASED) {
@@ -190,6 +196,6 @@ static void checkKeys(void *attr) {
 }
 
 void KEYBOARD_Init() {
-  xTaskCreateStatic(checkKeys, "KEY", ARRAY_SIZE(mKeyTaskStack), NULL, 2,
+  xTaskCreateStatic(checkKeys, "KEY", ARRAY_SIZE(mKeyTaskStack), NULL, 3,
                     mKeyTaskStack, &mKeyTaskBuffer);
 }

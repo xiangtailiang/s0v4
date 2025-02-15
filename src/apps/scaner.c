@@ -53,9 +53,7 @@ static void onNewBand() {
   radio->bw = b->bw;
   radio->gainIndex = b->gainIndex;
   radio->squelch = b->squelch;
-  taskENTER_CRITICAL();
   RADIO_Setup();
-  taskEXIT_CRITICAL();
   SP_Init(b);
 }
 
@@ -99,16 +97,14 @@ static void changeSetting(bool up) {
   default:
     break;
   }
-  taskENTER_CRITICAL();
   RADIO_Setup();
-  taskEXIT_CRITICAL();
 }
 
 void SCANER_init(void) {
   SPECTRUM_Y = 8;
   SPECTRUM_H = 44;
 
-  RADIO_LoadCurrentVFO();
+  // RADIO_LoadCurrentVFO();
 
   m = &gLoot[gSettings.activeVFO];
   m->snr = 0;
@@ -203,9 +199,7 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       u8v = radio->step;
       IncDec8(&u8v, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
       radio->step = u8v;
-      taskENTER_CRITICAL();
       RADIO_Setup();
-      taskEXIT_CRITICAL();
       return true;
     case KEY_STAR:
       APPS_run(APP_LOOT_LIST);

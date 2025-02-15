@@ -159,7 +159,7 @@ class QuanshengUVK5Radio(chirp_common.CloneModeRadio):
     """Quansheng UV-K5"""
     VENDOR = "Quansheng"     # Replace this with your vendor
     MODEL = "UV-K5"  # Replace this with your model
-    VARIANT = 'fagci r3b0rn'
+    VARIANT = 'fagci s0v4'
 
     BAUD_RATE = 38400    # Replace this with your baud rate
     BLOCK_SIZE = 80

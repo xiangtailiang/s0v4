@@ -38,8 +38,8 @@ void GENERATOR_update() {}
 bool GENERATOR_key(KEY_Code_t key, Key_State_t state) {
   const uint16_t M[] = {tone1Freq, 0, 0, 0};
   if (key == KEY_PTT) {
-    RADIO_ToggleTXEX(state == KEY_LONG_PRESSED, RADIO_GetTXF(), power, bkPower);
-    if (state == KEY_LONG_PRESSED && gTxState == TX_ON) {
+    RADIO_ToggleTXEX(state == KEY_PRESSED, RADIO_GetTXF(), power, bkPower);
+    if (state == KEY_PRESSED && gTxState == TX_ON) {
       BK4819_PlaySequence(M);
     }
 

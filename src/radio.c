@@ -819,6 +819,9 @@ uint16_t RADIO_GetS() {
 }
 
 bool RADIO_IsSquelchOpen(const Measurement *msm) {
+  if (gMonitorMode) {
+    return true;
+  }
   if (RADIO_GetRadio() == RADIO_BK4819) {
     return BK4819_IsSquelchOpen();
   }

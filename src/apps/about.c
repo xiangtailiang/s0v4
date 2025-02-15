@@ -3,8 +3,10 @@
 #include "apps.h"
 
 void ABOUT_Render() {
-  PrintMediumEx(LCD_XCENTER, LCD_YCENTER + 8, POS_C, C_FILL, "r3b0rn");
-  PrintSmallEx(LCD_XCENTER, LCD_YCENTER + 14, POS_C, C_FILL, "by FAGCI");
+  PrintMediumEx(LCD_XCENTER, LCD_YCENTER - 8, POS_C, C_FILL, "s0v4");
+  PrintSmallEx(LCD_XCENTER, LCD_YCENTER, POS_C, C_FILL, "by FAGCI");
+  PrintSmallEx(LCD_XCENTER, LCD_YCENTER + 8, POS_C, C_FILL,
+               __DATE__ " " __TIME__);
   PrintSmallEx(LCD_XCENTER, LCD_YCENTER + 24, POS_C, C_FILL,
                "t.me/uvk5_spectrum_talk");
 }

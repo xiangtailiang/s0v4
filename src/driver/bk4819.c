@@ -151,7 +151,7 @@ void BK4819_WriteU16(uint16_t Data) {
 }
 
 uint16_t BK4819_ReadRegister(BK4819_REGISTER_t Register) {
-
+  taskENTER_CRITICAL();
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCN);
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCL);
   SYSTICK_Delay250ns(1);
@@ -165,13 +165,14 @@ uint16_t BK4819_ReadRegister(BK4819_REGISTER_t Register) {
   SYSTICK_Delay250ns(1);
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCL);
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SDA);
-
+  taskEXIT_CRITICAL();
   return v;
 }
 
 void BK4819_WriteRegister(BK4819_REGISTER_t Register, uint16_t Data) {
   /* if (BK4819_ReadRegister(Register) == Data)
     return; */
+  taskENTER_CRITICAL();
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCN);
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCL);
   SYSTICK_Delay250ns(1);
@@ -182,6 +183,7 @@ void BK4819_WriteRegister(BK4819_REGISTER_t Register, uint16_t Data) {
   SYSTICK_Delay250ns(1);
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCL);
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SDA);
+  taskEXIT_CRITICAL();
 }
 
 void BK4819_SetAGC(bool useDefault, uint8_t gainIndex) {

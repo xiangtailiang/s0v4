@@ -2,6 +2,7 @@
 #include "../apps/textinput.h"
 #include "../driver/bk4819.h"
 #include "../driver/uart.h"
+#include "../helper/bands.h"
 #include "../helper/channels.h"
 #include "../helper/lootlist.h"
 #include "../helper/measurements.h"
@@ -80,6 +81,23 @@ static void UpdateRegMenuValue(RegisterSpec s, bool add) {
   }
 }
 
+static void startABScan() {
+  uint32_t F1 = gVFO[0].rxF;
+  uint32_t F2 = gVFO[1].rxF;
+
+  if (F1 > F2) {
+    SWAP(F1, F2);
+  }
+
+  gCurrentBand = defaultBand;
+  gCurrentBand.meta.type = TYPE_BAND_DETACHED;
+  gCurrentBand.rxF = F1;
+  gCurrentBand.txF = F2;
+  gCurrentBand.step = radio->step;
+
+  APPS_run(APP_SCANER);
+}
+
 static void setChannel(uint16_t v) { RADIO_TuneToCH(v); }
 
 static void tuneTo(uint32_t f) {
@@ -107,12 +125,13 @@ void VFO1_init(void) {
 
 void VFO1_update(void) {
   Measurement m = {
+      .f = radio->rxF,
       .rssi = RADIO_GetRSSI(),
       .snr = RADIO_GetSNR(),
       .noise = BK4819_GetNoise(),
       .glitch = BK4819_GetGlitch(),
   };
-  m.open = BK4819_IsSquelchOpen();
+  m.open = RADIO_IsSquelchOpen(&m);
   LOOT_Update(&m);
   RADIO_ToggleRX(m.open);
   SP_ShiftGraph(-1);
@@ -123,7 +142,7 @@ void VFO1_update(void) {
 
 bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
   if (key == KEY_PTT) {
-    RADIO_ToggleTX(state == KEY_LONG_PRESSED);
+    RADIO_ToggleTX(state == KEY_PRESSED);
     return true;
   }
   if (state == KEY_LONG_PRESSED) {
@@ -225,9 +244,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
   }
 
   if (key == KEY_PTT && !gIsNumNavInput) {
-    Log("PTT %u", state);
-    RADIO_ToggleTX(state == KEY_LONG_PRESSED ||
-                   state == KEY_LONG_PRESSED_CONT || state == KEY_PRESSED);
+    RADIO_ToggleTX(state == KEY_PRESSED);
     return true;
   }
 
@@ -260,7 +277,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
     OffsetDirection offsetDirection = radio->offsetDir;
     switch (key) {
     case KEY_EXIT:
-      // SCAN_StartAB();
+      startABScan();
       return true;
     case KEY_1:
       gChListFilter = TYPE_FILTER_BAND;
@@ -298,13 +315,11 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
       RADIO_ToggleModulation();
       return true;
     case KEY_STAR:
-      // SCAN_Start();
-      return true;
-    case KEY_SIDE1:
       APPS_run(APP_SCANER);
       return true;
+    case KEY_SIDE1:
+      return true;
     case KEY_SIDE2:
-      // APPS_run(APP_SPECTRUM);
       return true;
     default:
       break;
