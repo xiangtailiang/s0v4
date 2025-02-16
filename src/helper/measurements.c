@@ -116,7 +116,7 @@ int32_t AdjustI(int32_t val, int32_t min, int32_t max, int32_t inc) {
   }
 }
 
-uint32_t AdjustU(uint32_t val, uint32_t min, uint32_t max, uint32_t inc) {
+uint32_t AdjustU(uint32_t val, uint32_t min, uint32_t max, int32_t inc) {
   if (inc > 0) {
     return val == max - inc ? min : val + inc;
   } else {
@@ -145,7 +145,8 @@ SQL GetSql(uint8_t level) {
   sq.go = ConvertDomain(level, 0, 10, 32, 6);
 
   sq.rc = sq.ro - 4;
-  sq.nc = sq.gc = sq.no + 4;
+  sq.nc = sq.no + 4;
+  sq.gc = sq.go + 4;
   return sq;
 }
 

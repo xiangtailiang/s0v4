@@ -196,6 +196,6 @@ static void checkKeys(void *attr) {
 }
 
 void KEYBOARD_Init() {
-  xTaskCreateStatic(checkKeys, "KEY", ARRAY_SIZE(mKeyTaskStack), NULL, 3,
+  xTaskCreateStatic(checkKeys, "KEY", ARRAY_SIZE(mKeyTaskStack), NULL, 2,
                     mKeyTaskStack, &mKeyTaskBuffer);
 }

@@ -37,7 +37,7 @@ uint16_t Mean(const uint16_t *array, uint8_t n);
 uint16_t Std(const uint16_t *data, uint8_t n);
 
 int32_t AdjustI(int32_t val, int32_t min, int32_t max, int32_t inc);
-uint32_t AdjustU(uint32_t val, uint32_t min, uint32_t max, uint32_t inc);
+uint32_t AdjustU(uint32_t val, uint32_t min, uint32_t max, int32_t inc);
 int32_t IncDecI(int32_t val, int32_t min, int32_t max, bool inc);
 uint32_t IncDecU(uint32_t val, uint32_t min, uint32_t max, bool inc);
 

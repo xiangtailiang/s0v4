@@ -32,7 +32,8 @@ LD = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 
 GIT_HASH := $(shell git rev-parse --short HEAD)
-TS := $(date +'"%Y%m%d_%H%M%S"')
+TS := $(shell date -u +'"%Y-%m-%d %H:%M UTC"')
+TS_FILE := $(shell date -u +'"%Y%m%d_%H%M"')
 
 ASFLAGS = -c -mcpu=cortex-m0
 CFLAGS = -Os -Wall -Wno-error -mcpu=cortex-m0 -fno-builtin -fshort-enums -fno-delete-null-pointer-checks -Wno-error=incompatible-pointer-types -std=c2x -MMD -flto=auto -Wextra
@@ -76,6 +77,9 @@ DEPS = $(OBJS:.o=.d)
 all: $(TARGET)
 	$(OBJCOPY) -O binary $< $<.bin
 	-python3 fw-pack.py $<.bin $(GIT_HASH) $<.packed.bin
+
+release: clean all
+	cp $(BIN_DIR)/firmware.packed.bin $(BIN_DIR)/s0va-by-fagci-$(TS_FILE).bin
 
 version.o: .FORCE
 
