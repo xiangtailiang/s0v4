@@ -35,12 +35,12 @@ uint16_t Min(const uint16_t *array, uint8_t n);
 uint16_t Max(const uint16_t *array, uint8_t n);
 uint16_t Mean(const uint16_t *array, uint8_t n);
 uint16_t Std(const uint16_t *data, uint8_t n);
-void IncDec8(uint8_t *val, uint8_t min, uint8_t max, int8_t inc);
-void IncDecI8(int8_t *val, int8_t min, int8_t max, int8_t inc);
-void IncDec16(uint16_t *val, uint16_t min, uint16_t max, int16_t inc);
-void IncDecI16(int16_t *val, int16_t min, int16_t max, int16_t inc);
-void IncDecI32(int32_t *val, int32_t min, int32_t max, int32_t inc);
-void IncDec32(uint32_t *val, uint32_t min, uint32_t max, int32_t inc);
+
+int32_t AdjustI(int32_t val, int32_t min, int32_t max, int32_t inc);
+uint32_t AdjustU(uint32_t val, uint32_t min, uint32_t max, uint32_t inc);
+int32_t IncDecI(int32_t val, int32_t min, int32_t max, bool inc);
+uint32_t IncDecU(uint32_t val, uint32_t min, uint32_t max, bool inc);
+
 bool IsReadable(char *name);
 SQL GetSql(uint8_t level);
 uint32_t DeltaF(uint32_t f1, uint32_t f2);

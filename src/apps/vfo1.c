@@ -232,8 +232,8 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
       if (registerActive) {
         UpdateRegMenuValue(registerSpecs[menuIndex], key == KEY_2);
       } else {
-        IncDec8(&menuIndex, 0, ARRAY_SIZE(registerSpecs),
-                key == KEY_2 ? -1 : 1);
+        menuIndex =
+            IncDecU(menuIndex, 0, ARRAY_SIZE(registerSpecs), key != KEY_2);
       }
       return true;
     case KEY_5:
@@ -296,7 +296,6 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
 
   // long held
   if (longHeld) {
-    OffsetDirection offsetDirection = radio->offsetDir;
     switch (key) {
     case KEY_EXIT:
       startABScan();
@@ -324,8 +323,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
       RADIO_UpdateStep(true);
       return true;
     case KEY_8:
-      IncDec8(&offsetDirection, 0, OFFSET_MINUS, 1);
-      radio->offsetDir = offsetDirection;
+      radio->offsetDir = IncDecU(radio->offsetDir, 0, OFFSET_MINUS, true);
       return true;
     case KEY_9: // call
       gTextInputSize = 15;

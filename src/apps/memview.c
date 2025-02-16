@@ -36,11 +36,12 @@ bool MEMVIEW_key(KEY_Code_t key, Key_State_t state) {
     return true;
   case KEY_UP:
   case KEY_DOWN:
-    IncDec32(&page, 0, pagesCount, key == KEY_UP ? -1 : 1);
+    page = IncDecU(page, 0, pagesCount, key != KEY_UP);
     return true;
   case KEY_3:
   case KEY_9:
-    IncDec32(&page, 0, pagesCount, (key == KEY_3 ? -8196 : 8196) / PAGE_SZ);
+    page =
+        AdjustU(page, 0, pagesCount, (key == KEY_3 ? -8196 : 8196) / PAGE_SZ);
     return true;
   case KEY_MENU:
     return false;

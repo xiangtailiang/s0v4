@@ -476,12 +476,12 @@ static void setUpconverterFreq(uint32_t f) {
   SETTINGS_Save();
 }
 
-static void upDown(uint8_t inc) {
+static void upDown(bool inc) {
   if (isSubMenu) {
-    IncDec8(&subMenuIndex, 0, menu[menuIndex].size, inc);
+    subMenuIndex = IncDecU(subMenuIndex, 0, menu[menuIndex].size, inc);
     onSubChange();
   } else {
-    IncDec8(&menuIndex, 0, MENU_SIZE, inc);
+    menuIndex = IncDecU(menuIndex, 0, MENU_SIZE, inc);
   }
 }
 
@@ -501,7 +501,7 @@ bool SETTINGS_key(KEY_Code_t key, Key_State_t state) {
     switch (key) {
     case KEY_UP:
     case KEY_DOWN:
-      upDown(key == KEY_UP ? -1 : 1);
+      upDown(key != KEY_UP);
       return true;
     default:
       break;

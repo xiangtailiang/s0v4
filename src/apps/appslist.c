@@ -59,7 +59,7 @@ bool APPSLIST_key(KEY_Code_t key, Key_State_t state) {
     switch (key) {
     case KEY_UP:
     case KEY_DOWN:
-      IncDec8(&menuIndex, 0, MENU_SIZE, key == KEY_UP ? -1 : 1);
+      menuIndex = IncDecU(menuIndex, 0, MENU_SIZE, key != KEY_UP);
       return true;
     case KEY_MENU:
       APPS_exit();

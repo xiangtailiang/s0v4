@@ -226,7 +226,7 @@ bool BANDS_SelectBandRelativeByScanlist(bool next) {
     return false;
   }
   uint8_t oldScanlistBandIndex = scanlistBandIndex;
-  IncDec8(&scanlistBandIndex, 0, gScanlistSize, next ? 1 : -1);
+  scanlistBandIndex = IncDecU(scanlistBandIndex, 0, gScanlistSize, next);
   BANDS_Select(gScanlist[scanlistBandIndex], true);
   return oldScanlistBandIndex != scanlistBandIndex;
 }

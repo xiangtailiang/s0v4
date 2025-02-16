@@ -71,28 +71,22 @@ static void changeSetting(bool up) {
   uint8_t u8v;
   switch (setting) {
   case SET_AFC:
-    IncDec8(&afc, 0, 8 + 1, up ? 1 : -1);
+    afc = IncDecU(afc, 0, 8 + 1, up);
     BK4819_SetAFC(afc);
     break;
   case SET_BW:
-    u8v = radio->bw;
-    IncDec8(&u8v, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, up ? 1 : -1);
-    radio->bw = u8v;
+    radio->bw =
+        IncDecU(radio->bw, BK4819_FILTER_BW_6k, BK4819_FILTER_BW_26k + 1, up);
     break;
   case SET_AGC:
-    u8v = radio->gainIndex;
-    IncDec8(&u8v, 0, ARRAY_SIZE(gainTable), up ? 1 : -1);
-    radio->gainIndex = u8v;
+    radio->gainIndex = IncDecU(radio->gainIndex, 0, ARRAY_SIZE(gainTable), up);
     break;
   case SET_SQL_T:
-    u8v = radio->squelch.type;
-    IncDec8(&u8v, 0, ARRAY_SIZE(sqTypeNames), up ? 1 : -1);
-    radio->squelch.type = u8v;
+    radio->squelch.type =
+        IncDecU(radio->squelch.type, 0, ARRAY_SIZE(sqTypeNames), up);
     break;
   case SET_SQL_V:
-    u8v = radio->squelch.value;
-    IncDec8(&u8v, 0, 11, up ? 1 : -1);
-    radio->squelch.value = u8v;
+    radio->squelch.value = IncDecU(radio->squelch.value, 0, 11, up);
     break;
   default:
     break;
@@ -195,13 +189,12 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
     switch (key) {
     case KEY_1:
     case KEY_7:
-      IncDec32(&delay, 200, 10000, key == KEY_1 ? 100 : -100);
+      delay = AdjustU(delay, 200, 10000, key == KEY_1 ? 100 : -100);
       return true;
     case KEY_3:
     case KEY_9:
-      u8v = radio->step;
-      IncDec8(&u8v, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3 ? 1 : -1);
-      radio->step = u8v;
+      radio->step =
+          IncDecU(radio->step, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3);
       RADIO_Setup();
       return true;
     case KEY_STAR:
@@ -225,7 +218,7 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
   if (state == KEY_RELEASED) {
     switch (key) {
     case KEY_4:
-      IncDec8(&setting, 0, SET_COUNT, 1);
+      setting = IncDecU(setting, 0, SET_COUNT, true);
       return true;
     case KEY_5:
       gFInputCallback = selStart ? setStartF : setEndF;

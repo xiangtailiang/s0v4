@@ -181,7 +181,7 @@ static ModulationType getNextModulation(bool next) {
   uint8_t curIndex = indexOfMod(items, sz, radio->modulation);
 
   if (next) {
-    IncDec8(&curIndex, 0, sz, 1);
+    curIndex = IncDecU(curIndex, 0, sz, true);
   }
 
   return items[curIndex];
@@ -913,9 +913,8 @@ void RADIO_ToggleVfoMR(void) {
 }
 
 void RADIO_UpdateSquelchLevel(bool next) {
-  uint8_t sq = radio->squelch.value;
-  IncDec8(&sq, 0, 10, next ? 1 : -1);
-  RADIO_SetSquelch(sq);
+  radio->squelch.value = IncDecU(radio->squelch.value, 0, 10, next);
+  RADIO_SetSquelch(radio->squelch.value);
 }
 
 void RADIO_NextF(bool inc) {
@@ -925,9 +924,7 @@ void RADIO_NextF(bool inc) {
 }
 
 void RADIO_UpdateStep(bool inc) {
-  uint8_t step = radio->step;
-  IncDec8(&step, 0, STEP_500_0kHz, inc ? 1 : -1);
-  radio->step = step;
+  radio->step = IncDecU(radio->step, 0, STEP_500_0kHz, inc);
   radio->fixedBoundsMode = false;
   RADIO_SaveCurrentVFODelayed();
 }

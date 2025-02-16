@@ -72,7 +72,7 @@ static int16_t chScanlistIndex = 0;
 
 void CHANNELS_Next(bool next) {
   if (gScanlistSize) {
-    IncDecI16(&chScanlistIndex, 0, gScanlistSize, next ? 1 : -1);
+    chScanlistIndex = IncDecI(chScanlistIndex, 0, gScanlistSize, next);
     int16_t chNum = gScanlist[chScanlistIndex];
     radio->channel = chNum;
     RADIO_VfoLoadCH(gSettings.activeVFO);

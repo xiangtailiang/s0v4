@@ -188,11 +188,11 @@ bool CHLIST_key(KEY_Code_t key, Key_State_t state) {
     }
   }
 
-if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
+  if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
     switch (key) {
     case KEY_UP:
     case KEY_DOWN:
-      IncDec16(&channelIndex, 0, gScanlistSize, key == KEY_UP ? -1 : 1);
+      channelIndex = IncDecU(channelIndex, 0, gScanlistSize, key != KEY_UP);
       return true;
     default:
       break;
@@ -218,7 +218,7 @@ if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
       CHANNELS_LoadScanlist(gChListFilter, gSettings.currentScanlist);
       return true;
     case KEY_STAR:
-      IncDec8(&viewMode, 0, ARRAY_SIZE(VIEW_MODE_NAMES), 1);
+      viewMode = IncDecU(viewMode, 0, ARRAY_SIZE(VIEW_MODE_NAMES), true);
       return true;
     case KEY_MENU:
       if (gChSaveMode) {
