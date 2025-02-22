@@ -167,9 +167,11 @@ void SI47XX_PowerUp() {
   if (si4732mode == SI47XX_FM) {
     enableRDS();
   } else if (si4732mode == SI47XX_AM) {
+    Log("set AM settings");
     SI47XX_SetAutomaticGainControl(1, 0);
     sendProperty(PROP_AM_SOFT_MUTE_MAX_ATTENUATION, 0);
-    setAvcAmMaxGain(90);
+    sendProperty(PROP_AM_AGC_RELEASE_RATE, 20);
+    setAvcAmMaxGain(40);
   }
   SI47XX_SetFreq(siCurrentFreq);
 }
@@ -199,6 +201,7 @@ void SI47XX_PatchPowerUp() {
   SI47XX_downloadPatch();
 
   SI47XX_SsbSetup(2, 1, 0, 1, 0, 1);
+  setAvcAmMaxGain(42);
 
   AUDIO_ToggleSpeaker(true);
   SI47XX_SetVolume(63);
@@ -304,9 +307,6 @@ void SI47XX_SetFreq(uint16_t freq) {
   waitToSend();
   SI47XX_WriteBuffer(cmd, size);
   siCurrentFreq = freq;
-
-  // SYS_DelayMs(30);
-  // RSQ_GET();
 }
 
 void SI47XX_SetAMFrontendAGC(uint8_t minGainIdx, uint8_t attnBackup) {

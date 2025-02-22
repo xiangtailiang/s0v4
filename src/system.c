@@ -17,6 +17,7 @@
 #include "helper/bands.h"
 #include "helper/battery.h"
 #include "misc.h"
+#include "radio.h"
 #include "settings.h"
 #include "ui/graphics.h"
 #include "ui/statusline.h"
@@ -86,6 +87,7 @@ static void systemUpdate() {
 void SYS_Main(void *params) {
   BOARD_Init();
   Log("BOARD OK");
+  hasSi = RADIO_HasSi();
   KEYBOARD_Init();
   Log("Sys task OK");
 
