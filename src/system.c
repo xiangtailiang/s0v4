@@ -18,6 +18,7 @@
 #include "helper/battery.h"
 #include "misc.h"
 #include "radio.h"
+#include "scheduler.h"
 #include "settings.h"
 #include "ui/graphics.h"
 #include "ui/statusline.h"
@@ -84,6 +85,8 @@ static void systemUpdate() {
   BACKLIGHT_Update();
 }
 
+static uint32_t lastUartDataTime;
+
 void SYS_Main(void *params) {
   BOARD_Init();
   Log("BOARD OK");
@@ -126,19 +129,21 @@ void SYS_Main(void *params) {
                     appUpdateTaskStack, &appUpdateTaskBuffer);
   xTaskCreateStatic(appRender, "appR", ARRAY_SIZE(appRenderTaskStack), NULL, 2,
                     appRenderTaskStack, &appRenderTaskBuffer);
+  /* xTaskCreateStatic(uart, "uart", ARRAY_SIZE(uartTaskStack), NULL, 2,
+                    uartTaskStack, &uartTaskBuffer); */
 
   SystemMessages n;
 
   for (;;) {
     if (xQueueReceive(systemMessageQueue, &n, pdMS_TO_TICKS(5))) {
       // Process system notifications
-      Log("MSG: m:%u, k:%u, st:%u", n.message, n.key, n.state);
-      if (n.message == MSG_KEYPRESSED) {
+      // Log("MSG: m:%u, k:%u, st:%u", n.message, n.key, n.state);
+      if (n.message == MSG_KEYPRESSED && Now() - lastUartDataTime >= 1000) {
         BACKLIGHT_On();
         if (APPS_key(n.key, n.state)) {
           gRedrawScreen = true;
         } else {
-          Log("Process keys external");
+          // Log("Process keys external");
           if (n.key == KEY_MENU) {
             if (n.state == KEY_LONG_PRESSED) {
               APPS_run(APP_SETTINGS);
@@ -155,13 +160,13 @@ void SYS_Main(void *params) {
       }
     }
 
-    if (UART_IsCommandAvailable()) {
-      taskENTER_CRITICAL();
+    while (UART_IsCommandAvailable()) {
       UART_HandleCommand();
-      taskEXIT_CRITICAL();
+      lastUartDataTime = Now();
     }
+
     STATUSLINE_update();
-    vTaskDelay(1);
+    // vTaskDelay(1);
   }
 }
 
