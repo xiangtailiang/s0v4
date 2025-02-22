@@ -597,12 +597,9 @@ void RADIO_TuneToPure(uint32_t f, bool precise) {
 }
 
 void RADIO_SwitchRadioPure() {
-
   if (oldRadio == radio->radio) {
     return;
   }
-  Log("switch radio %s -> %s", oldRadio == 255 ? "-" : radioNames[oldRadio],
-      radioNames[radio->radio]);
   rxTurnOff(oldRadio);
   rxTurnOn(radio->radio);
   oldRadio = radio->radio;

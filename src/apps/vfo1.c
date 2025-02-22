@@ -291,7 +291,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
     }
   }
 
-  bool longHeld = state == KEY_LONG_PRESSED_CONT;
+  bool longHeld = state == KEY_LONG_PRESSED;
   bool simpleKeypress = state == KEY_RELEASED;
 
   // long held
