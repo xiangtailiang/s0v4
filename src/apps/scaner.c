@@ -121,8 +121,15 @@ void SCANER_update(void) {
   } else {
     m->f = radio->rxF;
     m->rssi = measure(radio->rxF);
+
+    if (!sqLevel && m->rssi) {
+      sqLevel = m->rssi - 1;
+    }
+
     m->open = m->rssi >= sqLevel;
+
     SP_AddPoint(m);
+
     if (m->rssi > msmHigh) {
       msmHigh = m->rssi;
     }

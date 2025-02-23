@@ -37,7 +37,8 @@ uint8_t gCurrentTxPower = 0;
 TXState gTxState = TX_UNKNOWN;
 bool gShowAllRSSI = false;
 
-bool hasSi = false;
+static bool hasSi = false;
+static bool hasSsbPatch = false;
 
 static uint8_t oldRadio = 255;
 
@@ -161,7 +162,7 @@ static ModulationType getNextModulation(bool next) {
     items = MODS_WFM;
     sz = ARRAY_SIZE(MODS_WFM);
   } else if (radio->rxF <= SI47XX_F_MAX && radio->rxF >= BK4819_F_MIN) {
-    if (isPatchPresent) {
+    if (hasSsbPatch) {
       items = MODS_BOTH_PATCH;
       sz = ARRAY_SIZE(MODS_BOTH_PATCH);
     } else {
@@ -169,7 +170,7 @@ static ModulationType getNextModulation(bool next) {
       sz = ARRAY_SIZE(MODS_BOTH);
     }
   } else if (radio->rxF <= SI47XX_F_MAX) {
-    if (isPatchPresent) {
+    if (hasSsbPatch) {
       items = MODS_SI4732_PATCH;
       sz = ARRAY_SIZE(MODS_SI4732_PATCH);
     } else {
@@ -193,7 +194,7 @@ Radio RADIO_Selector(uint32_t freq, ModulationType mod) {
   }
 
   if (hasSi && freq <= SI47XX_F_MAX &&
-      (mod == MOD_AM || (isPatchPresent && RADIO_IsSSB()))) {
+      (mod == MOD_AM || (hasSsbPatch && RADIO_IsSSB()))) {
     return RADIO_SI4732;
   }
 
@@ -217,31 +218,13 @@ const char *RADIO_GetBWName(const VFO *vfo) {
 }
 
 void RADIO_Init(void) {
-  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);
-  BK4819_SetupPowerAmplifier(0, 0); // 0 is default, but...
-
-  while (BK4819_ReadRegister(BK4819_REG_0C) & 1U) {
-    BK4819_WriteRegister(BK4819_REG_02, 0);
-    SYS_DelayMs(1);
+  Log("RADIO_Init");
+  hasSi = RADIO_HasSi();
+  if (hasSi) {
+    hasSsbPatch = SETTINGS_IsPatchPresent();
   }
-  BK4819_WriteRegister(BK4819_REG_3F, 0);
-  BK4819_WriteRegister(BK4819_REG_7D, 0xE94F | 10); // mic
-  // TX
-  // BK4819_WriteRegister(0x44, 38888);  // 300 resp TX
-  BK4819_WriteRegister(0x74, 0xAF1F); // 3k resp TX
-
-  BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_RX_ENABLE, true);
-  BK4819_WriteRegister(
-      BK4819_REG_48,
-      (11u << 12) |   // ??? .. 0 ~ 15, doesn't seem to make any difference
-          (0 << 10) | // AF Rx Gain-1 00:0dB 01:-6dB 10:-12dB 11:-18dB
-          (58 << 4) | // AF Rx Gain-2 AF RX Gain2 (-26 dB ~ 5.5 dB): 0x00: Mute
-          (8 << 0));  // AF DAC Gain (after Gain-1 and Gain-2) 1111 - max
-
-  BK4819_DisableDTMF();
-
-  BK4819_WriteRegister(0x40, (BK4819_ReadRegister(0x40) & ~(0x7FF)) |
-                                 (gSettings.deviation * 10) | (1 << 12));
+  Log("RADIO hasSi=%u, hasPatch=%u", hasSi, hasSsbPatch);
+  BK4819_Init();
 }
 
 static void setSI4732Modulation(ModulationType mod) {
@@ -269,6 +252,10 @@ void RADIO_SaveCurrentVFODelayed(void) {
 }
 
 static void setupToneDetection() {
+  Log("setupToneDetection");
+  // HACK? to enable STE RX
+  Log("DC flt BW = 0");
+  BK4819_WriteRegister(BK4819_REG_7E, 0x302E); // DC flt BW 0=BYP
   uint16_t InterruptMask = BK4819_REG_3F_CxCSS_TAIL;
   if (gSettings.dtmfdecode) {
     BK4819_EnableDTMF();
@@ -735,11 +722,13 @@ void RADIO_SetFilterBandwidth(BK4819_FilterBandwidth_t bw) {
 }
 
 void RADIO_Setup() {
+  Log("---------- %s RADIO_Setup ----------", radioNames[RADIO_GetRadio()]);
   ModulationType mod = RADIO_GetModulation();
   RADIO_SetGain(radio->gainIndex);
   RADIO_SetFilterBandwidth(radio->bw);
   switch (RADIO_GetRadio()) {
   case RADIO_BK4819:
+    Log("SQ %s,%u", sqTypeNames[radio->squelch.type], radio->squelch.value);
     BK4819_SquelchType(radio->squelch.type);
     BK4819_Squelch(radio->squelch.value, gSettings.sqlOpenTime,
                    gSettings.sqlCloseTime);
@@ -747,8 +736,6 @@ void RADIO_Setup() {
     BK4819_SetModulation(mod);
     BK4819_SetScrambler(radio->scrambler);
 
-    // HACK? to enable STE RX
-    BK4819_WriteRegister(BK4819_REG_7E, 0x302E); // DC flt BW 0=BYP
     setupToneDetection();
     break;
   case RADIO_BK1080:

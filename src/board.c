@@ -1,8 +1,6 @@
 #include "board.h"
 #include "driver/adc.h"
 #include "driver/backlight.h"
-#include "driver/bk4819-regs.h"
-#include "driver/bk4819.h"
 #include "driver/crc.h"
 #include "driver/gpio.h"
 #include "driver/st7565.h"
@@ -412,7 +410,10 @@ void BOARD_ToggleRed(bool on) {
 }
 
 void BOARD_Init(void) {
-  ST7565_Init();
-  BK4819_Init();
+  Log("INIT DISPLAY");
+  ST7565_Init(true);
+  Log("INIT BL");
   BACKLIGHT_Init();
+  Log("INIT KBD");
+  KEYBOARD_Init();
 }

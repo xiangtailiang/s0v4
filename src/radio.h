@@ -28,8 +28,6 @@ extern TXState gTxState;
 extern bool gShowAllRSSI;
 extern uint8_t gCurrentTxPower;
 
-extern bool hasSi;
-
 extern const uint16_t StepFrequencyTable[15];
 extern const char *modulationTypeOptions[8];
 extern const SquelchType sqTypeValues[4];

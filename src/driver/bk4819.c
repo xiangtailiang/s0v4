@@ -2,6 +2,7 @@
 #include "../driver/gpio.h"
 #include "../driver/system.h"
 #include "../driver/systick.h"
+#include "../driver/uart.h"
 #include "../inc/dp32g030/gpio.h"
 #include "../inc/dp32g030/portcon.h"
 #include "../misc.h"
@@ -66,6 +67,7 @@ void BK4819_Init(void) {
   BK4819_WriteRegister(BK4819_REG_33, 0x9000);
   BK4819_WriteRegister(BK4819_REG_3F, 0);
 
+    // ---
   BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);
   BK4819_SetupPowerAmplifier(0, 0); // 0 is default, but...
 
@@ -170,8 +172,7 @@ uint16_t BK4819_ReadRegister(BK4819_REGISTER_t Register) {
 }
 
 void BK4819_WriteRegister(BK4819_REGISTER_t Register, uint16_t Data) {
-  /* if (BK4819_ReadRegister(Register) == Data)
-    return; */
+  // Log("  BK W 0x%02x: 0x%04x", Register, Data);
   taskENTER_CRITICAL();
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCN);
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCL);
@@ -227,10 +228,11 @@ void BK4819_SetAGC(bool useDefault, uint8_t gainIndex) {
 }
 
 void BK4819_ToggleGpioOut(BK4819_GPIO_PIN_t Pin, bool bSet) {
+  const uint16_t PIN_BIT = 0x40U >> Pin;
   if (bSet) {
-    gBK4819_GpioOutState |= (0x40U >> Pin);
+    gBK4819_GpioOutState |= PIN_BIT;
   } else {
-    gBK4819_GpioOutState &= ~(0x40U >> Pin);
+    gBK4819_GpioOutState &= ~PIN_BIT;
   }
 
   BK4819_WriteRegister(BK4819_REG_33, gBK4819_GpioOutState);
@@ -277,7 +279,7 @@ void BK4819_SetCTCSSFrequency(uint32_t FreqControlWord) {
   }
   BK4819_WriteRegister(BK4819_REG_51, Config);
   // CTC1 Frequency Control Word
-  BK4819_WriteRegister(BK4819_REG_07, 0 | BK4819_REG_07_MODE_CTC1 |
+  BK4819_WriteRegister(BK4819_REG_07, BK4819_REG_07_MODE_CTC1 |
                                           ((FreqControlWord * 2065) / 1000)
                                               << BK4819_REG_07_SHIFT_FREQUENCY);
 }
@@ -390,6 +392,7 @@ void BK4819_SetupPowerAmplifier(uint8_t Bias, uint32_t Frequency) {
 }
 
 void BK4819_SetFrequency(uint32_t f) {
+  Log("BK f=%u", f);
   BK4819_WriteRegister(BK4819_REG_38, f & 0xFFFF);
   BK4819_WriteRegister(BK4819_REG_39, (f >> 16) & 0xFFFF);
 }
@@ -460,23 +463,21 @@ void BK4819_SetModulation(ModulationType type) {
   bool isSsb = type == MOD_LSB || type == MOD_USB;
   bool isFm = type == MOD_FM || type == MOD_WFM;
   BK4819_SetAF(modTypeReg47Values[type]);
-  BK4819_SetRegValue(afDacGainRegSpec, 0x8);
-  BK4819_WriteRegister(0x3D, isSsb ? 0 : 0x2AAB);
-  BK4819_SetRegValue(afcDisableRegSpec, !isFm);
+  BK4819_SetRegValue(RS_AF_DAC_GAIN, 0x8);
+  BK4819_SetRegValue(RS_AFC_DIS, !isFm);
   if (type == MOD_WFM) {
-    BK4819_SetRegValue(RS_XTAL_MODE, 0);
-    BK4819_SetRegValue(RS_IF_F, 14223);
     BK4819_SetRegValue(RS_RF_FILT_BW, 7);
     BK4819_SetRegValue(RS_RF_FILT_BW_WEAK, 7);
     BK4819_SetRegValue(RS_BW_MODE, 3);
+
+    BK4819_SetRegValue(RS_XTAL_MODE, 0);
+    BK4819_SetRegValue(RS_IF_F, 14223);
+  } else if (isSsb) {
+    BK4819_SetRegValue(RS_XTAL_MODE, 3);
+    BK4819_SetRegValue(RS_IF_F, 0);
   } else {
-    if (isSsb) {
-      BK4819_SetRegValue(RS_XTAL_MODE, 3);
-      BK4819_SetRegValue(RS_IF_F, 0);
-    } else {
-      BK4819_SetRegValue(RS_XTAL_MODE, 2);
-      BK4819_SetRegValue(RS_IF_F, 10923);
-    }
+    BK4819_SetRegValue(RS_XTAL_MODE, 2);
+    BK4819_SetRegValue(RS_IF_F, 10923);
   }
 }
 
@@ -496,11 +497,29 @@ void BK4819_RX_TurnOn(void) {
 }
 
 void BK4819_SelectFilterEx(Filter filter) {
-  BK4819_ToggleGpioOut(BK4819_GPIO4_PIN32_VHF_LNA, filter == FILTER_VHF);
-  BK4819_ToggleGpioOut(BK4819_GPIO3_PIN31_UHF_LNA, filter == FILTER_UHF);
+  Log("BK ---- SEL flt %u", filter);
+
+  // for single write to 0x33
+  const uint16_t PIN_BIT_VHF = 0x40U >> BK4819_GPIO4_PIN32_VHF_LNA;
+  const uint16_t PIN_BIT_UHF = 0x40U >> BK4819_GPIO3_PIN31_UHF_LNA;
+
+  if (filter == FILTER_VHF) {
+    gBK4819_GpioOutState |= PIN_BIT_VHF;
+  } else {
+    gBK4819_GpioOutState &= ~PIN_BIT_VHF;
+  }
+
+  if (filter == FILTER_UHF) {
+    gBK4819_GpioOutState |= PIN_BIT_UHF;
+  } else {
+    gBK4819_GpioOutState &= ~PIN_BIT_UHF;
+  }
+
+  BK4819_WriteRegister(BK4819_REG_33, gBK4819_GpioOutState);
 }
 
 void BK4819_SelectFilter(uint32_t f) {
+  Log("BK -- SEL flt for %u", f);
   Filter filter = f < SETTINGS_GetFilterBound() ? FILTER_VHF : FILTER_UHF;
 
   if (selectedFilter != filter) {
@@ -972,11 +991,15 @@ void BK4819_ToggleAFDAC(bool on) {
 }
 
 void BK4819_TuneTo(uint32_t f, bool precise) {
-  if (BK4819_GetFrequency() == f) { // TODO: maybe save current freq locally
+  static uint32_t oldFreq;
+  if (oldFreq == f) { // TODO: maybe save current freq locally
+    Log("BK tuneTo(%u) [-]", f);
     return;
   }
+  Log("BK tuneTo(%u) [+]", f);
   BK4819_SelectFilter(f);
   BK4819_SetFrequency(f);
+  oldFreq = f;
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
   if (precise) {
     BK4819_WriteRegister(BK4819_REG_30, 0x0200);

@@ -13,7 +13,7 @@ extern bool gRedrawScreen;
 extern uint8_t gFrameBuffer[8][LCD_WIDTH];
 
 void ST7565_Blit(void);
-void ST7565_Init(void);
+void ST7565_Init(bool full);
 void ST7565_WriteByte(uint8_t Value);
 
 #endif

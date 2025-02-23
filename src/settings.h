@@ -151,7 +151,6 @@ typedef struct {
 // channel 2
 
 extern Settings gSettings;
-extern bool isPatchPresent;
 extern uint8_t BL_TIME_VALUES[7];
 extern const char *BL_TIME_NAMES[7];
 extern const char *BL_SQL_MODE_NAMES[3];

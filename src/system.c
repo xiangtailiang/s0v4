@@ -89,10 +89,6 @@ static uint32_t lastUartDataTime;
 
 void SYS_Main(void *params) {
   BOARD_Init();
-  Log("BOARD OK");
-  hasSi = RADIO_HasSi();
-  KEYBOARD_Init();
-  Log("Sys task OK");
 
   uint8_t buf[2];
   uint8_t deadBuf[] = {0xDE, 0xAD};
@@ -111,9 +107,14 @@ void SYS_Main(void *params) {
       NVIC_SystemReset();
     }
 
-    ST7565_Init();
+    ST7565_Init(false);
     BACKLIGHT_Init();
+
+    Log("Load bands");
     BANDS_Load();
+    Log("INIT RADIO");
+    RADIO_Init();
+    Log("RUN DEFAULT APP");
     APPS_run(gSettings.mainApp);
   }
 
