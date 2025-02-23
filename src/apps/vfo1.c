@@ -263,7 +263,11 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
     switch (key) {
     case KEY_UP:
     case KEY_DOWN:
-      RADIO_NextF(key == KEY_UP);
+      if (RADIO_IsChMode()) {
+        CHANNELS_Next(key != KEY_UP);
+      } else {
+        RADIO_NextF(key == KEY_UP);
+      }
       RADIO_SaveCurrentVFODelayed();
       return true;
     case KEY_SIDE1:
@@ -292,10 +296,13 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
       APPS_run(APP_CH_LIST);
       return true;
     case KEY_2:
-      gSettings.iAmPro = !gSettings.iAmPro;
-      gVfo1ProMode = gSettings.iAmPro;
-      SETTINGS_Save();
-      return true;
+      if (gCurrentApp == APP_VFO1) {
+        gSettings.iAmPro = !gSettings.iAmPro;
+        gVfo1ProMode = gSettings.iAmPro;
+        SETTINGS_Save();
+        return true;
+      }
+      return false;
     case KEY_3:
       RADIO_ToggleVfoMR();
       VFO1_init();
