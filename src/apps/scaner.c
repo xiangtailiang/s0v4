@@ -68,7 +68,6 @@ static void setEndF(uint32_t f) {
 }
 
 static void changeSetting(bool up) {
-  uint8_t u8v;
   switch (setting) {
   case SET_AFC:
     afc = IncDecU(afc, 0, 8 + 1, up);
@@ -186,7 +185,6 @@ void SCANER_update(void) {
 }
 
 bool SCANER_key(KEY_Code_t key, Key_State_t state) {
-  uint8_t u8v;
   if (state == KEY_LONG_PRESSED && key == KEY_5) {
     selStart = !selStart;
     return true;

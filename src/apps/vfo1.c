@@ -22,8 +22,6 @@
 #include "chlist.h"
 #include "finput.h"
 
-#define EEPROM_WRITE_DELAY_MS 500
-
 bool gVfo1ProMode = false;
 
 static uint8_t menuIndex = 0;
@@ -53,12 +51,6 @@ static const RegisterSpec registerSpecs[] = {
     {"AGCH", 0x49, 7, 0b1111111, 1},
     {"AFC", 0x73, 0, 0xFF, 1},
 };
-
-static void delayedVfoSave() {
-  if (eepromWriteTimer != NULL) {
-    xTimerReset(eepromWriteTimer, portMAX_DELAY);
-  }
-}
 
 static void UpdateRegMenuValue(RegisterSpec s, bool add) {
   uint16_t v, maxValue;
@@ -136,11 +128,6 @@ void VFO1_init(void) {
     gVfo1ProMode = gSettings.iAmPro;
   }
   RADIO_LoadCurrentVFO();
-  eepromWriteTimer = xTimerCreateStatic(
-      "VFOsav", pdMS_TO_TICKS(EEPROM_WRITE_DELAY_MS), pdFALSE, NULL,
-      RADIO_SaveCurrentVFO, &vfoSaveTimerBuffer);
-
-  xTimerStart(eepromWriteTimer, portMAX_DELAY);
 }
 
 void VFO1_update(void) {
@@ -277,7 +264,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
     case KEY_UP:
     case KEY_DOWN:
       RADIO_NextF(key == KEY_UP);
-      delayedVfoSave();
+      RADIO_SaveCurrentVFODelayed();
       return true;
     case KEY_SIDE1:
     case KEY_SIDE2:

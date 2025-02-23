@@ -242,6 +242,8 @@ static void setSI4732Modulation(ModulationType mod) {
 static StaticTimer_t saveCurrentVfoTimerBuffer;
 static TimerHandle_t saveCurrentVfoTimer;
 void RADIO_SaveCurrentVFODelayed(void) {
+  /* Log("!!!VFO SAV delayed");
+  return; */
   if (saveCurrentVfoTimer) {
     xTimerStop(saveCurrentVfoTimer, 0);
   }

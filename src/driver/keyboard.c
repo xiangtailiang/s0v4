@@ -84,6 +84,7 @@ static Keyboard keyboard[5] = {
 };
 
 static void HandlePttKey() {
+  taskENTER_CRITICAL();
   mKeyPtt = !GPIO_CheckBit(&GPIOC->DATA, GPIOC_PIN_PTT);
 
   if (mPrevStatePtt == KEY_PRESSED && !mKeyPtt) {
@@ -93,6 +94,7 @@ static void HandlePttKey() {
     SYS_MsgKey(KEY_PTT, KEY_PRESSED);
     mPrevStatePtt = KEY_PRESSED;
   }
+  taskEXIT_CRITICAL();
 }
 
 static void ResetKeyboardRow(uint8_t row) {
@@ -106,7 +108,8 @@ static uint16_t ReadStableGpioData() {
   uint8_t ii;
 
   for (ii = 0, reg = 0; ii < 3; ii++) {
-    vTaskDelay(pdMS_TO_TICKS(1));
+    // vTaskDelay(pdMS_TO_TICKS(1));
+    // SYSTICK_DelayUs(0);
     reg2 = (uint16_t)GPIOA->DATA;
     if (reg != reg2) {
       reg = reg2;
@@ -123,9 +126,10 @@ static void ResetKeyboardPins() {
 
 static uint8_t ScanKeyboardMatrix() {
   for (uint8_t i = 0; i < ROWS; i++) {
+    taskENTER_CRITICAL();
     ResetKeyboardRow(i);
-
     uint16_t reg = ReadStableGpioData();
+    taskEXIT_CRITICAL();
 
     for (uint8_t j = 0; j < COLS; j++) {
       const uint16_t mask = 1u << keyboard[i].pins[j].pin;

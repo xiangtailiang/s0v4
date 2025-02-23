@@ -525,6 +525,7 @@ void UART_printf(const char *str, ...) {
   va_end(va);
 }
 
+#ifdef DEBUG
 void Log(const char *pattern, ...) {
   char text[128];
   va_list args;
@@ -533,3 +534,6 @@ void Log(const char *pattern, ...) {
   va_end(args);
   UART_printf("%u %s\n", Now(), text);
 }
+#else
+void Log(const char *pattern, ...) {}
+#endif

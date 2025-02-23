@@ -78,6 +78,9 @@ all: $(TARGET)
 	$(OBJCOPY) -O binary $< $<.bin
 	-python3 fw-pack.py $<.bin $(GIT_HASH) $<.packed.bin
 
+debug: CCFLAGS += -DDEBUG
+debug: clean all
+
 release: clean all
 	cp $(BIN_DIR)/firmware.packed.bin $(BIN_DIR)/s0va-by-fagci-$(TS_FILE).bin
 
