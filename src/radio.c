@@ -650,6 +650,7 @@ void RADIO_SaveCurrentVFO(void) {
 }
 
 void RADIO_LoadCurrentVFO(void) {
+  gMonitorMode = false;
   for (uint8_t i = 0; i < 2; ++i) {
     loadVFO(i);
     // Log("gVFO(%u)= (f=%u, radio=%u)", i + 1, gVFO[i].rxF, gVFO[i].radio);
@@ -815,7 +816,7 @@ bool RADIO_IsSquelchOpen(const Measurement *msm) {
     return BK4819_IsSquelchOpen();
   }
 
-  return RADIO_GetSNR() > 0;
+  return RADIO_GetSNR() > radio->squelch.value;
 }
 
 void RADIO_VfoLoadCH(uint8_t i) {
@@ -940,15 +941,17 @@ void RADIO_ToggleTxPower(void) {
   RADIO_SaveCurrentVFODelayed();
 }
 
-void RADIO_ToggleModulation(void) {
-  if (radio->modulation == getNextModulation(true))
+void RADIO_ToggleModulationEx(bool next) {
+  if (radio->modulation == getNextModulation(next))
     return;
-  radio->modulation = getNextModulation(true);
+  radio->modulation = getNextModulation(next);
 
   // NOTE: for right BW after switching from WFM to another
   RADIO_Setup();
   RADIO_SaveCurrentVFODelayed();
 }
+
+void RADIO_ToggleModulation(void) { RADIO_ToggleModulationEx(true); }
 
 bool RADIO_HasSi() { return BK1080_ReadRegister(1) != 0x1080; }
 

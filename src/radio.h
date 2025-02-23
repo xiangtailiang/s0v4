@@ -75,6 +75,7 @@ void RADIO_ToggleVfoMR();
 
 void RADIO_SetSquelch(uint8_t sq);
 void RADIO_SetGain(uint8_t gainIndex);
+void RADIO_ToggleModulationEx(bool next);
 void RADIO_ToggleModulation();
 void RADIO_ToggleListeningBW();
 void RADIO_SetFilterBandwidth(BK4819_FilterBandwidth_t bw);

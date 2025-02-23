@@ -228,7 +228,7 @@ void CUR_Render() {
     DrawVLine(curX - curSbWidth, y, 2, C_INVERT);
     DrawVLine(curX + curSbWidth, y, 2, C_INVERT);
   }
-  for (uint8_t y = SPECTRUM_Y + 10; y < S_BOTTOM; y += 1) {
+  for (uint8_t y = SPECTRUM_Y + 10; y < S_BOTTOM; y += 2) {
     DrawVLine(curX, y, 1, C_INVERT);
   }
 }

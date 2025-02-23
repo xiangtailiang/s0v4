@@ -10,6 +10,7 @@
 #include "../ui/spectrum.h"
 #include "../ui/statusline.h"
 #include "apps.h"
+#include "chlist.h"
 #include "finput.h"
 #include <stdint.h>
 
@@ -36,6 +37,7 @@ typedef enum {
   SET_AFC,
   SET_SQL_T,
   SET_SQL_V,
+  SET_MOD,
   SET_COUNT,
 } Setting;
 
@@ -87,6 +89,9 @@ static void changeSetting(bool up) {
   case SET_SQL_V:
     radio->squelch.value = IncDecU(radio->squelch.value, 0, 11, up);
     break;
+  case SET_MOD:
+    RADIO_ToggleModulationEx(up);
+    break;
   default:
     break;
   }
@@ -97,6 +102,7 @@ void SCANER_init(void) {
   SPECTRUM_Y = 8;
   SPECTRUM_H = 44;
 
+  gMonitorMode = false;
   if (!gCurrentBand.rxF) {
     RADIO_LoadCurrentVFO();
     BANDS_SelectByFrequency(radio->rxF, true);
@@ -185,9 +191,18 @@ void SCANER_update(void) {
 }
 
 bool SCANER_key(KEY_Code_t key, Key_State_t state) {
-  if (state == KEY_LONG_PRESSED && key == KEY_5) {
-    selStart = !selStart;
-    return true;
+  if (state == KEY_LONG_PRESSED) {
+    switch (key) {
+    case KEY_5:
+      selStart = !selStart;
+      return true;
+    case KEY_0:
+      gChListFilter = TYPE_FILTER_BAND;
+      APPS_run(APP_CH_LIST);
+      return true;
+    default:
+      break;
+    }
   }
 
   if (state == KEY_RELEASED || state == KEY_LONG_PRESSED_CONT) {
@@ -198,8 +213,7 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       return true;
     case KEY_3:
     case KEY_9:
-      radio->step =
-          IncDecU(radio->step, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3);
+      b->step = IncDecU(b->step, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3);
       onNewBand();
       return true;
     case KEY_STAR:
@@ -253,6 +267,13 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       onNewBand();
       return true;
 
+    case KEY_PTT:
+      if (gLastActiveLoot) {
+        RADIO_TuneToSave(gLastActiveLoot->f);
+        APPS_run(APP_VFO1);
+        return true;
+      }
+      break;
     default:
       break;
     }
@@ -276,12 +297,14 @@ void SCANER_render(void) {
   const int8_t vGain = -gainTable[radio->gainIndex].gainDb + 33;
 
   STATUSLINE_SetText(                                                     //
-      "%c%+d %c%s %cAFC%u %c%s%c%u",                                      //
+      "%c%+d%c%s%cAFC%u%c%s%c%u%c%s",                                     //
       setting == SET_AGC ? '>' : ' ', vGain,                              //
-      setting == SET_BW ? '>' : ' ', bwNames[radio->bw],                  //
+      setting == SET_BW ? '>' : ' ', RADIO_GetBWName(radio),              //
       setting == SET_AFC ? '>' : ' ', afc,                                //
       setting == SET_SQL_T ? '>' : ' ', sqTypeNames[radio->squelch.type], //
-      setting == SET_SQL_V ? '>' : ' ', radio->squelch.value              //
+      setting == SET_SQL_V ? '>' : ' ', radio->squelch.value,             //
+      setting == SET_MOD ? '>' : ' ',
+      modulationTypeOptions[RADIO_GetModulation()] //
   );
 
   SP_Render(b);
