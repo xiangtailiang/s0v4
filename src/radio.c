@@ -420,7 +420,7 @@ void RADIO_ToggleRX(bool on) {
     return;
   }
   BOARD_ToggleGreen(on);
-  // Log("TOGGLE RX=%u", on);
+  Log("TOGGLE RX=%u", on);
   gRedrawScreen = true;
 
   gIsListening = on;
@@ -813,7 +813,7 @@ bool RADIO_IsSquelchOpen() {
     return BK4819_IsSquelchOpen();
   }
 
-  return RADIO_GetSNR() > radio->squelch.value;
+  return gShowAllRSSI ? RADIO_GetSNR() > radio->squelch.value : true;
 }
 
 void RADIO_VfoLoadCH(uint8_t i) {

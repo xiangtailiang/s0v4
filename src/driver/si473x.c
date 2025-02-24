@@ -310,6 +310,7 @@ void SI47XX_SetFreq(uint16_t freq) {
   waitToSend();
   SI47XX_WriteBuffer(cmd, size);
   siCurrentFreq = freq;
+  Log("SI f=%u", siCurrentFreq);
 }
 
 void SI47XX_SetAMFrontendAGC(uint8_t minGainIdx, uint8_t attnBackup) {
