@@ -121,8 +121,7 @@ void SCANER_init(void) {
 
 void SCANER_update(void) {
   if (m->open) {
-    m->rssi = RADIO_GetRSSI();
-    m->open = RADIO_IsSquelchOpen(m);
+    m->open = RADIO_IsSquelchOpen();
   } else {
     m->f = radio->rxF;
     m->rssi = measure(radio->rxF);
@@ -152,9 +151,8 @@ void SCANER_update(void) {
     thinking = true;
     wasThinkingEarlier = true;
     gRedrawScreen = true;
-    vTaskDelay(pdMS_TO_TICKS(100));
-    m->rssi = RADIO_GetRSSI();
-    m->open = RADIO_IsSquelchOpen(m);
+    vTaskDelay(pdMS_TO_TICKS(60));
+    m->open = RADIO_IsSquelchOpen();
     thinking = false;
     gRedrawScreen = true;
     if (!m->open) {
@@ -195,6 +193,9 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
     switch (key) {
     case KEY_5:
       selStart = !selStart;
+      return true;
+    case KEY_4:
+      setting = IncDecU(setting, 0, SET_COUNT, false);
       return true;
     case KEY_0:
       gChListFilter = TYPE_FILTER_BAND;

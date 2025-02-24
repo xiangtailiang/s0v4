@@ -81,12 +81,6 @@ void UI_DrawTicks(uint8_t y, const Band *band) {
   }
 }
 
-void UI_ShowWait() {
-  FillRect(0, 32 - 5, 128, 9, C_FILL);
-  PrintMediumBoldEx(64, 32 + 2, POS_C, C_CLEAR, "WAIT");
-  ST7565_Blit();
-}
-
 void UI_Scanlists(uint8_t baseX, uint8_t baseY, uint16_t sl) {
   for (uint8_t i = 0; i < 16; ++i) {
     bool isActive = (sl >> i) & 1;

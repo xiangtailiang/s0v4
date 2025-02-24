@@ -138,7 +138,7 @@ void VFO1_update(void) {
       .noise = BK4819_GetNoise(),
       .glitch = BK4819_GetGlitch(),
   };
-  m.open = RADIO_IsSquelchOpen(&m);
+  m.open = RADIO_IsSquelchOpen();
   if (!gMonitorMode) {
     LOOT_Update(&m);
   }
@@ -146,7 +146,7 @@ void VFO1_update(void) {
   SP_ShiftGraph(-1);
   SP_AddGraphPoint(&m);
   gRedrawScreen = true;
-  vTaskDelay(pdMS_TO_TICKS(100));
+  vTaskDelay(pdMS_TO_TICKS(60));
 }
 
 bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
@@ -264,7 +264,7 @@ bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
     case KEY_UP:
     case KEY_DOWN:
       if (RADIO_IsChMode()) {
-        CHANNELS_Next(key != KEY_UP);
+        CHANNELS_Next(key == KEY_UP);
       } else {
         RADIO_NextF(key == KEY_UP);
       }

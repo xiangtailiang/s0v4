@@ -8,6 +8,7 @@
 #include "../helper/measurements.h"
 #include "../radio.h"
 #include "../scheduler.h"
+#include "../system.h"
 #include "../ui/components.h"
 #include "../ui/graphics.h"
 #include "../ui/menu.h"
@@ -139,7 +140,7 @@ static void saveLootToCh(const Loot *loot, int16_t chnum, uint16_t scanlist) {
 }
 
 static void saveToFreeChannels(bool saveWhitelist, uint16_t scanlist) {
-  UI_ShowWait();
+  SYS_MsgNotify("Wait!", 100000);
   for (uint16_t i = 0; i < LOOT_Size(); ++i) {
     uint16_t chnum = CHANNELS_GetCountMax();
     const Loot *loot = LOOT_Item(i);
@@ -165,6 +166,7 @@ static void saveToFreeChannels(bool saveWhitelist, uint16_t scanlist) {
       }
     }
   }
+  SYS_MsgNotify("", 0);
 }
 
 bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {

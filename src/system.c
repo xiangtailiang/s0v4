@@ -27,7 +27,7 @@
 #define itemSize sizeof(SystemMessages)
 
 typedef enum {
-  MSG_TIMEOUT,
+  MSG_NOTIFY,
   MSG_BKCLIGHT,
   MSG_KEYPRESSED,
   MSG_PLAY_BEEP,
@@ -44,6 +44,9 @@ typedef struct {
 } SystemMessages;
 
 uint32_t gAppUpdateInterval = pdMS_TO_TICKS(1);
+
+static char notificationMessage[16] = "";
+static uint32_t notificationTimeoutAt;
 
 static TimerHandle_t sysTimer;
 static StaticTimer_t sysTimerBuffer;
@@ -72,6 +75,11 @@ static void appRender(void *arg) {
       STATUSLINE_render();
 
       APPS_render();
+
+      if (notificationMessage[0]) {
+        FillRect(0, 32 - 5, 128, 9, C_FILL);
+        PrintMediumBoldEx(64, 32 + 2, POS_C, C_CLEAR, notificationMessage);
+      }
 
       ST7565_Blit();
       gRedrawScreen = false;
@@ -167,6 +175,10 @@ void SYS_Main(void *params) {
     }
 
     STATUSLINE_update();
+
+    if (Now() >= notificationTimeoutAt) {
+      notificationMessage[0] = '\0';
+    }
     // vTaskDelay(1);
   }
 }
@@ -176,4 +188,13 @@ void SYS_MsgKey(KEY_Code_t key, Key_State_t state) {
   BaseType_t xHigherPriorityTaskWoken = pdTRUE;
   xQueueSendFromISR(systemMessageQueue, (void *)&appMSG,
                     &xHigherPriorityTaskWoken);
+}
+
+void SYS_MsgNotify(const char *message, uint32_t ms) {
+  SystemMessages appMSG = {MSG_NOTIFY};
+  BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+  xQueueSendFromISR(systemMessageQueue, (void *)&appMSG,
+                    &xHigherPriorityTaskWoken);
+  notificationTimeoutAt = Now() + ms;
+  strncpy(notificationMessage, message, 16);
 }

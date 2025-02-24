@@ -154,7 +154,7 @@ static uint8_t indexOfMod(const ModulationType *arr, uint8_t n,
   return 0;
 }
 
-static ModulationType getNextModulation(bool next) {
+static ModulationType getNextModulation(bool next, bool apply) {
   uint8_t sz = ARRAY_SIZE(MODS_BK4819);
   ModulationType *items = MODS_BK4819;
 
@@ -179,13 +179,9 @@ static ModulationType getNextModulation(bool next) {
     }
   }
 
-  uint8_t curIndex = indexOfMod(items, sz, radio->modulation);
+  const uint8_t curIndex = indexOfMod(items, sz, radio->modulation);
 
-  if (next) {
-    curIndex = IncDecU(curIndex, 0, sz, true);
-  }
-
-  return items[curIndex];
+  return items[apply ? IncDecU(curIndex, 0, sz, next) : curIndex];
 }
 
 Radio RADIO_Selector(uint32_t freq, ModulationType mod) {
@@ -595,7 +591,7 @@ void RADIO_SwitchRadioPure() {
 }
 
 void RADIO_SwitchRadio() {
-  radio->modulation = getNextModulation(false);
+  radio->modulation = getNextModulation(true, false);
   radio->radio = RADIO_Selector(radio->rxF, radio->modulation);
   RADIO_SwitchRadioPure();
 }
@@ -607,6 +603,7 @@ static void checkVisibleBand() {
 }
 
 void RADIO_SetupByCurrentVFO(void) {
+  Log("RADIO setup by VFO");
   checkVisibleBand();
 
   RADIO_SwitchRadio();
@@ -808,7 +805,7 @@ uint16_t RADIO_GetS() {
   }
 }
 
-bool RADIO_IsSquelchOpen(const Measurement *msm) {
+bool RADIO_IsSquelchOpen() {
   if (gMonitorMode) {
     return true;
   }
@@ -942,9 +939,10 @@ void RADIO_ToggleTxPower(void) {
 }
 
 void RADIO_ToggleModulationEx(bool next) {
-  if (radio->modulation == getNextModulation(next))
+  if (radio->modulation == getNextModulation(next, true)) {
     return;
-  radio->modulation = getNextModulation(next);
+  }
+  radio->modulation = getNextModulation(next, true);
 
   // NOTE: for right BW after switching from WFM to another
   RADIO_Setup();

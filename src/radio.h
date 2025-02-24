@@ -82,7 +82,7 @@ void RADIO_SetFilterBandwidth(BK4819_FilterBandwidth_t bw);
 void RADIO_ToggleTxPower(void);
 void RADIO_UpdateStep(bool inc);
 void RADIO_UpdateSquelchLevel(bool next);
-bool RADIO_IsSquelchOpen(const Measurement *msm);
+bool RADIO_IsSquelchOpen();
 
 bool RADIO_IsSSB();
 uint32_t GetScreenF(uint32_t f);
