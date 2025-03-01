@@ -6,6 +6,7 @@
 #include "appslist.h"
 #include "chcfg.h"
 #include "chlist.h"
+#include "chscan.h"
 #include "finput.h"
 #include "generator.h"
 #include "lootlist.h"
@@ -55,6 +56,7 @@ const AppType_t appsAvailableToRun[RUN_APPS_COUNT] = {
     APP_VFO2,      //
     APP_CH_LIST,   //
     APP_SCANER,    //
+    APP_CH_SCAN,   //
     APP_LOOT_LIST, //
     APP_MEMVIEW,   //
     APP_GENERATOR, //
@@ -66,6 +68,8 @@ const App apps[APPS_COUNT] = {
     {"EEPROM view", MEMVIEW_Init, NULL, MEMVIEW_Render, MEMVIEW_key, NULL},
     {"Spectrum", SCANER_init, SCANER_update, SCANER_render, SCANER_key,
      SCANER_deinit},
+    {"CH Scan", CHSCAN_init, CHSCAN_update, CHSCAN_render, CHSCAN_key,
+     CHSCAN_deinit},
     {"Channels", CHLIST_init, NULL, CHLIST_render, CHLIST_key, CHLIST_deinit},
     {"Freq input", FINPUT_init, FINPUT_update, FINPUT_render, FINPUT_key,
      FINPUT_deinit},

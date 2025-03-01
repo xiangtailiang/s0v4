@@ -8,8 +8,8 @@
 #include <stdint.h>
 
 static Loot loot[LOOT_SIZE_MAX] = {0};
-static int16_t lootIndex = -1;
 static uint32_t lastTimeCheck = 0;
+static int16_t lootIndex = -1;
 
 Loot *gLastActiveLoot = NULL;
 int16_t gLastActiveLootIndex = -1;
