@@ -219,7 +219,8 @@ bool SCANER_key(KEY_Code_t key, Key_State_t state) {
       return true;
     case KEY_3:
     case KEY_9:
-      b->step = IncDecU(b->step, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3);
+      radio->step = b->step =
+          IncDecU(b->step, STEP_0_02kHz, STEP_500_0kHz + 1, key == KEY_3);
       onNewBand();
       return true;
     case KEY_STAR:

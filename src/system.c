@@ -43,6 +43,8 @@ typedef struct {
   Key_State_t state;
 } SystemMessages;
 
+static uint8_t DEAD_BUF[] = {0xDE, 0xAD};
+
 uint32_t gAppUpdateInterval = pdMS_TO_TICKS(1);
 
 static char notificationMessage[16] = "";
@@ -61,6 +63,8 @@ StackType_t appUpdateTaskStack[configMINIMAL_STACK_SIZE + 100];
 StaticTask_t appRenderTaskBuffer;
 StackType_t appRenderTaskStack[configMINIMAL_STACK_SIZE + 100];
 
+static uint32_t lastUartDataTime;
+
 static void appUpdate(void *arg) {
   for (;;) {
     APPS_update();
@@ -72,14 +76,15 @@ static void appRender(void *arg) {
   for (;;) {
     if (gRedrawScreen) {
       UI_ClearScreen();
-      STATUSLINE_render();
 
       APPS_render();
 
       if (notificationMessage[0]) {
         FillRect(0, 32 - 5, 128, 9, C_FILL);
-        PrintMediumBoldEx(64, 32 + 2, POS_C, C_CLEAR, notificationMessage);
+        PrintMediumEx(64, 32 + 2, POS_C, C_CLEAR, notificationMessage);
       }
+
+      STATUSLINE_render(); // coz of APPS_render calls STATUSLINE_SetText
 
       ST7565_Blit();
       gRedrawScreen = false;
@@ -93,43 +98,28 @@ static void systemUpdate() {
   BACKLIGHT_Update();
 }
 
-static uint32_t lastUartDataTime;
+static bool resetNeeded() {
+  uint8_t buf[2];
+  EEPROM_ReadBuffer(0, buf, 2);
+
+  return memcmp(buf, DEAD_BUF, 2) == 0;
+}
+
+static void loadSettingsOrReset() {
+  SETTINGS_Load();
+  if (gSettings.batteryCalibration > 2154 ||
+      gSettings.batteryCalibration < 1900) {
+    gSettings.batteryCalibration = 0;
+    EEPROM_WriteBuffer(0, DEAD_BUF, 2);
+    NVIC_SystemReset();
+  }
+}
 
 void SYS_Main(void *params) {
   BOARD_Init();
-
-  uint8_t buf[2];
-  uint8_t deadBuf[] = {0xDE, 0xAD};
-  EEPROM_ReadBuffer(0, buf, 2);
-
-  if (memcmp(buf, deadBuf, 2) == 0) {
-    gSettings.batteryCalibration = 2000;
-    gSettings.backlight = 5;
-    APPS_run(APP_RESET);
-  } else {
-    SETTINGS_Load();
-    if (gSettings.batteryCalibration > 2154 ||
-        gSettings.batteryCalibration < 1900) {
-      gSettings.batteryCalibration = 0;
-      EEPROM_WriteBuffer(0, deadBuf, 2);
-      NVIC_SystemReset();
-    }
-
-    ST7565_Init(false);
-    BACKLIGHT_Init();
-
-    Log("Load bands");
-    BANDS_Load();
-    Log("INIT RADIO");
-    RADIO_Init();
-    Log("RUN DEFAULT APP");
-    APPS_run(gSettings.mainApp);
-  }
-
   BATTERY_UpdateBatteryInfo();
 
-  systemMessageQueue = xQueueCreateStatic(
-      queueLen, itemSize, systemQueueStorageArea, &systemTasksQueue);
+  // run updates & render tasks to keep user informed
   sysTimer = xTimerCreateStatic("sysT", pdMS_TO_TICKS(1000), pdTRUE, NULL,
                                 systemUpdate, &sysTimerBuffer);
   xTimerStart(sysTimer, 0);
@@ -138,8 +128,32 @@ void SYS_Main(void *params) {
                     appUpdateTaskStack, &appUpdateTaskBuffer);
   xTaskCreateStatic(appRender, "appR", ARRAY_SIZE(appRenderTaskStack), NULL, 2,
                     appRenderTaskStack, &appRenderTaskBuffer);
-  /* xTaskCreateStatic(uart, "uart", ARRAY_SIZE(uartTaskStack), NULL, 2,
-                    uartTaskStack, &uartTaskBuffer); */
+
+  if (resetNeeded()) {
+    gSettings.batteryCalibration = 2000;
+    gSettings.backlight = 5;
+    APPS_run(APP_RESET);
+  } else {
+    loadSettingsOrReset();
+    BATTERY_UpdateBatteryInfo();
+
+    ST7565_Init(false);
+    BACKLIGHT_Init();
+
+    SYS_MsgNotify("Load bands", 1000);
+    Log("Load bands");
+    BANDS_Load();
+
+    SYS_MsgNotify("Init radio", 1000);
+    Log("INIT RADIO");
+    RADIO_Init();
+
+    Log("RUN DEFAULT APP");
+    APPS_run(gSettings.mainApp);
+  }
+
+  systemMessageQueue = xQueueCreateStatic(
+      queueLen, itemSize, systemQueueStorageArea, &systemTasksQueue);
 
   SystemMessages n;
 
@@ -149,6 +163,26 @@ void SYS_Main(void *params) {
       // Log("MSG: m:%u, k:%u, st:%u", n.message, n.key, n.state);
       if (n.message == MSG_KEYPRESSED && Now() - lastUartDataTime >= 1000) {
         BACKLIGHT_On();
+
+        if (n.state == KEY_LONG_PRESSED && n.key == KEY_F) {
+          gSettings.keylock = !gSettings.keylock;
+          SETTINGS_Save();
+          gRedrawScreen = true;
+          return;
+        }
+
+        /* if (gSettings.keylock && n.state == KEY_LONG_PRESSED &&
+            n.key == KEY_8) {
+          captureScreen();
+          return;
+        } */
+
+        /* if (gSettings.keylock &&
+            (gSettings.pttLock ? true : n.key != KEY_PTT) &&
+            !(n.state == KEY_LONG_PRESSED && n.key == KEY_F)) {
+          return;
+        } */
+
         if (APPS_key(n.key, n.state)) {
           gRedrawScreen = true;
         } else {
@@ -166,6 +200,9 @@ void SYS_Main(void *params) {
             }
           }
         }
+      }
+      if (n.message == MSG_NOTIFY) {
+        gRedrawScreen = true;
       }
     }
 

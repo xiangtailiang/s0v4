@@ -54,6 +54,7 @@ void waitToSend() {
 void SI47XX_downloadPatch() {
   // Log("DL patch");
   SYS_MsgNotify("Wait!", 10000);
+  vTaskDelay(pdMS_TO_TICKS(100));
 
   uint8_t buf[64]; // 64 is optimal, more has no sense
   const uint16_t BUF_SIZE = ARRAY_SIZE(buf);

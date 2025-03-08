@@ -16,6 +16,7 @@
 #include "apps.h"
 #include "chlist.h"
 #include "vfo1.h"
+#include <stdint.h>
 
 static uint8_t menuIndex = 0;
 static const uint8_t MENU_ITEM_H_LARGER = 15;
@@ -144,6 +145,7 @@ static void saveLootToCh(const Loot *loot, int16_t chnum, uint16_t scanlist) {
 
 static void saveToFreeChannels(bool saveWhitelist, uint16_t scanlist) {
   SYS_MsgNotify("Wait!", 100000);
+  uint32_t saved = 0;
   for (uint16_t i = 0; i < LOOT_Size(); ++i) {
     uint16_t chnum = CHANNELS_GetCountMax();
     const Loot *loot = LOOT_Item(i);
@@ -159,6 +161,7 @@ static void saveToFreeChannels(bool saveWhitelist, uint16_t scanlist) {
       if (CHANNELS_GetMeta(chnum).type == TYPE_EMPTY) {
         // save new
         saveLootToCh(loot, chnum, scanlist);
+        saved++;
         break;
       } else {
         CH ch;
@@ -169,7 +172,9 @@ static void saveToFreeChannels(bool saveWhitelist, uint16_t scanlist) {
       }
     }
   }
-  SYS_MsgNotify("", 0);
+  char str[16];
+  snprintf(str, 15, "Saved: %u", saved);
+  SYS_MsgNotify(str, 1000);
 }
 
 bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {
