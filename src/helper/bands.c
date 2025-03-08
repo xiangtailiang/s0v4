@@ -6,7 +6,6 @@
 #include "measurements.h"
 #include <stdint.h>
 
-#define RANGES_STACK_SIZE 4
 
 // NOTE
 // for SCAN use cached band by index
@@ -159,6 +158,15 @@ bool BANDS_InRange(const uint32_t f, const Band p) {
   return f >= p.rxF && f <= p.txF;
 }
 
+void BANDS_SetRadioParamsFromCurrentBand() {
+  radio->fixedBoundsMode = true;
+  radio->step = gCurrentBand.step;
+  radio->bw = gCurrentBand.bw;
+  radio->gainIndex = gCurrentBand.gainIndex;
+  radio->modulation = gCurrentBand.modulation;
+  radio->squelch = gCurrentBand.squelch;
+}
+
 // Set gCurrentBand, sets internal cursor in SL
 void BANDS_Select(int16_t num, bool copyToVfo) {
   CHANNELS_Load(num, &gCurrentBand);
@@ -173,12 +181,7 @@ void BANDS_Select(int16_t num, bool copyToVfo) {
   }
   radio->allowTx = gCurrentBand.allowTx;
   if (copyToVfo) {
-    radio->fixedBoundsMode = true;
-    radio->step = gCurrentBand.step;
-    radio->bw = gCurrentBand.bw;
-    radio->gainIndex = gCurrentBand.gainIndex;
-    radio->modulation = gCurrentBand.modulation;
-    radio->squelch = gCurrentBand.squelch;
+    BANDS_SetRadioParamsFromCurrentBand();
   }
   RADIO_SaveCurrentVFO();
 }
@@ -254,6 +257,7 @@ PowerCalibration BANDS_GetPowerCalib(uint32_t f) {
 }
 
 void BANDS_RangeClear() { rangesStackIndex = -1; }
+int8_t BANDS_RangeIndex() { return rangesStackIndex; }
 
 bool BANDS_RangePush(Band r) {
   if (rangesStackIndex < RANGES_STACK_SIZE - 1) {

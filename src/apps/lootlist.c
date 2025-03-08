@@ -47,14 +47,13 @@ static bool shortList = true;
 static bool sortRev = false;
 
 static void tuneToLoot(const Loot *loot, bool save) {
-  // CH ch = LOOT_ToCh(loot);
-  // *radio = ch; // TODO: keep name?
-
   if (save) {
     RADIO_TuneToSave(loot->f);
   } else {
     RADIO_TuneTo(loot->f);
   }
+  BANDS_SetRadioParamsFromCurrentBand();
+  RADIO_Setup();
 }
 
 static void displayFreqBlWl(uint8_t y, const Loot *loot) {
@@ -118,7 +117,11 @@ static void sort(Sort type) {
   STATUSLINE_SetText("By %s %s", sortNames[sortType], sortRev ? "v" : "^");
 }
 
-void LOOTLIST_update() {}
+void LOOTLIST_update() {
+  RADIO_CheckAndListen();
+  gRedrawScreen = true;
+  vTaskDelay(pdMS_TO_TICKS(60));
+}
 
 void LOOTLIST_render(void) {
   UI_ShowMenuEx(shortList ? getLootItemShort : getLootItem, LOOT_Size(),

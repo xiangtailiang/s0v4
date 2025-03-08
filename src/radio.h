@@ -101,4 +101,6 @@ bool RADIO_IsChMode();
 
 void RADIO_GetGainString(char *String, uint8_t i);
 
+void RADIO_CheckAndListen();
+
 #endif /* end of include guard: RADIO_H */

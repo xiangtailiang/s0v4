@@ -7,6 +7,7 @@
 #include "../helper/channels.h"
 #include "../helper/lootlist.h"
 #include "../radio.h"
+#include "../ui/components.h"
 #include "../ui/graphics.h"
 
 void CHSCAN_init(void) {}
@@ -51,6 +52,7 @@ void CHSCAN_render(void) {
     PrintMediumEx(LCD_XCENTER, 18, POS_C, C_FILL, "MR %u", radio->channel + 1);
     PrintSmallEx(LCD_XCENTER, 24, POS_C, C_FILL, "%u.%05u", radio->rxF / MHZ,
                  radio->rxF % MHZ);
+    UI_RSSIBar(26);
   } else {
     PrintMediumEx(LCD_XCENTER, 18, POS_C, C_FILL, "Scanning...");
     PrintSmallEx(LCD_XCENTER, 24, POS_C, C_FILL, "%u.%05u", radio->rxF / MHZ,

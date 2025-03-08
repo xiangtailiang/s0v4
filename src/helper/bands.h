@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define BANDS_COUNT_MAX 70
+#define RANGES_STACK_SIZE 5
 
 typedef struct {
   uint32_t s;
@@ -38,9 +39,12 @@ uint8_t BANDS_GetScanlistIndex();
 void BANDS_Select(int16_t num, bool copyToVfo);
 
 void BANDS_RangeClear();
+int8_t BANDS_RangeIndex();
 bool BANDS_RangePush(Band r);
 Band BANDS_RangePop(void);
 Band *BANDS_RangePeek(void);
+
+void BANDS_SetRadioParamsFromCurrentBand();
 
 extern Band defaultBand;
 extern Band gCurrentBand;

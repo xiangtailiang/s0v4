@@ -131,20 +131,7 @@ void VFO1_init(void) {
 }
 
 void VFO1_update(void) {
-  Measurement m = {
-      .f = radio->rxF,
-      .rssi = RADIO_GetRSSI(),
-      .snr = RADIO_GetSNR(),
-      .noise = BK4819_GetNoise(),
-      .glitch = BK4819_GetGlitch(),
-  };
-  m.open = RADIO_IsSquelchOpen();
-  if (!gMonitorMode) {
-    LOOT_Update(&m);
-  }
-  RADIO_ToggleRX(m.open);
-  SP_ShiftGraph(-1);
-  SP_AddGraphPoint(&m);
+  RADIO_CheckAndListen();
   gRedrawScreen = true;
   vTaskDelay(pdMS_TO_TICKS(60));
 }

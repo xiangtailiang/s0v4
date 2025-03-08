@@ -31,6 +31,8 @@ static uint16_t msmHigh;
 
 static uint32_t cursorRangeTimeout = 0;
 
+static bool isAnalyserMode = false;
+
 typedef enum {
   SET_AGC,
   SET_BW,
@@ -51,12 +53,9 @@ static uint16_t measure(uint32_t f) {
 
 static void onNewBand() {
   radio->rxF = b->rxF;
-  radio->step = b->step;
-  radio->bw = b->bw;
-  radio->gainIndex = b->gainIndex;
-  radio->squelch = b->squelch;
   RADIO_Setup();
   SP_Init(b);
+  isAnalyserMode = BANDS_RangeIndex() == RANGES_STACK_SIZE - 1;
 }
 
 static void setStartF(uint32_t f) {
@@ -113,8 +112,14 @@ void SCANER_init(void) {
 
   gCurrentBand.meta.type = TYPE_BAND_DETACHED;
 
+  BANDS_RangeClear(); // TODO: push only if gCurrentBand was changed from
+                      // outside
+
   BANDS_RangePush(gCurrentBand);
   b = BANDS_RangePeek();
+
+  gCurrentBand = *b;
+  BANDS_SetRadioParamsFromCurrentBand();
 
   onNewBand();
 }
@@ -320,8 +325,14 @@ void SCANER_render(void) {
 
   PrintSmallEx(LCD_WIDTH, 12, POS_R, C_FILL, "%u.%02uk", step / 100,
                step % 100);
+  if (BANDS_RangeIndex() > 0) {
+    PrintSmallEx(LCD_WIDTH, 18, POS_R, C_FILL, "Zoom %u",
+                 BANDS_RangeIndex() + 1);
+  }
 
-  // renderAnalyzerUI();
+  if (isAnalyserMode) {
+    renderAnalyzerUI();
+  }
 
   // bottom
   Band r = CUR_GetRange(b, step);
