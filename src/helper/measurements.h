@@ -44,5 +44,6 @@ uint32_t IncDecU(uint32_t val, uint32_t min, uint32_t max, bool inc);
 bool IsReadable(char *name);
 SQL GetSql(uint8_t level);
 uint32_t DeltaF(uint32_t f1, uint32_t f2);
+uint32_t RoundToStep(uint32_t f, uint32_t step);
 
 #endif /* end of include guard: MEASUREMENTS_H */

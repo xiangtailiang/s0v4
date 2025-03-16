@@ -263,27 +263,17 @@ bool CUR_Size(bool up) {
   return false;
 }
 
-static uint32_t roundToStep(uint32_t f, uint32_t step) {
-  uint32_t sd = f % step;
-  if (sd > step / 2) {
-    f += step - sd;
-  } else {
-    f -= sd;
-  }
-  return f;
-}
-
 Band CUR_GetRange(Band *p, uint32_t step) {
   Band range = *p;
   range.rxF = SP_X2F(curX - curSbWidth);
   range.txF = SP_X2F(curX + curSbWidth),
-  range.rxF = roundToStep(range.rxF, step);
-  range.txF = roundToStep(range.txF, step);
+  range.rxF = RoundToStep(range.rxF, step);
+  range.txF = RoundToStep(range.txF, step);
   return range;
 }
 
 uint32_t CUR_GetCenterF(Band *p, uint32_t step) {
-  return roundToStep(SP_X2F(curX), step);
+  return RoundToStep(SP_X2F(curX), step);
 }
 
 void CUR_Reset() {

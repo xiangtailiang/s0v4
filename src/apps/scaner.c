@@ -52,6 +52,7 @@ static uint16_t measure(uint32_t f) {
 }
 
 static void onNewBand() {
+  gCurrentBand = *b;
   radio->rxF = b->rxF;
   RADIO_Setup();
   SP_Init(b);
@@ -124,6 +125,36 @@ void SCANER_init(void) {
   onNewBand();
 }
 
+static void next() {
+  radio->rxF += StepFrequencyTable[radio->step];
+
+  if (radio->rxF > b->txF) {
+    radio->rxF = b->rxF;
+    gRedrawScreen = true;
+  }
+}
+
+static uint32_t lastSettedF = 0;
+static bool lastScanForward = true;
+static uint32_t timeout = 0;
+static bool lastListenState = false;
+
+static void nextWithTimeout() {
+  if (lastListenState != gIsListening) {
+    lastListenState = gIsListening;
+    SetTimeout(&timeout, gIsListening
+                             ? SCAN_TIMEOUTS[gSettings.sqOpenedTimeout]
+                             : SCAN_TIMEOUTS[gSettings.sqClosedTimeout]);
+  }
+
+  if (CheckTimeout(&timeout)) {
+    lastSettedF = radio->rxF;
+    SetTimeout(&timeout, 0);
+    next();
+    return;
+  }
+}
+
 void SCANER_update(void) {
   if (m->open) {
     m->open = RADIO_IsSquelchOpen();
@@ -171,26 +202,22 @@ void SCANER_update(void) {
 
   if (m->open) {
     gRedrawScreen = true;
-    return;
   }
 
   static uint8_t stepsPassed;
 
-  if (stepsPassed++ > 64) {
-    stepsPassed = 0;
-    gRedrawScreen = true;
-    if (!wasThinkingEarlier) {
-      sqLevel--;
+  if (!m->open) {
+    if (stepsPassed++ > 64) {
+      stepsPassed = 0;
+      gRedrawScreen = true;
+      if (!wasThinkingEarlier) {
+        sqLevel--;
+      }
+      wasThinkingEarlier = false;
     }
-    wasThinkingEarlier = false;
   }
 
-  radio->rxF += StepFrequencyTable[radio->step];
-
-  if (radio->rxF > b->txF) {
-    radio->rxF = b->rxF;
-    gRedrawScreen = true;
-  }
+  nextWithTimeout();
 }
 
 bool SCANER_key(KEY_Code_t key, Key_State_t state) {

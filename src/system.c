@@ -140,13 +140,14 @@ void SYS_Main(void *params) {
     ST7565_Init(false);
     BACKLIGHT_Init();
 
-    SYS_MsgNotify("Load bands", 1000);
-    Log("Load bands");
+    SYS_MsgNotify("LOAD BANDS", 1000);
+    Log("LOAD BANDS");
     BANDS_Load();
 
-    SYS_MsgNotify("Init radio", 1000);
+    SYS_MsgNotify("INIT RADIO", 1000);
     Log("INIT RADIO");
     RADIO_Init();
+    SYS_MsgNotify("", 0);
 
     Log("RUN DEFAULT APP");
     APPS_run(gSettings.mainApp);
@@ -164,12 +165,12 @@ void SYS_Main(void *params) {
       if (n.message == MSG_KEYPRESSED && Now() - lastUartDataTime >= 1000) {
         BACKLIGHT_On();
 
-        if (n.state == KEY_LONG_PRESSED && n.key == KEY_F) {
+        /* if (n.state == KEY_LONG_PRESSED && n.key == KEY_F) {
           gSettings.keylock = !gSettings.keylock;
           SETTINGS_Save();
           gRedrawScreen = true;
           return;
-        }
+        } */
 
         /* if (gSettings.keylock && n.state == KEY_LONG_PRESSED &&
             n.key == KEY_8) {

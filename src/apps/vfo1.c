@@ -406,12 +406,7 @@ static void renderTxRxState(uint8_t y, bool isTx) {
 
 static void renderFrequencyAndModulation(uint8_t y, uint32_t f,
                                          const char *mod) {
-  uint16_t fp1 = f / MHZ;
-  uint16_t fp2 = f / 100 % 1000;
-  uint8_t fp3 = f % 100;
-
-  PrintBiggestDigitsEx(LCD_WIDTH - 22, y, POS_R, C_FILL, "%4u.%03u", fp1, fp2);
-  PrintBigDigitsEx(LCD_WIDTH - 1, y, POS_R, C_FILL, "%02u", fp3);
+  UI_BigFrequency(y, f);
   PrintMediumEx(LCD_WIDTH - 1, y - 12, POS_R, C_FILL, mod);
 }
 

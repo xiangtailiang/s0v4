@@ -7,6 +7,7 @@
 #include "chcfg.h"
 #include "chlist.h"
 #include "chscan.h"
+#include "fc.h"
 #include "finput.h"
 #include "generator.h"
 #include "lootlist.h"
@@ -57,6 +58,7 @@ const AppType_t appsAvailableToRun[RUN_APPS_COUNT] = {
     APP_CH_LIST,   //
     APP_SCANER,    //
     APP_CH_SCAN,   //
+    APP_FC,        //
     APP_LOOT_LIST, //
     APP_MEMVIEW,   //
     APP_GENERATOR, //
@@ -70,6 +72,7 @@ const App apps[APPS_COUNT] = {
      SCANER_deinit},
     {"CH Scan", CHSCAN_init, CHSCAN_update, CHSCAN_render, CHSCAN_key,
      CHSCAN_deinit},
+    {"FC", FC_init, FC_update, FC_render, FC_key, FC_deinit},
     {"Channels", CHLIST_init, NULL, CHLIST_render, CHLIST_key, CHLIST_deinit},
     {"Freq input", FINPUT_init, FINPUT_update, FINPUT_render, FINPUT_key,
      FINPUT_deinit},

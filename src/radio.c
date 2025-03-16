@@ -24,6 +24,7 @@
 #include "scheduler.h"
 #include "settings.h"
 #include "ui/spectrum.h"
+#include "ui/statusline.h"
 #include <stdint.h>
 
 CH *radio;

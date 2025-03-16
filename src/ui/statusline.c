@@ -1,16 +1,16 @@
 #include "statusline.h"
+#include "../apps/apps.h"
 #include "../driver/eeprom.h"
 #include "../driver/si473x.h"
 #include "../driver/st7565.h"
+#include "../external/FreeRTOS/include/FreeRTOS.h"
+#include "../external/FreeRTOS/include/projdefs.h"
+#include "../external/FreeRTOS/include/timers.h"
 #include "../helper/bands.h"
 #include "../helper/battery.h"
 #include "../helper/channels.h"
 #include "../helper/numnav.h"
 #include "../scheduler.h"
-// #include "../svc.h"
-#include "../external/FreeRTOS/include/FreeRTOS.h"
-#include "../external/FreeRTOS/include/projdefs.h"
-#include "../external/FreeRTOS/include/timers.h"
 #include "components.h"
 #include "graphics.h"
 #include <string.h>
@@ -143,10 +143,10 @@ void STATUSLINE_render(void) {
     icons[idx++] = SYM_LOCK;
   }
 
-  /* if ((gCurrentApp == APP_CH_LIST || gCurrentApp == APP_VFO1 ||
+  if ((gCurrentApp == APP_CH_LIST || gCurrentApp == APP_VFO1 ||
        gCurrentApp == APP_VFO2 || gCurrentApp == APP_LOOT_LIST)) {
     UI_Scanlists(LCD_XCENTER - 13, 0, gSettings.currentScanlist);
-  } */
+  }
 
   PrintSymbolsEx(LCD_WIDTH - 1 -
                      (gSettings.batteryStyle == BAT_VOLTAGE ? 38 : 18),

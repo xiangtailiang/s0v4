@@ -153,3 +153,13 @@ SQL GetSql(uint8_t level) {
 uint32_t DeltaF(uint32_t f1, uint32_t f2) {
   return f1 > f2 ? f1 - f2 : f2 - f1;
 }
+
+uint32_t RoundToStep(uint32_t f, uint32_t step) {
+  uint32_t sd = f % step;
+  if (sd > step / 2) {
+    f += step - sd;
+  } else {
+    f -= sd;
+  }
+  return f;
+}
