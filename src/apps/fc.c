@@ -10,10 +10,16 @@
 #include "apps.h"
 #include "vfo1.h"
 
+static const char *FILTER_NAMES[] = {
+    [FILTER_OFF] = "ALL",
+    [FILTER_VHF] = "VHF",
+    [FILTER_UHF] = "UHF",
+};
+
 static bool bandAutoSwitch = false;
 static FreqScanTime T = F_SC_T_0_2s;
 static uint32_t scanF = 0;
-static bool lower = false;
+static Filter filter = FILTER_UHF;
 static uint32_t bound;
 static uint32_t fcTimeMs;
 
@@ -38,9 +44,8 @@ static void gotF(uint32_t f) {
 }
 
 static void switchBand() {
-  lower = !lower;
   scanF = 0;
-  BK4819_SelectFilter(lower ? 14500000 : 43300000);
+  BK4819_SelectFilterEx(filter);
   FC_init();
 }
 
@@ -73,6 +78,15 @@ void FC_update() {
 
   if (bandAutoSwitch &&
       (Now() - lastSwitch >= (uint32_t)(fcTimeMs * 2) + 200)) {
+    switch (filter) {
+    case FILTER_UHF:
+      filter = FILTER_VHF;
+      break;
+    case FILTER_VHF:
+    default:
+      filter = FILTER_UHF;
+      break;
+    }
     switchBand();
     lastSwitch = Now();
     return;
@@ -89,19 +103,12 @@ void FC_update() {
     return;
   }
 
-  if (lower && f >= bound) {
-    return;
-  }
-
-  if (!lower && f < bound) {
-    return;
-  }
-
   if (f >= 8800000 && f < 10800000) {
     return;
   }
 
-  if ((lower && f >= bound) || (!lower && f < bound)) {
+  if ((filter == FILTER_VHF && f >= bound) ||
+      (filter == FILTER_UHF && f < bound)) {
     return;
   }
 
@@ -135,6 +142,7 @@ bool FC_key(KEY_Code_t key, Key_State_t state) {
       APPS_run(APP_LOOT_LIST);
       return true;
     case KEY_F:
+      filter = IncDecU(filter, 0, 3, true);
       switchBand();
       return true;
     case KEY_0:
@@ -152,7 +160,7 @@ bool FC_key(KEY_Code_t key, Key_State_t state) {
 }
 
 void FC_render() {
-  PrintMediumEx(0, 16, POS_L, C_FILL, "%s %ums SQ %u %s", lower ? "VHF" : "UHF",
+  PrintMediumEx(0, 16, POS_L, C_FILL, "%s %ums SQ %u %s", FILTER_NAMES[filter],
                 fcTimeMs, radio->squelch.value, bandAutoSwitch ? "[A]" : "");
   UI_BigFrequency(40, scanF);
 
