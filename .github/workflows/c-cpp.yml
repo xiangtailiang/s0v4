@@ -29,4 +29,5 @@ jobs:
         name: build-artifact
         path: |
           bin/firmware.bin
+          bin/firmware.packed.bin
           bin/firmware
