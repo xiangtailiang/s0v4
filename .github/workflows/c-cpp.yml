@@ -16,9 +16,11 @@ jobs:
     - name: apt-update
       run: sudo apt-get update
     - name: install build tool
-      run: sudo apt-get install gcc-arm-none-eabi
+      run: sudo apt-get install gcc-arm-none-eabi python3-pip
     - name: pre build
       run: git submodule update --init --recursive --depth=1
+    - name: install python dependencies
+      run: python3 -m pip install crcmod
     - name: make
       run: make
     - name: Archive
