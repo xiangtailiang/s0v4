@@ -141,6 +141,14 @@ static bool resetFull() {
     return false;
   }
 
+  if (stats.channels < total.channels) {
+    // Delete channels first, before creating bands
+    CHANNELS_Delete(stats.channels);
+    stats.channels++;
+    stats.bytes += CH_SIZE;
+    return false;
+  }
+
   if (stats.bands < total.bands) {
     Band band;
     memset(&band, 0, sizeof(Band));
@@ -185,12 +193,6 @@ static bool resetFull() {
     return false;
   }
 
-  if (stats.channels < total.channels) {
-    CHANNELS_Delete(stats.channels);
-    stats.channels++;
-    stats.bytes += CH_SIZE;
-    return false;
-  }
   return true;
 }
 
