@@ -87,6 +87,8 @@ static void startReset(ResetType t) {
     stats.vfos = 0;
     stats.bands = 0;
     stats.channels = 0;
+    // Add default amateur and public bands
+    total.bands = 3; // 2M, 70CM amateur bands and 409 public band
     break;
   default:
     break;
@@ -140,6 +142,46 @@ static bool resetFull() {
   }
 
   if (stats.bands < total.bands) {
+    Band band;
+    memset(&band, 0, sizeof(Band));
+    
+    if (stats.bands == 0) {
+      // 2M amateur band (144-148MHz)
+      sprintf(band.name, "%s", "2M");
+      band.rxF = 144000000;  // 144MHz
+      band.txF = 148000000;  // 148MHz
+      band.allowTx = true;   // Allow transmission
+    } else if (stats.bands == 1) {
+      // 70CM amateur band (430-440MHz)
+      sprintf(band.name, "%s", "70CM");
+      band.rxF = 430000000;  // 430MHz
+      band.txF = 440000000;  // 440MHz
+      band.allowTx = true;   // Allow transmission
+    } else if (stats.bands == 2) {
+      // China public band (409MHz)
+      sprintf(band.name, "%s", "409");
+      band.rxF = 409000000;  // 409MHz
+      band.txF = 410000000;  // 410MHz
+      band.allowTx = true;   // Allow transmission
+    }
+    
+    // Common band settings
+    band.meta.readonly = false;
+    band.meta.type = TYPE_BAND;
+    band.modulation = MOD_FM;
+    band.bw = BK4819_FILTER_BW_17k;
+    band.squelch.value = 2;
+    band.squelch.type = SQUELCH_RSSI_NOISE_GLITCH;
+    band.step = STEP_25_0kHz;
+    band.gainIndex = AUTO_GAIN_INDEX;
+    band.misc.powCalib.s = 43;  // Use default power calibration
+    band.misc.powCalib.m = 68;
+    band.misc.powCalib.e = 140;
+    band.misc.lastUsedFreq = band.rxF;
+    
+    CHANNELS_Save(stats.bands, &band);
+    stats.bands++;
+    stats.bytes += CH_SIZE;
     return false;
   }
 
