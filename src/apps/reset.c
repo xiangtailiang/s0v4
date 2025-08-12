@@ -88,7 +88,7 @@ static void startReset(ResetType t) {
     stats.bands = 0;
     stats.channels = 0;
     // Add default amateur and public bands
-    total.bands = 3; // 2M, 70CM amateur bands and 409 public band
+    total.bands = 5; // 2M, 70CM amateur bands, 409 public band, VHF and UHF commercial bands
     break;
   default:
     break;
@@ -170,6 +170,18 @@ static bool resetFull() {
       sprintf(band.name, "%s", "409");
       band.rxF = 409000000;  // 409MHz
       band.txF = 410000000;  // 410MHz
+      band.allowTx = true;   // Allow transmission
+    } else if (stats.bands == 3) {
+      // VHF commercial band (136-174MHz)
+      sprintf(band.name, "%s", "VHF");
+      band.rxF = 136000000;  // 136MHz
+      band.txF = 174000000;  // 174MHz
+      band.allowTx = true;   // Allow transmission
+    } else if (stats.bands == 4) {
+      // UHF commercial band (400-520MHz)
+      sprintf(band.name, "%s", "UHF");
+      band.rxF = 400000000;  // 400MHz
+      band.txF = 520000000;  // 520MHz
       band.allowTx = true;   // Allow transmission
     }
     
