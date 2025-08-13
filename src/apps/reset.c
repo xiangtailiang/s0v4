@@ -58,7 +58,7 @@ static void selectEeprom(EEPROMType t) {
 
   total.settings = 1;
   total.vfos = ARRAY_SIZE(gVFO);
-  total.bands = 0; // default bands
+  total.bands = 2; // default bands
   total.channels = total.mr - total.vfos - total.bands;
 }
 
@@ -88,7 +88,7 @@ static void startReset(ResetType t) {
     stats.bands = 0;
     stats.channels = 0;
     // Add default amateur and public bands
-    total.bands = 5; // 2M, 70CM amateur bands, 409 public band, VHF and UHF commercial bands
+    total.bands = 2; // VHF and UHF commercial bands
     break;
   default:
     break;
@@ -153,35 +153,18 @@ static bool resetFull() {
     Band band;
     memset(&band, 0, sizeof(Band));
     
+    
     if (stats.bands == 0) {
-      // 2M amateur band (144-148MHz)
-      sprintf(band.name, "%s", "2M");
-      band.rxF = 144000000;  // 144MHz
-      band.txF = 148000000;  // 148MHz
-      band.allowTx = true;   // Allow transmission
-    } else if (stats.bands == 1) {
-      // 70CM amateur band (430-440MHz)
-      sprintf(band.name, "%s", "70CM");
-      band.rxF = 430000000;  // 430MHz
-      band.txF = 440000000;  // 440MHz
-      band.allowTx = true;   // Allow transmission
-    } else if (stats.bands == 2) {
-      // China public band (409MHz)
-      sprintf(band.name, "%s", "409");
-      band.rxF = 409000000;  // 409MHz
-      band.txF = 410000000;  // 410MHz
-      band.allowTx = true;   // Allow transmission
-    } else if (stats.bands == 3) {
       // VHF commercial band (136-174MHz)
       sprintf(band.name, "%s", "VHF");
-      band.rxF = 136000000;  // 136MHz
-      band.txF = 174000000;  // 174MHz
+      band.rxF = 13600000;  // 136MHz
+      band.txF = 17400000;  // 174MHz
       band.allowTx = true;   // Allow transmission
-    } else if (stats.bands == 4) {
+    } else if (stats.bands == 1) {
       // UHF commercial band (400-520MHz)
       sprintf(band.name, "%s", "UHF");
-      band.rxF = 400000000;  // 400MHz
-      band.txF = 520000000;  // 520MHz
+      band.rxF = 40000000;  // 400MHz
+      band.txF = 52000000;  // 520MHz
       band.allowTx = true;   // Allow transmission
     }
     
@@ -189,15 +172,12 @@ static bool resetFull() {
     band.meta.readonly = false;
     band.meta.type = TYPE_BAND;
     band.modulation = MOD_FM;
+    band.radio = RADIO_BK4819;
     band.bw = BK4819_FILTER_BW_17k;
-    band.squelch.value = 2;
+    band.squelch.value = 4;
     band.squelch.type = SQUELCH_RSSI_NOISE_GLITCH;
     band.step = STEP_25_0kHz;
     band.gainIndex = AUTO_GAIN_INDEX;
-    band.misc.powCalib.s = 43;  // Use default power calibration
-    band.misc.powCalib.m = 68;
-    band.misc.powCalib.e = 140;
-    band.misc.lastUsedFreq = band.rxF;
     
     CHANNELS_Save(stats.bands, &band);
     stats.bands++;
