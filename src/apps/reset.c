@@ -11,7 +11,7 @@
 #include "../ui/graphics.h"
 #include "../ui/statusline.h"
 
-#define DEFAULT_BANDS_COUNT 5
+#define DEFAULT_BANDS_COUNT 4
 
 typedef enum {
   RESET_0xFF,
@@ -156,15 +156,6 @@ static bool resetFull() {
     memset(&band, 0, sizeof(Band));
 
     if (stats.bands == 0) {
-      // Broadcast FM band (88-108MHz)
-      sprintf(band.name, "%s", "Bcast FM");
-      band.rxF = 8800000;   // 88MHz
-      band.txF = 10799999;  // 108MHz
-      band.allowTx = false; // No transmission allowed
-      band.modulation = MOD_WFM;
-      band.bw = BK4819_FILTER_BW_26k; //
-      band.step = STEP_100_0kHz;
-    } else if (stats.bands == 1) {
       // Air band (118-135MHz)
       sprintf(band.name, "%s", "Air");
       band.rxF = 11800000;  // 118MHz
@@ -173,7 +164,7 @@ static bool resetFull() {
       band.modulation = MOD_AM;
       band.bw = BK4819_FILTER_BW_9k;
       band.step = STEP_12_5kHz;
-    } else if (stats.bands == 2) {
+    } else if (stats.bands == 1) {
       // VHF commercial band (136-174MHz)
       sprintf(band.name, "%s", "VHF");
       band.rxF = 13600000; // 136MHz
@@ -182,7 +173,7 @@ static bool resetFull() {
       band.modulation = MOD_FM;
       band.bw = BK4819_FILTER_BW_17k;
       band.step = STEP_25_0kHz;
-    } else if (stats.bands == 3) {
+    } else if (stats.bands == 2) {
       // UHF commercial band (400-520MHz)
       sprintf(band.name, "%s", "UHF");
       band.rxF = 40000000; // 400MHz
@@ -191,7 +182,7 @@ static bool resetFull() {
       band.modulation = MOD_FM;
       band.bw = BK4819_FILTER_BW_17k;
       band.step = STEP_25_0kHz;
-    } else if (stats.bands == 4) {
+    } else if (stats.bands == 3) {
       // Additional band - you can customize this
       sprintf(band.name, "%s", "Extra");
       band.rxF = 43000000; // 430MHz
@@ -205,11 +196,7 @@ static bool resetFull() {
     // Common band settings
     band.meta.readonly = false;
     band.meta.type = TYPE_BAND;
-    if (band.modulation == MOD_WFM) {
-      band.radio = RADIO_BK1080;
-    } else {
-      band.radio = RADIO_BK4819;
-    }
+    band.radio = RADIO_BK4819;
     band.squelch.value = 4;
     band.squelch.type = SQUELCH_RSSI_NOISE_GLITCH;
     band.gainIndex = AUTO_GAIN_INDEX;
