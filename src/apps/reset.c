@@ -11,6 +11,8 @@
 #include "../ui/graphics.h"
 #include "../ui/statusline.h"
 
+#define DEFAULT_BANDS_COUNT 5
+
 typedef enum {
   RESET_0xFF,
   RESET_FULL,
@@ -58,7 +60,7 @@ static void selectEeprom(EEPROMType t) {
 
   total.settings = 1;
   total.vfos = ARRAY_SIZE(gVFO);
-  total.bands = 2; // default bands
+  total.bands = DEFAULT_BANDS_COUNT; // default bands
   total.channels = total.mr - total.vfos - total.bands;
 }
 
@@ -88,7 +90,7 @@ static void startReset(ResetType t) {
     stats.bands = 0;
     stats.channels = 0;
     // Add default amateur and public bands
-    total.bands = 2; // VHF and UHF commercial bands
+    total.bands = DEFAULT_BANDS_COUNT; // VHF and UHF commercial bands
     break;
   default:
     break;
@@ -123,7 +125,7 @@ static bool resetFull() {
 
     vfo->channel = -1;
     vfo->modulation = MOD_FM;
-    vfo->bw = BK4819_FILTER_BW_12k;
+    vfo->bw = BK4819_FILTER_BW_17k;
     vfo->radio = RADIO_BK4819;
     vfo->txF = 0;
     vfo->offsetDir = OFFSET_NONE;
@@ -152,33 +154,66 @@ static bool resetFull() {
   if (stats.bands < total.bands) {
     Band band;
     memset(&band, 0, sizeof(Band));
-    
-    
+
     if (stats.bands == 0) {
+      // Broadcast FM band (88-108MHz)
+      sprintf(band.name, "%s", "Bcast FM");
+      band.rxF = 8800000;   // 88MHz
+      band.txF = 10799999;  // 108MHz
+      band.allowTx = false; // No transmission allowed
+      band.modulation = MOD_WFM;
+      band.bw = BK4819_FILTER_BW_26k; //
+      band.step = STEP_100_0kHz;
+    } else if (stats.bands == 1) {
+      // Air band (118-135MHz)
+      sprintf(band.name, "%s", "Air");
+      band.rxF = 11800000;  // 118MHz
+      band.txF = 13499999;  // 135MHz
+      band.allowTx = false; // No transmission allowed
+      band.modulation = MOD_AM;
+      band.bw = BK4819_FILTER_BW_9k;
+      band.step = STEP_12_5kHz;
+    } else if (stats.bands == 2) {
       // VHF commercial band (136-174MHz)
       sprintf(band.name, "%s", "VHF");
-      band.rxF = 13600000;  // 136MHz
-      band.txF = 17400000;  // 174MHz
-      band.allowTx = true;   // Allow transmission
-    } else if (stats.bands == 1) {
+      band.rxF = 13600000; // 136MHz
+      band.txF = 17400000; // 174MHz
+      band.allowTx = true; // Allow transmission
+      band.modulation = MOD_FM;
+      band.bw = BK4819_FILTER_BW_17k;
+      band.step = STEP_25_0kHz;
+    } else if (stats.bands == 3) {
       // UHF commercial band (400-520MHz)
       sprintf(band.name, "%s", "UHF");
-      band.rxF = 40000000;  // 400MHz
-      band.txF = 52000000;  // 520MHz
-      band.allowTx = true;   // Allow transmission
+      band.rxF = 40000000; // 400MHz
+      band.txF = 52000000; // 520MHz
+      band.allowTx = true; // Allow transmission
+      band.modulation = MOD_FM;
+      band.bw = BK4819_FILTER_BW_17k;
+      band.step = STEP_25_0kHz;
+    } else if (stats.bands == 4) {
+      // Additional band - you can customize this
+      sprintf(band.name, "%s", "Extra");
+      band.rxF = 43000000; // 430MHz
+      band.txF = 44000000; // 440MHz
+      band.allowTx = true; // Allow transmission
+      band.modulation = MOD_FM;
+      band.bw = BK4819_FILTER_BW_17k;
+      band.step = STEP_25_0kHz;
     }
-    
+
     // Common band settings
     band.meta.readonly = false;
     band.meta.type = TYPE_BAND;
-    band.modulation = MOD_FM;
-    band.radio = RADIO_BK4819;
-    band.bw = BK4819_FILTER_BW_17k;
+    if (band.modulation == MOD_WFM) {
+      band.radio = RADIO_BK1080;
+    } else {
+      band.radio = RADIO_BK4819;
+    }
     band.squelch.value = 4;
     band.squelch.type = SQUELCH_RSSI_NOISE_GLITCH;
-    band.step = STEP_25_0kHz;
     band.gainIndex = AUTO_GAIN_INDEX;
-    
+
     CHANNELS_Save(stats.bands, &band);
     stats.bands++;
     stats.bytes += CH_SIZE;
