@@ -2,7 +2,6 @@
 #include "../driver/bk4819.h"
 #include "../driver/system.h"
 #include "../radio.h"
-#include "../scheduler.h"
 #include "../settings.h"
 #include <stddef.h>
 
@@ -19,7 +18,7 @@ static bool checkActivityOnFreq(uint32_t freq) {
   bool activity;
 
   BK4819_TuneTo(freq, false);
-  SYS_DelayMs(DW_CHECK_DELAY);
+  SYSTEM_DelayMs(DW_CHECK_DELAY);
   activity = BK4819_IsSquelchOpen();
   BK4819_TuneTo(oldFreq, false);
 
@@ -30,8 +29,8 @@ static void sync(void) {
   static int8_t i = VFOS_COUNT - 1;
 
   // Do not sync if we are in TX
-  if (gTxState == TX_ON) {
-    return;
+  if (gTxState != TX_OFF) {
+      return;
   }
 
   if (checkActivityOnFreq(gVFO[i].rxF)) {
@@ -87,7 +86,7 @@ void LISTENING_Update(void) {
       }
     }
   }
-  if (gTxState != TX_ON && gDW.doSync) {
+  if (gTxState == TX_OFF && gDW.doSync) {
     if (gSettings.dw == DW_OFF) {
       gDW.doSync = false;
       return;
