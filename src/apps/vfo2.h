@@ -1,13 +1,13 @@
-#ifndef VFO2_H
-#define VFO2_H
+#ifndef VFO2_APP_H
+#define VFO2_APP_H
 
 #include "../driver/keyboard.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 void VFO2_init(void);
-bool VFO2_key(KEY_Code_t key, Key_State_t state);
 void VFO2_update(void);
-void VFO2_render(void);
-void VFO2_deinit(void);
+bool VFO2_key(KEY_Code_t key, Key_State_t state);
+void VFO2_render();
 
-#endif /* end of include guard: VFO2_H */
+#endif /* end of include guard: VFO2_APP_H */
