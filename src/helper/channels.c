@@ -60,7 +60,7 @@ bool CHANNELS_Existing(int16_t num) {
   if (num < 0 || num >= CHANNELS_GetCountMax()) {
     return false;
   }
-  return CHANNELS_GetMeta(num).type != TYPE_EMPTY;
+  return CHANNELS_GetMeta(num).type == TYPE_CH;
 }
 
 uint16_t CHANNELS_Scanlists(int16_t num) {
