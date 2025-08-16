@@ -14,6 +14,7 @@
 #include "../ui/menu.h"
 #include "../ui/statusline.h"
 #include "apps.h"
+#include "chcfg.h"
 #include "chlist.h"
 #include "vfo1.h"
 #include <stdint.h>
@@ -256,6 +257,8 @@ bool LOOTLIST_key(KEY_Code_t key, Key_State_t state) {
       return true;
     case KEY_5:
       tuneToLoot(loot, false);
+      gChEd = LOOT_ToCh(loot);
+      gChSaveMode = true;
       gChListFilter = TYPE_FILTER_CH_SAVE;
       APPS_run(APP_CH_LIST);
       return true;
