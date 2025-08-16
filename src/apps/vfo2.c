@@ -1,6 +1,7 @@
 #include "vfo2.h"
 #include "../dcs.h"
 #include "../helper/bands.h"
+#include "../helper/listening.h"
 #include "../helper/lootlist.h"
 #include "../misc.h"
 #include "../scheduler.h"
@@ -111,7 +112,10 @@ static void render2VFOPart(uint8_t i) {
   renderAdditionalInfo(bl, vfo, msm);
 }
 
-void VFO2_init(void) { VFO1_init(); }
+void VFO2_init(void) {
+  VFO1_init();
+  LISTENING_Init();
+}
 
 bool VFO2_key(KEY_Code_t key, Key_State_t state) {
   uint8_t g = gCurrentBand.gainIndex;
@@ -135,7 +139,9 @@ bool VFO2_key(KEY_Code_t key, Key_State_t state) {
   return false;
 }
 
-void VFO2_update(void) { VFO1_update(); }
+void VFO2_update(void) { LISTENING_Update(); }
+
+void VFO2_deinit(void) { LISTENING_Deinit(); }
 
 void VFO2_render(void) {
   STATUSLINE_renderCurrentBand();
