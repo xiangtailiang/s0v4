@@ -236,6 +236,8 @@ CH LOOT_ToCh(const Loot *loot) {
       .power = p.power,
       .bw = p.bw,
       .squelch = p.squelch,
+      .step = p.step,
+      .allowTx = p.allowTx,
       .gainIndex = p.gainIndex,
   };
 

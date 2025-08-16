@@ -197,6 +197,7 @@ static bool resetFull() {
     band.meta.readonly = false;
     band.meta.type = TYPE_BAND;
     band.radio = RADIO_BK4819;
+    band.power = 3;
     band.squelch.value = 4;
     band.squelch.type = SQUELCH_RSSI_NOISE_GLITCH;
     band.gainIndex = AUTO_GAIN_INDEX;
