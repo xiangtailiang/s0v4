@@ -173,7 +173,7 @@ static bool resetFull() {
       band.modulation = MOD_FM;
       band.bw = BK4819_FILTER_BW_17k;
       band.step = STEP_25_0kHz;
-    } else if (stats.bands == 2) {
+    } else if (stats.bands == 3) {
       // UHF commercial band (400-520MHz)
       sprintf(band.name, "%s", "UHF");
       band.rxF = 40000000; // 400MHz
@@ -182,9 +182,9 @@ static bool resetFull() {
       band.modulation = MOD_FM;
       band.bw = BK4819_FILTER_BW_17k;
       band.step = STEP_25_0kHz;
-    } else if (stats.bands == 3) {
+    } else if (stats.bands == 2) {
       // Additional band - you can customize this
-      sprintf(band.name, "%s", "Extra");
+      sprintf(band.name, "%s", "70CM");
       band.rxF = 43000000; // 430MHz
       band.txF = 44000000; // 440MHz
       band.allowTx = true; // Allow transmission
@@ -197,7 +197,7 @@ static bool resetFull() {
     band.meta.readonly = false;
     band.meta.type = TYPE_BAND;
     band.radio = RADIO_BK4819;
-    band.power = 3;
+    band.power = 1;
     band.squelch.value = 4;
     band.squelch.type = SQUELCH_RSSI_NOISE_GLITCH;
     band.gainIndex = AUTO_GAIN_INDEX;
