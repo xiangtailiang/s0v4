@@ -1,4 +1,5 @@
 #include "chlist.h"
+#include <string.h>
 #include "../driver/uart.h"
 #include "../helper/bands.h"
 #include "../helper/numnav.h"
@@ -108,6 +109,7 @@ static void save() {
   }
   CHANNELS_Save(getChannelNumber(channelIndex), &gChEd);
   RADIO_LoadCurrentVFO();
+  memset(&gChEd, 0, sizeof(gChEd));
   APPS_exit();
   APPS_exit();
 }
