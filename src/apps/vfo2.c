@@ -21,9 +21,22 @@ static void renderTxRxState(uint8_t i, uint8_t bl, bool isActive) {
     }
   }
 
-  if (gIsListening && isActive) {
-    PrintMedium(0, bl, "RX");
-    UI_RSSIBar(31);
+  if (gIsListening) {
+    bool receivingOnThisVfo = false;
+    if (gSettings.dw != DW_OFF) {
+      if (!gDW.isSync && gDW.activityOnVFO == i) {
+        receivingOnThisVfo = true;
+      }
+    } else {
+      if (isActive) {
+        receivingOnThisVfo = true;
+      }
+    }
+
+    if (receivingOnThisVfo) {
+      PrintMedium(0, bl, "RX");
+      UI_RSSIBar(31);
+    }
   }
 }
 
