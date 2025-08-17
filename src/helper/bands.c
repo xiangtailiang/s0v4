@@ -236,7 +236,9 @@ bool BANDS_SelectBandRelativeByScanlist(bool next) {
 
 void BANDS_SaveCurrent(void) {
   if (allBandIndex >= 0 && gCurrentBand.meta.type == TYPE_BAND) {
-    CHANNELS_Save(allBands[allBandIndex].mr, &gCurrentBand);
+    if (allBands[allBandIndex].s == gCurrentBand.rxF) {
+      CHANNELS_Save(allBands[allBandIndex].mr, &gCurrentBand);
+    }
   }
 }
 
