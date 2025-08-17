@@ -64,6 +64,7 @@ const AppType_t appsAvailableToRun[RUN_APPS_COUNT] = {
     APP_GENERATOR, //
     APP_RESET,
     APP_ABOUT,     //
+    APP_MORSE,     //
 };
 
 const App apps[APPS_COUNT] = {
@@ -90,6 +91,7 @@ const App apps[APPS_COUNT] = {
     {"Generator", GENERATOR_init, GENERATOR_update, GENERATOR_render,
      GENERATOR_key, NULL},
     {"ABOUT", NULL, NULL, ABOUT_Render, ABOUT_key, NULL},
+    {"Morse", MORSE_init, MORSE_update, MORSE_render, MORSE_key, MORSE_deinit},
 };
 
 bool APPS_key(KEY_Code_t Key, Key_State_t state) {
