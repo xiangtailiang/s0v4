@@ -110,6 +110,7 @@ void MORSE_deinit(void) {
 
 void MORSE_update(void) {
   if (morseState == STATE_IDLE) {
+    vTaskDelay(pdMS_TO_TICKS(100));
     return;
   }
 
