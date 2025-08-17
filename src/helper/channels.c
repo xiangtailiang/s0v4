@@ -63,6 +63,13 @@ bool CHANNELS_Existing(int16_t num) {
   return CHANNELS_GetMeta(num).type == TYPE_CH;
 }
 
+bool CHANNELS_Existing_CH(int16_t num) {
+  if (num < 0 || num >= CHANNELS_GetCountMax()) {
+    return false;
+  }
+  return CHANNELS_GetMeta(num).type == TYPE_CH || CHANNELS_GetMeta(num).type == TYPE_BAND;
+}
+
 uint16_t CHANNELS_Scanlists(int16_t num) {
   uint16_t sl;
   EEPROM_ReadBuffer(GetChannelOffset(num) + offsetof(CH, scanlists), &sl, 2);

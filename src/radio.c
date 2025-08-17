@@ -598,7 +598,7 @@ void RADIO_SwitchRadio() {
 }
 
 static void checkVisibleBand() {
-  if (!BANDS_InRange(radio->rxF, gCurrentBand)) {
+  if (!BANDS_InRange(radio->rxF, gCurrentBand) || gCurrentBand.meta.type == TYPE_BAND_DETACHED) {
     BANDS_SelectByFrequency(radio->rxF, radio->fixedBoundsMode);
   }
 }
