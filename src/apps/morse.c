@@ -1,11 +1,13 @@
 #include "morse.h"
 #include "../driver/bk4819.h"
 #include "../driver/uart.h"
+#include "../external/FreeRTOS/include/task.h"
 #include "../helper/measurements.h"
 #include "../radio.h"
 #include "../ui/graphics.h"
 #include "../ui/statusline.h"
 #include "apps.h"
+#include "finput.h"
 #include "textinput.h"
 
 // --- Morse Code Definitions ---
@@ -53,8 +55,8 @@ static const char *MORSE_TABLE[40] = {
     ".-- ",     // W
 };
 
-static const uint16_t DOT_DURATION = 100; // ms
-static const uint16_t TONE_FREQ = 700;    // Hz
+static uint16_t dotDuration = 100; // ms (default is 12 WPM)
+static const uint16_t TONE_FREQ = 700;   // Hz
 
 // --- App State ---
 
@@ -92,14 +94,24 @@ static const char *getMorseString(char c) {
 
 // --- App Functions ---
 
+static void morse_set_wpm(uint32_t wpm) {
+  if (wpm > 0 && wpm <= 60) { // Sanity check WPM
+    dotDuration = 1200 / wpm;
+  }
+}
+
 static void textInputCallback(void) { morseState = STATE_IDLE; }
 
-void MORSE_init(void) {
-  memset(inputText, 0, sizeof(inputText));
+static void launchTextInput(void) {
   gTextinputText = inputText;
   gTextInputSize = sizeof(inputText) - 1;
   gTextInputCallback = textInputCallback;
   APPS_run(APP_TEXTINPUT);
+}
+
+void MORSE_init(void) {
+  memset(inputText, 0, sizeof(inputText));
+  launchTextInput();
 }
 
 void MORSE_deinit(void) {
@@ -155,10 +167,10 @@ void MORSE_update(void) {
 
     if (symbol == ' ') { // Word gap
       BK4819_EnterTxMute();
-      stateTimer = Now() + (DOT_DURATION * 7);
+      stateTimer = Now() + (dotDuration * 7);
     } else { // Dot or Dash
       BK4819_ExitTxMute();
-      uint16_t duration = (symbol == '.') ? DOT_DURATION : (DOT_DURATION * 3);
+      uint16_t duration = (symbol == '.') ? dotDuration : (dotDuration * 3);
       stateTimer = Now() + duration;
     }
     morseState = STATE_TX_GAP;
@@ -169,7 +181,7 @@ void MORSE_update(void) {
     BK4819_EnterTxMute();
     morsePos++;
     morseState = STATE_NEXT_SYMBOL;
-    stateTimer = Now() + DOT_DURATION; // Inter-symbol gap
+    stateTimer = Now() + dotDuration; // Inter-symbol gap
     break;
 
   case STATE_STOPPING:
@@ -194,7 +206,9 @@ void MORSE_render() {
     break;
   }
 
-  PrintMediumEx(LCD_XCENTER, 15, POS_C, C_FILL, "Morse Code");
+  PrintMediumEx(LCD_XCENTER, 10, POS_C, C_FILL, "Morse Code");
+  uint16_t wpm = 1200 / dotDuration;
+  PrintSmallEx(LCD_XCENTER, 22, POS_C, C_FILL, "Speed: %u WPM", wpm);
   PrintMediumEx(LCD_XCENTER, 35, POS_C, C_FILL, status);
 
   if (strlen(inputText) > 0) {
@@ -218,6 +232,15 @@ bool MORSE_key(KEY_Code_t key, Key_State_t state) {
       morseState = STATE_STOPPING;
     }
     MORSE_update(); // Run update once to start/stop immediately
+    return true;
+
+  case KEY_1:
+    gFInputCallback = morse_set_wpm;
+    APPS_run(APP_FINPUT);
+    return true;
+
+  case KEY_5:
+    launchTextInput();
     return true;
 
   case KEY_EXIT:
