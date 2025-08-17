@@ -903,14 +903,14 @@ void RADIO_ToggleVfoMR(void) {
     radio->channel *= -1;
     radio->channel -= 1; // 1 -> 0
     // Log("radio->ch=%u", radio->channel);
-    if (CHANNELS_Existing(radio->channel)) {
+    if (CHANNELS_Existing_CH(radio->channel)) {
       RADIO_TuneToMR(radio->channel);
     } else {
       CHANNELS_Next(true);
       // Log("CH NEXT, radio->ch=%u", radio->channel);
     }
   }
-  // RADIO_SaveCurrentVFO();
+  RADIO_SaveCurrentVFO();
 }
 
 void RADIO_UpdateSquelchLevel(bool next) {

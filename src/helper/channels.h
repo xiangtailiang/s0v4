@@ -159,6 +159,7 @@ bool CHANNELS_LoadBuf();
 void CHANNELS_Next(bool next);
 void CHANNELS_Delete(int16_t i);
 bool CHANNELS_Existing(int16_t i);
+bool CHANNELS_Existing_CH(int16_t i);
 uint16_t CHANNELS_Scanlists(int16_t i);
 void CHANNELS_LoadScanlist(CHTypeFilter type, uint16_t n);
 void CHANNELS_LoadBlacklistToLoot();
