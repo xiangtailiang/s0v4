@@ -2,6 +2,10 @@
 #define MORSE_H
 
 #include "../scheduler.h"
+#include "../driver/keyboard.h"
+#include <stdbool.h>
+#include <stdint.h>
+
 
 void MORSE_init(void);
 void MORSE_update(void);

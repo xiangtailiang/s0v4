@@ -18,6 +18,7 @@
 #include "textinput.h"
 #include "vfo1.h"
 #include "vfo2.h"
+#include "morse.h"
 
 #define APPS_STACK_SIZE 8
 
