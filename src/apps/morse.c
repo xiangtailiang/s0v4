@@ -121,7 +121,14 @@ void MORSE_update(void) {
   case STATE_STARTING:
     RADIO_ToggleTX(true);
     if (gTxState == TX_ON) {
+      // Set up the tone generator, but keep it muted
       BK4819_TransmitTone(TONE_FREQ);
+      BK4819_EnterTxMute();
+
+      // Set the timer for the 1-second squelch delay
+      stateTimer = Now() + 1000;
+
+      // Set the next state to begin sending the actual symbols
       morseState = STATE_NEXT_CHAR;
     }
     break;
@@ -202,6 +209,9 @@ bool MORSE_key(KEY_Code_t key, Key_State_t state) {
   switch (key) {
   case KEY_PTT:
     if (morseState == STATE_IDLE) {
+      // Reset state for new transmission
+      textPos = 0;
+      morsePos = 0;
       morseState = STATE_STARTING;
     } else {
       morseState = STATE_STOPPING;
