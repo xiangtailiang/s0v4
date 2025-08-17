@@ -11,7 +11,7 @@
 #include "../ui/graphics.h"
 #include "../ui/statusline.h"
 
-#define DEFAULT_BANDS_COUNT 4
+#define DEFAULT_BANDS_COUNT 5
 
 typedef enum {
   RESET_0xFF,

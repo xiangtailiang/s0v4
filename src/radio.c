@@ -875,6 +875,12 @@ void RADIO_NextVFO(void) {
 }
 
 void RADIO_ToggleVfoMR(void) {
+  uint32_t now = Now();
+  if (now - lastToggleVfoMrTime < 3000) {
+    return;
+  }
+  lastToggleVfoMrTime = now;
+
   if (RADIO_IsChMode()) {
     loadVFO(gSettings.activeVFO);
     radio->channel += 1; // 0 -> 1
