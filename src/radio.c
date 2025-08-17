@@ -42,7 +42,7 @@ static bool hasSi = false;
 static bool hasSsbPatch = false;
 
 static uint8_t oldRadio = 255;
-static uint32_t lastToggleVfoMrTime = 0;
+// static uint32_t lastToggleVfoMrTime = 0;
 
 const uint16_t StepFrequencyTable[15] = {
     2,   5,   50,  100,
@@ -883,10 +883,10 @@ void RADIO_NextVFO(void) {
 
 void RADIO_ToggleVfoMR(void) {
   uint32_t now = Now();
-  if (now - lastToggleVfoMrTime < 3000) {
-    return;
-  }
-  lastToggleVfoMrTime = now;
+  // if (now - lastToggleVfoMrTime < 3000) {
+  //   return;
+  // }
+  // lastToggleVfoMrTime = now;
 
   if (RADIO_IsChMode()) {
     loadVFO(gSettings.activeVFO);
@@ -910,7 +910,7 @@ void RADIO_ToggleVfoMR(void) {
       // Log("CH NEXT, radio->ch=%u", radio->channel);
     }
   }
-  RADIO_SaveCurrentVFO();
+  // RADIO_SaveCurrentVFO();
 }
 
 void RADIO_UpdateSquelchLevel(bool next) {
