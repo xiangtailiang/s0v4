@@ -71,7 +71,7 @@ typedef enum {
 static char inputText[32];
 static uint8_t textPos;
 static uint8_t morsePos;
-static MorseState state = STATE_IDLE;
+static MorseState morseState = STATE_IDLE;
 static uint32_t stateTimer;
 
 // --- Helper Functions ---
@@ -92,7 +92,7 @@ static const char *getMorseString(char c) {
 
 // --- App Functions ---
 
-static void textInputCallback(void) { state = STATE_IDLE; }
+static void textInputCallback(void) { morseState = STATE_IDLE; }
 
 void MORSE_init(void) {
   memset(inputText, 0, sizeof(inputText));
@@ -109,7 +109,7 @@ void MORSE_deinit(void) {
 }
 
 void MORSE_update(void) {
-  if (state == STATE_IDLE) {
+  if (morseState == STATE_IDLE) {
     return;
   }
 
@@ -117,22 +117,22 @@ void MORSE_update(void) {
     return;
   }
 
-  switch (state) {
+  switch (morseState) {
   case STATE_STARTING:
     RADIO_ToggleTX(true);
     if (gTxState == TX_ON) {
       BK4819_TransmitTone(TONE_FREQ);
-      state = STATE_NEXT_CHAR;
+      morseState = STATE_NEXT_CHAR;
     }
     break;
 
   case STATE_NEXT_CHAR:
     if (textPos >= strlen(inputText)) {
-      state = STATE_STOPPING;
+      morseState = STATE_STOPPING;
       break;
     }
     morsePos = 0;
-    state = STATE_NEXT_SYMBOL;
+    morseState = STATE_NEXT_SYMBOL;
     break;
 
   case STATE_NEXT_SYMBOL: {
@@ -141,7 +141,7 @@ void MORSE_update(void) {
 
     if (symbol == '\0') { // End of character
       textPos++;
-      state = STATE_NEXT_CHAR;
+      morseState = STATE_NEXT_CHAR;
       break;
     }
 
@@ -153,36 +153,33 @@ void MORSE_update(void) {
       uint16_t duration = (symbol == '.') ? DOT_DURATION : (DOT_DURATION * 3);
       stateTimer = Now() + duration;
     }
-    state = STATE_TX_GAP;
+    morseState = STATE_TX_GAP;
     break;
   }
 
   case STATE_TX_GAP:
     BK4819_EnterTxMute();
     morsePos++;
-    state = STATE_NEXT_SYMBOL;
+    morseState = STATE_NEXT_SYMBOL;
     stateTimer = Now() + DOT_DURATION; // Inter-symbol gap
     break;
 
   case STATE_STOPPING:
     RADIO_ToggleTX(false);
-    state = STATE_IDLE;
+    morseState = STATE_IDLE;
     break;
 
   default:
-    state = STATE_IDLE;
+    morseState = STATE_IDLE;
     break;
   }
 }
 
 void MORSE_render() {
   char status[32];
-  switch (state) {
+  switch (morseState) {
   case STATE_IDLE:
     sprintf(status, "Press PTT to start");
-    break;
-  case STATE_TRANSMITTING:
-    sprintf(status, "Transmitting...");
     break;
   default:
     sprintf(status, "Sending...");
@@ -193,12 +190,7 @@ void MORSE_render() {
   PrintMediumEx(LCD_XCENTER, 35, POS_C, C_FILL, status);
 
   if (strlen(inputText) > 0) {
-    PrintMedium(2, 50, inputText);
-    if (state != STATE_IDLE) {
-      uint8_t width = FONT_SMALL_WIDTH;
-      uint8_t x = 2 + (textPos * width);
-      FillRect(x, 50 + 8, width, 2, C_FILL);
-    }
+    PrintMediumEx(LCD_XCENTER, 50, POS_C, C_FILL, "Msg: %s", inputText);
   }
 }
 
@@ -209,10 +201,10 @@ bool MORSE_key(KEY_Code_t key, Key_State_t state) {
 
   switch (key) {
   case KEY_PTT:
-    if (state == STATE_IDLE) {
-      state = STATE_STARTING;
+    if (morseState == STATE_IDLE) {
+      morseState = STATE_STARTING;
     } else {
-      state = STATE_STOPPING;
+      morseState = STATE_STOPPING;
     }
     MORSE_update(); // Run update once to start/stop immediately
     return true;
