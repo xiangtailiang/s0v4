@@ -42,6 +42,7 @@ static bool hasSi = false;
 static bool hasSsbPatch = false;
 
 static uint8_t oldRadio = 255;
+static uint32_t lastToggleVfoMrTime = 0;
 
 const uint16_t StepFrequencyTable[15] = {
     2,   5,   50,  100,
@@ -238,6 +239,12 @@ static void setSI4732Modulation(ModulationType mod) {
 
 static StaticTimer_t saveCurrentVfoTimerBuffer;
 static TimerHandle_t saveCurrentVfoTimer;
+
+static void SaveCurrentVfoTimerCallback(TimerHandle_t xTimer) {
+  (void)xTimer;
+  RADIO_SaveCurrentVFO();
+}
+
 void RADIO_SaveCurrentVFODelayed(void) {
   /* Log("!!!VFO SAV delayed");
   return; */
@@ -246,7 +253,7 @@ void RADIO_SaveCurrentVFODelayed(void) {
   }
   saveCurrentVfoTimer =
       xTimerCreateStatic("RS", pdMS_TO_TICKS(1000), pdFALSE, NULL,
-                         RADIO_SaveCurrentVFO, &saveCurrentVfoTimerBuffer);
+                         SaveCurrentVfoTimerCallback, &saveCurrentVfoTimerBuffer);
   xTimerStart(saveCurrentVfoTimer, 0);
 }
 
