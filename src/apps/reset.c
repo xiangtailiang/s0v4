@@ -191,6 +191,15 @@ static bool resetFull() {
       band.modulation = MOD_FM;
       band.bw = BK4819_FILTER_BW_17k;
       band.step = STEP_25_0kHz;
+    } else if (stats.bands == 4) {
+      // Broadcast FM
+      sprintf(band.name, "%s", "Bcast FM");
+      band.rxF = 8800000;   // 88MHz
+      band.txF = 10799999;  // 108MHz
+      band.allowTx = false; // No transmission allowed
+      band.modulation = MOD_WFM;
+      band.bw = BK4819_FILTER_BW_26k; //
+      band.step = STEP_100_0kHz;
     }
 
     // Common band settings
