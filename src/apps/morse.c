@@ -94,7 +94,10 @@ static const char *getMorseString(char c) {
 
 // --- App Functions ---
 
-static void morse_set_wpm(uint32_t wpm) {
+static void morse_set_wpm(uint32_t raw_value) {
+  // finput returns the value multiplied by 100,000
+  uint32_t wpm = raw_value / 100000;
+
   if (wpm > 0 && wpm <= 60) { // Sanity check WPM
     dotDuration = 1200 / wpm;
   }
@@ -206,13 +209,12 @@ void MORSE_render() {
     break;
   }
 
-  PrintMediumEx(LCD_XCENTER, 10, POS_C, C_FILL, "Morse Code");
   uint16_t wpm = 1200 / dotDuration;
-  PrintSmallEx(LCD_XCENTER, 22, POS_C, C_FILL, "Speed: %u WPM", wpm);
-  PrintMediumEx(LCD_XCENTER, 35, POS_C, C_FILL, status);
+  PrintMediumEx(LCD_XCENTER, 16, POS_C, C_FILL, "Speed: %u WPM", wpm);
+  PrintMediumEx(LCD_XCENTER, 28, POS_C, C_FILL, status);
 
   if (strlen(inputText) > 0) {
-    PrintMediumEx(LCD_XCENTER, 50, POS_C, C_FILL, "Msg: %s", inputText);
+    PrintMediumEx(LCD_XCENTER, 40, POS_C, C_FILL, "Msg: %s", inputText);
   }
 }
 
