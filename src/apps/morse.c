@@ -210,8 +210,8 @@ void MORSE_render() {
   }
 
   uint16_t wpm = 1200 / dotDuration;
-  PrintMediumEx(LCD_XCENTER, 16, POS_C, C_FILL, "Speed: %u WPM", wpm);
-  PrintMediumEx(LCD_XCENTER, 28, POS_C, C_FILL, status);
+  PrintMediumEx(LCD_XCENTER, 28, POS_C, C_FILL, "Speed: %u WPM", wpm);
+  PrintMediumEx(LCD_XCENTER, 16, POS_C, C_FILL, status);
 
   if (strlen(inputText) > 0) {
     PrintMediumEx(LCD_XCENTER, 40, POS_C, C_FILL, "Msg: %s", inputText);
