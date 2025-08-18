@@ -11,7 +11,7 @@
 #include "finput.h"
 #include "generator.h"
 #include "lootlist.h"
-#include "memview.h"
+// #include "memview.h"
 #include "reset.h"
 #include "scaner.h"
 #include "settings.h"
@@ -61,7 +61,7 @@ const AppType_t appsAvailableToRun[RUN_APPS_COUNT] = {
     APP_CH_SCAN,   //
     APP_FC,        //
     APP_LOOT_LIST, //
-    APP_MEMVIEW,   //
+    // APP_MEMVIEW,   //
     APP_GENERATOR, //
     APP_RESET,
     APP_ABOUT,     //
@@ -70,7 +70,7 @@ const AppType_t appsAvailableToRun[RUN_APPS_COUNT] = {
 
 const App apps[APPS_COUNT] = {
     {"None", NULL, NULL, NULL, NULL, NULL},
-    {"EEPROM view", MEMVIEW_Init, NULL, MEMVIEW_Render, MEMVIEW_key, NULL},
+    // {"EEPROM view", MEMVIEW_Init, NULL, MEMVIEW_Render, MEMVIEW_key, NULL},
     {"Spectrum", SCANER_init, SCANER_update, SCANER_render, SCANER_key,
      SCANER_deinit},
     {"CH Scan", CHSCAN_init, CHSCAN_update, CHSCAN_render, CHSCAN_key,
