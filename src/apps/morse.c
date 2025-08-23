@@ -55,7 +55,7 @@ static const char *MORSE_TABLE[40] = {
     ".-- ",     // W
 };
 
-static uint16_t dotDuration = 100; // ms (default is 12 WPM)
+static uint16_t dotDuration = 80; // ms (default is 15 WPM)
 static const uint16_t TONE_FREQ = 700;   // Hz
 
 // --- App State ---

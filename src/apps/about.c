@@ -4,7 +4,7 @@
 
 void ABOUT_Render() {
   PrintMediumEx(LCD_XCENTER, LCD_YCENTER - 8, POS_C, C_FILL, "s0v4");
-  PrintMediumEx(LCD_XCENTER, LCD_YCENTER, POS_C, C_FILL, "FAGCI & Tiger");
+  PrintSmallEx(LCD_XCENTER, LCD_YCENTER, POS_C, C_FILL, "FAGCI & Tiger");
   PrintSmallEx(LCD_XCENTER, LCD_YCENTER + 8, POS_C, C_FILL, TIME_STAMP);
 }
 

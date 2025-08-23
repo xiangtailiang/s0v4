@@ -163,7 +163,7 @@ static bool resetFull() {
       band.allowTx = false; // No transmission allowed
       band.modulation = MOD_AM;
       band.bw = BK4819_FILTER_BW_9k;
-      band.step = STEP_12_5kHz;
+      band.step = STEP_8_33kHz;
     } else if (stats.bands == 1) {
       // VHF commercial band (136-174MHz)
       sprintf(band.name, "%s", "VHF");
@@ -172,7 +172,7 @@ static bool resetFull() {
       band.allowTx = true; // Allow transmission
       band.modulation = MOD_FM;
       band.bw = BK4819_FILTER_BW_17k;
-      band.step = STEP_25_0kHz;
+      band.step = STEP_6_25kHz;
     } else if (stats.bands == 3) {
       // UHF commercial band (400-520MHz)
       sprintf(band.name, "%s", "UHF");
@@ -181,7 +181,7 @@ static bool resetFull() {
       band.allowTx = true; // Allow transmission
       band.modulation = MOD_FM;
       band.bw = BK4819_FILTER_BW_17k;
-      band.step = STEP_25_0kHz;
+      band.step = STEP_6_25kHz;
     } else if (stats.bands == 2) {
       // Additional band - you can customize this
       sprintf(band.name, "%s", "70CM");
@@ -190,7 +190,7 @@ static bool resetFull() {
       band.allowTx = true; // Allow transmission
       band.modulation = MOD_FM;
       band.bw = BK4819_FILTER_BW_17k;
-      band.step = STEP_25_0kHz;
+      band.step = STEP_6_25kHz;
     } else if (stats.bands == 4) {
       // Broadcast FM
       sprintf(band.name, "%s", "Bcast FM");
