@@ -1013,7 +1013,6 @@ void RADIO_AutoReplyInit() {
   gAutoReplyState = AUTO_REPLY_IDLE;
   gAutoReplyTimer = 0;
   gAutoReplyWasListening = false;
-  Log("AutoReply: Initialized");
 }
 
 void RADIO_AutoReplyReset() {
@@ -1024,7 +1023,6 @@ void RADIO_AutoReplyReset() {
   gAutoReplyState = AUTO_REPLY_IDLE;
   gAutoReplyTimer = 0;
   gAutoReplyWasListening = false;
-  Log("AutoReply: Reset");
 }
 
 void RADIO_AutoReplyUpdate() {
@@ -1050,7 +1048,6 @@ void RADIO_AutoReplyUpdate() {
       if (gIsListening && !gAutoReplyWasListening) {
         gAutoReplyState = AUTO_REPLY_LISTENING;
         gAutoReplyWasListening = true;
-        Log("AutoReply: Signal detected, entering listening state");
       }
       break;
       
@@ -1059,7 +1056,6 @@ void RADIO_AutoReplyUpdate() {
       if (!gIsListening && gAutoReplyWasListening) {
         gAutoReplyState = AUTO_REPLY_SIGNAL_END;
         gAutoReplyTimer = currentTime;
-        Log("AutoReply: Signal ended, preparing for reply");
       }
       // 如果信号继续，保持监听状态
       else if (gIsListening) {
@@ -1078,10 +1074,8 @@ void RADIO_AutoReplyUpdate() {
           gAutoReplyState = AUTO_REPLY_TRANSMITTING;
           gAutoReplyTimer = currentTime;
           RADIO_ToggleTX(true);
-          Log("AutoReply: Starting transmission for 20 seconds");
         } else {
           // 无法发射，重置状态
-          Log("AutoReply: Cannot transmit, TX state: %d", txState);
           RADIO_AutoReplyReset();
         }
       }
@@ -1092,7 +1086,6 @@ void RADIO_AutoReplyUpdate() {
       if (currentTime - gAutoReplyTimer >= 20000) { // 20秒 = 20000毫秒
         RADIO_ToggleTX(false);
         RADIO_AutoReplyReset();
-        Log("AutoReply: Transmission completed, returning to idle");
       }
       break;
       
