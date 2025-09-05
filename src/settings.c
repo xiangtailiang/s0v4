@@ -72,6 +72,8 @@ Settings gSettings = (Settings){
     .batteryStyle = BAT_PERCENT,
     .upconverter = 0,
     .deviation = 130, // 1300
+    .autoReply = false,        // 新增：自动回复功能默认关闭
+    .autoReplyDelay = 2,       // 新增：自动回复延迟默认2秒
 };
 
 const uint32_t EEPROM_SIZES[6] = {
@@ -88,6 +90,25 @@ void SETTINGS_Save(void) {
 
 void SETTINGS_Load(void) {
   EEPROM_ReadBuffer(SETTINGS_OFFSET, &gSettings, SETTINGS_SIZE);
+  // 在这里添加自动回复的默认值
+  if (gSettings.roger >= sizeof(rogerNames) / sizeof(rogerNames[0])) {
+    gSettings.roger = 0;
+  }
+  if (gSettings.dw >= sizeof(dwNames) / sizeof(dwNames[0])) {
+    gSettings.dw = false;
+  }
+  if (gSettings.chDisplayMode >= sizeof(CH_DISPLAY_MODE_NAMES) / sizeof(CH_DISPLAY_MODE_NAMES[0])) {
+    gSettings.chDisplayMode = 0;
+  }
+  if (gSettings.scanmode >= sizeof(BL_SQL_MODE_NAMES) / sizeof(BL_SQL_MODE_NAMES[0])) {
+    gSettings.scanmode = 0;
+  }
+  if (gSettings.sqOpenedTimeout >= sizeof(SCAN_TIMEOUT_NAMES) / sizeof(SCAN_TIMEOUT_NAMES[0])) {
+    gSettings.sqOpenedTimeout = SCAN_TO_NONE;
+  }
+  if (gSettings.sqClosedTimeout >= sizeof(SCAN_TIMEOUT_NAMES) / sizeof(SCAN_TIMEOUT_NAMES[0])) {
+    gSettings.sqClosedTimeout = SCAN_TO_2s;
+  }
 }
 
 static StaticTimer_t settingsSaveTimerBuffer;

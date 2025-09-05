@@ -44,6 +44,8 @@ typedef enum {
   M_DTMF_DECODE,
   M_CH_DISP_MODE,
   M_FC_TIME,
+  M_AUTO_REPLY,        // 新增：自动回复开关
+  M_AUTO_REPLY_DELAY,  // 新增：自动回复延迟
 } Menu;
 
 static uint8_t menuIndex = 0;
@@ -85,6 +87,8 @@ static const MenuItem menu[] = {
     {"Roger", M_ROGER, ARRAY_SIZE(rogerNames)},
     {"Tone local", M_TONE_LOCAL, 2},
     {"Lock PTT", M_PTT_LOCK, 2},
+    {"Auto Reply", M_AUTO_REPLY, 2},        // 新增：自动回复开关菜单项
+    {"Reply Delay", M_AUTO_REPLY_DELAY, 32}, // 新增：自动回复延迟菜单项 (0-31秒)
 };
 
 static const uint8_t MENU_SIZE = ARRAY_SIZE(menu);
@@ -129,7 +133,11 @@ static void getSubmenuItemText(uint16_t index, char *name) {
   case M_BEEP:
   case M_STE:
   case M_DTMF_DECODE:
+  case M_AUTO_REPLY:  // 新增：自动回复开关显示
     strncpy(name, onOff[index], 31);
+    return;
+  case M_AUTO_REPLY_DELAY:  // 新增：自动回复延迟显示
+    sprintf(name, "%us", index);
     return;
   case M_BAT_CAL:
     sprintf(name, "%u.%04u (%u)", v / 10000, v % 10000, index + BAT_CAL_MIN);
@@ -221,6 +229,14 @@ static void accept(void) {
     gSettings.beep = subMenuIndex;
     SETTINGS_Save();
     break;
+  case M_AUTO_REPLY:  // 新增：保存自动回复开关设置
+    gSettings.autoReply = subMenuIndex;
+    SETTINGS_Save();
+    break;
+  case M_AUTO_REPLY_DELAY:  // 新增：保存自动回复延迟设置
+    gSettings.autoReplyDelay = subMenuIndex;
+    SETTINGS_Save();
+    break;
   case M_BAT_CAL:
     gSettings.batteryCalibration = subMenuIndex + BAT_CAL_MIN;
     SETTINGS_Save();
@@ -297,6 +313,9 @@ static const char *getValue(Menu type) {
   case M_SQL_CLOSE_T:
     sprintf(Output, "%ums", gSettings.sqlCloseTime * 5);
     return Output;
+  case M_AUTO_REPLY_DELAY:  // 新增：显示自动回复延迟值
+    sprintf(Output, "%us", gSettings.autoReplyDelay);
+    return Output;
   case M_BAT_TYPE:
     return BATTERY_TYPE_NAMES[gSettings.batteryType];
   case M_FC_TIME:
@@ -322,6 +341,8 @@ static const char *getValue(Menu type) {
     return Output;
   case M_BEEP:
     return onOff[gSettings.beep];
+  case M_AUTO_REPLY:  // 新增：显示自动回复开关状态
+    return onOff[gSettings.autoReply];
   case M_DTMF_DECODE:
     return onOff[gSettings.dtmfdecode];
   case M_STE:
@@ -407,6 +428,12 @@ static void setInitialSubmenuIndex(void) {
     break;
   case M_BEEP:
     subMenuIndex = gSettings.beep;
+    break;
+  case M_AUTO_REPLY:  // 新增：设置自动回复开关的初始值
+    subMenuIndex = gSettings.autoReply;
+    break;
+  case M_AUTO_REPLY_DELAY:  // 新增：设置自动回复延迟的初始值
+    subMenuIndex = gSettings.autoReplyDelay;
     break;
   case M_BAT_CAL:
     subMenuIndex = gSettings.batteryCalibration - BAT_CAL_MIN;

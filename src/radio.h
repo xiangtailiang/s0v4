@@ -17,6 +17,15 @@ typedef enum {
   TX_POW_OVERDRIVE,
 } TXState;
 
+// 新增：自动回复状态枚举
+typedef enum {
+  AUTO_REPLY_IDLE,           // 空闲状态
+  AUTO_REPLY_LISTENING,      // 正在接收信号
+  AUTO_REPLY_SIGNAL_END,     // 信号结束，准备发射
+  AUTO_REPLY_DELAY,          // 延迟等待
+  AUTO_REPLY_TRANSMITTING,   // 正在发射
+} AutoReplyState;
+
 extern CH *radio;
 extern CH gVFO[2];
 
@@ -27,6 +36,11 @@ extern bool gMonitorMode;
 extern TXState gTxState;
 extern bool gShowAllRSSI;
 extern uint8_t gCurrentTxPower;
+
+// 新增：自动回复相关全局变量
+extern AutoReplyState gAutoReplyState;
+extern uint32_t gAutoReplyTimer;
+extern bool gAutoReplyWasListening;
 
 extern const uint16_t StepFrequencyTable[15];
 extern const char *modulationTypeOptions[8];
@@ -102,5 +116,10 @@ bool RADIO_IsChMode();
 void RADIO_GetGainString(char *String, uint8_t i);
 
 void RADIO_CheckAndListen();
+
+// 新增：自动回复功能函数
+void RADIO_AutoReplyInit();
+void RADIO_AutoReplyUpdate();
+void RADIO_AutoReplyReset();
 
 #endif /* end of include guard: RADIO_H */

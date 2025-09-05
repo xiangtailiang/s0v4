@@ -89,7 +89,8 @@ typedef struct {
   uint8_t txTime : 4;
 
   uint8_t fcTime : 2;
-  uint8_t reserved5 : 2;
+  uint8_t reserved5 : 1;
+  uint8_t autoReply : 1;  // 新增：自动回复功能开关
   uint8_t iAmPro : 1;
   uint8_t roger : 3;
 
@@ -130,6 +131,7 @@ typedef struct {
 
   uint8_t activeVFO : 2;
   bool skipGarbageFrequencies : 1;
+  uint8_t autoReplyDelay : 5;  // 新增：自动回复延迟时间(秒)，范围0-31秒
 
 } __attribute__((packed)) Settings;
 // getsize(Settings)

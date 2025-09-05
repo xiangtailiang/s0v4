@@ -38,6 +38,11 @@ uint8_t gCurrentTxPower = 0;
 TXState gTxState = TX_UNKNOWN;
 bool gShowAllRSSI = false;
 
+// 新增：自动回复相关全局变量
+AutoReplyState gAutoReplyState = AUTO_REPLY_IDLE;
+uint32_t gAutoReplyTimer = 0;
+bool gAutoReplyWasListening = false;
+
 static bool hasSi = false;
 static bool hasSsbPatch = false;
 
@@ -222,6 +227,9 @@ void RADIO_Init(void) {
   }
   Log("RADIO hasSi=%u, hasPatch=%u", hasSi, hasSsbPatch);
   BK4819_Init();
+  
+  // 新增：初始化自动回复功能
+  RADIO_AutoReplyInit();
 }
 
 static void setSI4732Modulation(ModulationType mod) {
@@ -995,4 +1003,106 @@ void RADIO_CheckAndListen() {
   RADIO_ToggleRX(m.open);
   SP_ShiftGraph(-1);
   SP_AddGraphPoint(&m);
+  
+  // 新增：更新自动回复状态
+  RADIO_AutoReplyUpdate();
+}
+
+// 新增：自动回复功能实现
+void RADIO_AutoReplyInit() {
+  gAutoReplyState = AUTO_REPLY_IDLE;
+  gAutoReplyTimer = 0;
+  gAutoReplyWasListening = false;
+  Log("AutoReply: Initialized");
+}
+
+void RADIO_AutoReplyReset() {
+  if (gAutoReplyState == AUTO_REPLY_TRANSMITTING) {
+    // 如果正在发射，先停止发射
+    RADIO_ToggleTX(false);
+  }
+  gAutoReplyState = AUTO_REPLY_IDLE;
+  gAutoReplyTimer = 0;
+  gAutoReplyWasListening = false;
+  Log("AutoReply: Reset");
+}
+
+void RADIO_AutoReplyUpdate() {
+  // 如果自动回复功能未启用，直接返回
+  if (!gSettings.autoReply) {
+    if (gAutoReplyState != AUTO_REPLY_IDLE) {
+      RADIO_AutoReplyReset();
+    }
+    return;
+  }
+
+  // 如果正在手动发射，重置自动回复状态
+  if (gTxState == TX_ON && gAutoReplyState != AUTO_REPLY_TRANSMITTING) {
+    RADIO_AutoReplyReset();
+    return;
+  }
+
+  uint32_t currentTime = Now();
+  
+  switch (gAutoReplyState) {
+    case AUTO_REPLY_IDLE:
+      // 检测到信号开始接收
+      if (gIsListening && !gAutoReplyWasListening) {
+        gAutoReplyState = AUTO_REPLY_LISTENING;
+        gAutoReplyWasListening = true;
+        Log("AutoReply: Signal detected, entering listening state");
+      }
+      break;
+      
+    case AUTO_REPLY_LISTENING:
+      // 信号结束检测
+      if (!gIsListening && gAutoReplyWasListening) {
+        gAutoReplyState = AUTO_REPLY_SIGNAL_END;
+        gAutoReplyTimer = currentTime;
+        Log("AutoReply: Signal ended, preparing for reply");
+      }
+      // 如果信号继续，保持监听状态
+      else if (gIsListening) {
+        gAutoReplyWasListening = true;
+      }
+      break;
+      
+    case AUTO_REPLY_SIGNAL_END:
+      // 等待延迟时间后开始发射
+      if (currentTime - gAutoReplyTimer >= (gSettings.autoReplyDelay * 1000)) {
+        // 检查是否可以发射
+        uint32_t txF = RADIO_GetTXF();
+        TXState txState = RADIO_GetTXState(txF);
+        
+        if (txState == TX_ON) {
+          gAutoReplyState = AUTO_REPLY_TRANSMITTING;
+          gAutoReplyTimer = currentTime;
+          RADIO_ToggleTX(true);
+          Log("AutoReply: Starting transmission for 20 seconds");
+        } else {
+          // 无法发射，重置状态
+          Log("AutoReply: Cannot transmit, TX state: %d", txState);
+          RADIO_AutoReplyReset();
+        }
+      }
+      break;
+      
+    case AUTO_REPLY_TRANSMITTING:
+      // 发射20秒后停止
+      if (currentTime - gAutoReplyTimer >= 20000) { // 20秒 = 20000毫秒
+        RADIO_ToggleTX(false);
+        RADIO_AutoReplyReset();
+        Log("AutoReply: Transmission completed, returning to idle");
+      }
+      break;
+      
+    case AUTO_REPLY_DELAY:
+      // 预留状态，暂未使用
+      break;
+  }
+  
+  // 更新上一次监听状态
+  if (!gIsListening) {
+    gAutoReplyWasListening = false;
+  }
 }

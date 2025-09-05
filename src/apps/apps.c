@@ -9,7 +9,7 @@
 #include "chscan.h"
 #include "fc.h"
 #include "finput.h"
-#include "generator.h"
+// #include "generator.h"
 #include "lootlist.h"
 // #include "memview.h"
 #include "reset.h"
@@ -62,7 +62,7 @@ const AppType_t appsAvailableToRun[RUN_APPS_COUNT] = {
     APP_FC,        //
     APP_LOOT_LIST, //
     // APP_MEMVIEW,   //
-    APP_GENERATOR, //
+    // APP_GENERATOR, //
     APP_RESET,
     APP_ABOUT,     //
     APP_MORSE,     //
@@ -89,8 +89,8 @@ const App apps[APPS_COUNT] = {
     {"Settings", NULL, NULL, SETTINGS_render, SETTINGS_key, SETTINGS_deinit},
     {"1 VFO", VFO1_init, VFO1_update, VFO1_render, VFO1_key, NULL},
     {"2 VFO", VFO2_init, VFO2_update, VFO2_render, VFO2_key, NULL},
-    {"Generator", GENERATOR_init, GENERATOR_update, GENERATOR_render,
-     GENERATOR_key, NULL},
+    // {"Generator", GENERATOR_init, GENERATOR_update, GENERATOR_render,
+    //  GENERATOR_key, NULL},
     {"ABOUT", NULL, NULL, ABOUT_Render, ABOUT_key, NULL},
     {"Morse", MORSE_init, MORSE_update, MORSE_render, MORSE_key, MORSE_deinit},
 };
