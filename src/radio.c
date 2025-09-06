@@ -1070,7 +1070,7 @@ void RADIO_AutoReplyUpdate() {
         uint32_t txF = RADIO_GetTXF();
         TXState txState = RADIO_GetTXState(txF);
         
-        if (txState == TX_ON) {
+        if (txState == TX_ON && gSettings.autoReplyDuration > 0) {
           gAutoReplyState = AUTO_REPLY_TRANSMITTING;
           gAutoReplyTimer = currentTime;
           RADIO_ToggleTX(true);
@@ -1082,8 +1082,8 @@ void RADIO_AutoReplyUpdate() {
       break;
       
     case AUTO_REPLY_TRANSMITTING:
-      // 发射20秒后停止
-      if (currentTime - gAutoReplyTimer >= 20000) { // 20秒 = 20000毫秒
+      // 发射 gSettings.autoReplyDuration 秒后停止
+      if (currentTime - gAutoReplyTimer >= (gSettings.autoReplyDuration * 1000)) {
         RADIO_ToggleTX(false);
         RADIO_AutoReplyReset();
       }

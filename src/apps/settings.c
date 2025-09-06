@@ -46,6 +46,7 @@ typedef enum {
   M_FC_TIME,
   M_AUTO_REPLY,        // 新增：自动回复开关
   M_AUTO_REPLY_DELAY,  // 新增：自动回复延迟
+  M_AUTO_REPLY_DURATION,
 } Menu;
 
 static uint8_t menuIndex = 0;
@@ -89,6 +90,7 @@ static const MenuItem menu[] = {
     {"Lock PTT", M_PTT_LOCK, 2},
     {"Auto Reply", M_AUTO_REPLY, 2},        // 新增：自动回复开关菜单项
     {"Reply Delay", M_AUTO_REPLY_DELAY, 32}, // 新增：自动回复延迟菜单项 (0-31秒)
+    {"Reply Time", M_AUTO_REPLY_DURATION, 61},
 };
 
 static const uint8_t MENU_SIZE = ARRAY_SIZE(menu);
@@ -137,6 +139,9 @@ static void getSubmenuItemText(uint16_t index, char *name) {
     strncpy(name, onOff[index], 31);
     return;
   case M_AUTO_REPLY_DELAY:  // 新增：自动回复延迟显示
+    sprintf(name, "%us", index);
+    return;
+  case M_AUTO_REPLY_DURATION:
     sprintf(name, "%us", index);
     return;
   case M_BAT_CAL:
@@ -237,6 +242,10 @@ static void accept(void) {
     gSettings.autoReplyDelay = subMenuIndex;
     SETTINGS_Save();
     break;
+  case M_AUTO_REPLY_DURATION:
+    gSettings.autoReplyDuration = subMenuIndex;
+    SETTINGS_Save();
+    break;
   case M_BAT_CAL:
     gSettings.batteryCalibration = subMenuIndex + BAT_CAL_MIN;
     SETTINGS_Save();
@@ -315,6 +324,9 @@ static const char *getValue(Menu type) {
     return Output;
   case M_AUTO_REPLY_DELAY:  // 新增：显示自动回复延迟值
     sprintf(Output, "%us", gSettings.autoReplyDelay);
+    return Output;
+  case M_AUTO_REPLY_DURATION:
+    sprintf(Output, "%us", gSettings.autoReplyDuration);
     return Output;
   case M_BAT_TYPE:
     return BATTERY_TYPE_NAMES[gSettings.batteryType];
@@ -434,6 +446,9 @@ static void setInitialSubmenuIndex(void) {
     break;
   case M_AUTO_REPLY_DELAY:  // 新增：设置自动回复延迟的初始值
     subMenuIndex = gSettings.autoReplyDelay;
+    break;
+  case M_AUTO_REPLY_DURATION:
+    subMenuIndex = gSettings.autoReplyDuration;
     break;
   case M_BAT_CAL:
     subMenuIndex = gSettings.batteryCalibration - BAT_CAL_MIN;

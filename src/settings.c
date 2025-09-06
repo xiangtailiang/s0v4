@@ -72,8 +72,9 @@ Settings gSettings = (Settings){
     .batteryStyle = BAT_PERCENT,
     .upconverter = 0,
     .deviation = 130, // 1300
-    .autoReply = false,        // 新增：自动回复功能默认关闭
-    .autoReplyDelay = 2,       // 新增：自动回复延迟默认2秒
+    .autoReply = false,        // 自动回复功能默认关闭
+    .autoReplyDelay = 2,       // 自动回复延迟默认2秒
+    .autoReplyDuration = 20,   // 自动回复持续时间默认20秒
 };
 
 const uint32_t EEPROM_SIZES[6] = {

@@ -132,6 +132,7 @@ typedef struct {
   uint8_t activeVFO : 2;
   bool skipGarbageFrequencies : 1;
   uint8_t autoReplyDelay : 5;  // 新增：自动回复延迟时间(秒)，范围0-31秒
+  uint8_t autoReplyDuration; 
 
 } __attribute__((packed)) Settings;
 // getsize(Settings)
