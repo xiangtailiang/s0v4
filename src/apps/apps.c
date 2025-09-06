@@ -9,7 +9,7 @@
 #include "chscan.h"
 #include "fc.h"
 #include "finput.h"
-// #include "generator.h"
+#include "generator.h"
 #include "lootlist.h"
 // #include "memview.h"
 #include "reset.h"
