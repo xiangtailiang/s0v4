@@ -423,8 +423,13 @@ static void renderChannelName(uint8_t y, const char *name, bool isChMode,
 static void renderProModeInfo(uint8_t y, const VFO *radio) {
   PrintSmall(34, 12, "RNG %+3u %+3u %+3u", RADIO_GetRSSI(), BK4819_GetNoise(),
              BK4819_GetGlitch());
-  PrintSmallEx(LCD_WIDTH - 1, 12, POS_R, C_FILL, "%s%u",
+  if (radio->allowTx) {
+    PrintSmallEx(LCD_WIDTH - 1, 12, POS_R, C_FILL, "%c %s%u",TX_POWER_NAMES[radio->power][0],
                sqTypeNames[radio->squelch.type], radio->squelch.value);
+  } else {
+    PrintSmallEx(LCD_WIDTH - 1, 12, POS_R, C_FILL, "%s%u",
+               sqTypeNames[radio->squelch.type], radio->squelch.value);
+  }
   PrintSmallEx(LCD_WIDTH - 1, 18, POS_R, true, RADIO_GetBWName(radio));
 
   const uint32_t step = StepFrequencyTable[radio->step];
