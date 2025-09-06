@@ -91,8 +91,8 @@ const App apps[APPS_COUNT] = {
     {"2 VFO", VFO2_init, VFO2_update, VFO2_render, VFO2_key, NULL},
     // {"Generator", GENERATOR_init, GENERATOR_update, GENERATOR_render,
     //  GENERATOR_key, NULL},
-    {"ABOUT", NULL, NULL, ABOUT_Render, ABOUT_key, NULL},
     {"Morse", MORSE_init, MORSE_update, MORSE_render, MORSE_key, MORSE_deinit},
+    {"ABOUT", NULL, NULL, ABOUT_Render, ABOUT_key, NULL},
 };
 
 bool APPS_key(KEY_Code_t Key, Key_State_t state) {
