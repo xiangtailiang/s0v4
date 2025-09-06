@@ -62,7 +62,7 @@ const AppType_t appsAvailableToRun[RUN_APPS_COUNT] = {
     APP_FC,        //
     APP_LOOT_LIST, //
     // APP_MEMVIEW,   //
-    // APP_GENERATOR, //
+    APP_GENERATOR, //
     APP_RESET,
     APP_ABOUT,     //
     APP_MORSE,     //
