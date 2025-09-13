@@ -154,7 +154,7 @@ void VFO1_update(void) {
 				gBatterySaveCountdown--;
 			} else {
 				BK4819_RX_TurnOn();
-				gPowerSave_10ms = BATTERY_SAVE_WAKEUP_10MS; 
+				gPowerSave_10ms = BATTERY_SAVE_WAKEUP_10MS; /
 			}
 		}
 	} else {
