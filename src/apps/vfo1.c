@@ -22,7 +22,13 @@
 #include "chlist.h"
 #include "finput.h"
 
+#define BATTERY_SAVE_COUNTDOWN (100)
+#define BATTERY_SAVE_60MS (3)
+#define BATTERY_SAVE_WAKEUP_60MS (1)
+
 bool gVfo1ProMode = false;
+uint16_t gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
+static uint16_t gPowerSave_60ms;
 
 static uint8_t menuIndex = 0;
 static bool registerActive = false;
@@ -131,9 +137,39 @@ void VFO1_init(void) {
 }
 
 void VFO1_update(void) {
-  RADIO_CheckAndListen();
-  gRedrawScreen = true;
-  vTaskDelay(pdMS_TO_TICKS(60));
+	if (BATTERY_SAVE_60MS > 0 && gTxState != TX_ON) {
+		if (gPowerSave_60ms > 0) {
+			RADIO_CheckAndListen();
+			if (gIsListening) {
+				gPowerSave_60ms = 0;
+				gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
+			} else if (--gPowerSave_60ms == 0) {
+				BK4819_Sleep();
+			}
+		} else {
+			RADIO_CheckAndListen();
+			if (gIsListening) {
+				gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
+			} else if (gBatterySaveCountdown > 0) {
+				gBatterySaveCountdown--;
+			} else {
+				BK4819_RX_TurnOn();
+				gPowerSave_60ms = BATTERY_SAVE_WAKEUP_60MS;
+				gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
+			}
+		}
+	} else {
+		RADIO_CheckAndListen();
+	}
+
+	if (BATTERY_SAVE_LEVEL > 0 && !gIsListening && gTxState != TX_ON) {
+		gRedrawScreen = true;
+		vTaskDelay(gPowerSave_60ms == 0 ? BATTERY_SAVE_60MS * 60
+						: pdMS_TO_TICKS(60));
+	} else {
+		gRedrawScreen = true;
+		vTaskDelay(pdMS_TO_TICKS(60));
+	}
 }
 
 bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
@@ -223,7 +259,13 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
 }
 
 bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
-  if ((!gVfo1ProMode || gCurrentApp == APP_VFO2) && state == KEY_RELEASED &&
+	gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
+	if (gPowerSave_60ms > 0) {
+		gPowerSave_60ms = 0;
+		BK4819_RX_TurnOn();
+		gRedrawScreen = true;
+	}
+  if ((!gVfo1ProMode) && state == KEY_RELEASED &&
       RADIO_IsChMode()) {
     if (!gIsNumNavInput && key <= KEY_9) {
       NUMNAV_Init(radio->channel, 0, CHANNELS_GetCountMax() - 1);
@@ -463,3 +505,4 @@ void VFO1_render(void) {
     renderProModeInfo(BASE, radio);
   }
 }
+
