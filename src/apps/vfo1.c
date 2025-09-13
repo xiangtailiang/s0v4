@@ -162,7 +162,7 @@ void VFO1_update(void) {
 		RADIO_CheckAndListen();
 	}
 
-	if (BATTERY_SAVE_LEVEL > 0 && !gIsListening && gTxState != TX_ON) {
+	if (BATTERY_SAVE_60MS > 0 && !gIsListening && gTxState != TX_ON) {
 		gRedrawScreen = true;
 		vTaskDelay(gPowerSave_60ms == 0 ? BATTERY_SAVE_60MS * 60
 						: pdMS_TO_TICKS(60));
