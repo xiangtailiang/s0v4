@@ -23,8 +23,8 @@
 #include "finput.h"
 
 #define BATTERY_SAVE_COUNTDOWN (100)
-#define BATTERY_SAVE_60MS (3)
-#define BATTERY_SAVE_WAKEUP_60MS (1)
+#define BATTERY_SAVE_60MS (4)
+#define BATTERY_SAVE_WAKEUP_60MS (2)
 
 bool gVfo1ProMode = false;
 uint16_t gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
