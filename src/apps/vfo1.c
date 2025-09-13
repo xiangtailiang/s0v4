@@ -22,13 +22,13 @@
 #include "chlist.h"
 #include "finput.h"
 
-#define BATTERY_SAVE_COUNTDOWN (100)
-#define BATTERY_SAVE_60MS (6)
-#define BATTERY_SAVE_WAKEUP_60MS (1)
+#define BATTERY_SAVE_COUNTDOWN   (600)  // 600 * 10ms = 6 seconds
+#define BATTERY_SAVE_SLEEP_10MS  (40)   // 40 * 10ms = 400ms sleep
+#define BATTERY_SAVE_WAKEUP_10MS (2)   // 3 * 10ms = 30ms wakeup
 
 bool gVfo1ProMode = false;
 uint16_t gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
-static uint16_t gPowerSave_60ms;
+static uint16_t gPowerSave_10ms;
 
 static uint8_t menuIndex = 0;
 static bool registerActive = false;
@@ -137,14 +137,14 @@ void VFO1_init(void) {
 }
 
 void VFO1_update(void) {
-	if (BATTERY_SAVE_60MS > 0 && gTxState != TX_ON) {
-		if (gPowerSave_60ms > 0) {
+	if (BATTERY_SAVE_SLEEP_10MS > 0 && gTxState != TX_ON) {
+		if (gPowerSave_10ms > 0) {
 			RADIO_CheckAndListen();
 			if (gIsListening) {
-				gPowerSave_60ms = 0;
+				gPowerSave_10ms = 0;
 				gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
-			} else if (--gPowerSave_60ms == 0) {
-				BK4819_Sleep();
+			} else if (--gPowerSave_10ms == 0) {
+				BK419_Sleep();
 			}
 		} else {
 			RADIO_CheckAndListen();
@@ -154,20 +154,20 @@ void VFO1_update(void) {
 				gBatterySaveCountdown--;
 			} else {
 				BK4819_RX_TurnOn();
-				gPowerSave_60ms = BATTERY_SAVE_WAKEUP_60MS;
+				gPowerSave_10ms = BATTERY_SAVE_WAKEUP_10MS; /
 			}
 		}
 	} else {
 		RADIO_CheckAndListen();
 	}
 
-	if (BATTERY_SAVE_60MS > 0 && !gIsListening && gTxState != TX_ON) {
+	if (BATTERY_SAVE_SLEEP_10MS > 0 && !gIsListening && gTxState != TX_ON) {
 		gRedrawScreen = true;
-		vTaskDelay(gPowerSave_60ms == 0 ? BATTERY_SAVE_60MS * 60
-						: pdMS_TO_TICKS(60));
+		vTaskDelay(gPowerSave_10ms == 0 ? pdMS_TO_TICKS(BATTERY_SAVE_SLEEP_10MS * 10) // 休眠400ms
+						: pdMS_TO_TICKS(10)); // 唤醒检测周期10ms
 	} else {
 		gRedrawScreen = true;
-		vTaskDelay(pdMS_TO_TICKS(60));
+		vTaskDelay(pdMS_TO_TICKS(10)); // 正常周期10ms
 	}
 }
 
@@ -259,8 +259,8 @@ bool VFOPRO_key(KEY_Code_t key, Key_State_t state) {
 
 bool VFO1_keyEx(KEY_Code_t key, Key_State_t state, bool isProMode) {
 	gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
-	if (gPowerSave_60ms > 0) {
-		gPowerSave_60ms = 0;
+	if (gPowerSave_10ms > 0) {
+		gPowerSave_10ms = 0;
 		BK4819_RX_TurnOn();
 		gRedrawScreen = true;
 	}
