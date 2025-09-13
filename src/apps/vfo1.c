@@ -144,7 +144,7 @@ void VFO1_update(void) {
 				gPowerSave_10ms = 0;
 				gBatterySaveCountdown = BATTERY_SAVE_COUNTDOWN;
 			} else if (--gPowerSave_10ms == 0) {
-				BK4819_Sleep();
+				BK419_Sleep();
 			}
 		} else {
 			RADIO_CheckAndListen();
